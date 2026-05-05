@@ -1,5 +1,6 @@
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { Exclude, Expose } from 'class-transformer';
+import { Role } from '../enums/roles.enum';
 
 @Entity({
   name: 'USERS',
@@ -27,8 +28,15 @@ export class Users {
 
   @Column({
     type: 'varchar',
+    nullable: true,
+    unique: true,
+  })
+  googleId: string;
+
+  @Column({
+    type: 'varchar',
     length: 100,
-    nullable: false,
+    nullable: true,
   })
   @Exclude()
   password: string;
@@ -48,22 +56,22 @@ export class Users {
 
   @Expose({ groups: ['Get'] })
   @Column({
-    type: 'text',
+    type: 'varchar',
+    length: 100,
   })
-  address: string;
+  companyName: string;
 
   @Expose({ groups: ['Get'] })
   @Column({
-    type: 'varchar',
-    length: 50,
+    type: 'boolean',
+    default: true,
   })
-  city: string;
+  isActive: boolean;
 
   @Column({
-    type: 'boolean',
-    default: false,
-    nullable: false,
+    type: 'enum',
+    enum: Role,
+    default: Role.User,
   })
-  @Exclude()
-  isAdmin: boolean;
+  role: Role;
 }

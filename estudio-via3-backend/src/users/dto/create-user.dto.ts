@@ -12,6 +12,9 @@ import {
   Validate,
 } from 'class-validator';
 import { MatchPassword } from 'src/helpers/matchPassword';
+import { Role } from '../enums/roles.enum';
+import { IsEnum } from 'class-validator';
+
 
 export class CreateUserDto {
   @ApiProperty({
@@ -46,12 +49,6 @@ export class CreateUserDto {
   confirmPassword: string;
 
   @IsNotEmpty()
-  @IsString()
-  @MinLength(3)
-  @MaxLength(80)
-  address: string;
-
-  @IsNotEmpty()
   @IsNumber()
   phone: number;
 
@@ -63,13 +60,14 @@ export class CreateUserDto {
 
   @IsNotEmpty()
   @IsString()
-  @MinLength(5)
+  @MinLength(3)
   @MaxLength(20)
-  city: string;
+  companyName: string;
 
   @Exclude()
   @IsEmpty()
-  isAdmin?: boolean;
+  isActive?: boolean;
+
 }
 
 export class LoginUserDto extends PickType(CreateUserDto, [

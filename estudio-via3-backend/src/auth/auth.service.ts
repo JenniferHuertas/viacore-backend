@@ -9,6 +9,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { CreateUserDto, LoginUserDto } from 'src/users/dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
+import { Role } from 'src/users/enums/roles.enum';
 
 @Injectable()
 export class AuthService {
@@ -32,6 +33,7 @@ export class AuthService {
     const newUser = this.usersRepository.create({
       ...createUserDto,
       password: hashedPassword,
+      role: Role.User,
     });
 
     const savedUser = await this.usersRepository.save(newUser);
@@ -57,7 +59,43 @@ export class AuthService {
     const payload = {
       id: foundUser.id,
       email: foundUser.email,
-      isAdmin: foundUser.isAdmin,
+      role: foundUser.role,
+    };
+    const token = this.jwtService.sign(payload, { expiresIn: '1h' });
+
+    return { login: true, access_token: token };
+  }
+
+  async findOrCreateGoogleUser(googleUser: {
+    email: string;
+    name: string;
+    googleId: string;
+  }) {
+    let user = await this.usersRepository.findOneBy({
+      email: googleUser.email,
+    });
+
+    if (!user) {
+      user = this.usersRepository.create({
+        email: googleUser.email,
+        name: googleUser.name,
+        googleId: googleUser.googleId,
+        // password queda null, phone/country/address/city quedan vacíos
+        phone: 0,
+        country: '',
+        companyName: '',
+      });
+      await this.usersRepository.save(user);
+    } else if (!user.googleId) {
+      // Si el email ya existe pero sin googleId, lo vincula
+      user.googleId = googleUser.googleId;
+      await this.usersRepository.save(user);
+    }
+
+    const payload = {
+      id: user.id,
+      email: user.email,
+      role: user.role, // <-- en lugar de isAdmin
     };
     const token = this.jwtService.sign(payload, { expiresIn: '1h' });
 

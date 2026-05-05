@@ -40,10 +40,10 @@ export class UsersService {
       throw new NotFoundException(`User with id ${id} not found`);
     }
 
-    await this.usersRepository.delete(id);
+    await this.usersRepository.update(id, { isActive: false });
 
     return {
-      message: `User with id ${id} deleted successfully`,
+      message: `User with id ${id} deactivated successfully`,
     };
   }
 }

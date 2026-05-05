@@ -35,11 +35,7 @@ export class AuthGuard implements CanActivate {
     try {
       const payload = this.jwtService.verify(token, { secret });
 
-      if (payload.isAdmin) {
-        payload.roles = [Role.Admin];
-      } else {
-        payload.roles = [Role.User];
-      }
+      payload.roles = payload.role ? [payload.role] : [Role.User];
 
       request.user = payload;
 
