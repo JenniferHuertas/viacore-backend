@@ -13,6 +13,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import typeorm from './config/typeorm';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
+import { TrainingRequestModule } from './training-request/training-request.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { JwtModule } from '@nestjs/jwt';
         expiresIn: '30m',
       },
     }),
+    TrainingRequestModule,
   ],
   controllers: [AppController],
   providers: [AppService],
