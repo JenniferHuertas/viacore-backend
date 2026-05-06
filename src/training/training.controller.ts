@@ -34,7 +34,7 @@ export class TrainingController {
   @Put(':id')
   updateTraining(
     @Param('id', ParseUUIDPipe) id: string,
-    dataTraining: UpdateTrainingDto,
+    @Body() dataTraining: UpdateTrainingDto,
   ) {
     return this.trainingService.updateTraining(id, dataTraining);
   }

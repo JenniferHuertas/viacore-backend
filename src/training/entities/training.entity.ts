@@ -1,5 +1,16 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  // JoinColumn,
+  // OneToMany,
+  // OneToOne,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+// import { TrainingRequest } from '../training-request/training-request.entity';
+// import { FileResource } from '../file-resource/file-resource.entity';
 
 @Entity({
   name: 'TRAINING',
@@ -49,13 +60,34 @@ export class Training {
   })
   isActive!: boolean;
 
-  @Column({
-    type: 'text',
-    default: '',
-  })
-  @ApiProperty({
-    description:
-      'Debe ser una URL válida, que finalice en .jpg/.jpeg/.png/.webp',
-  })
-  imgUrl!: string;
+  // @Column({
+  //   type: 'text',
+  //   default: '',
+  // })
+  // @ApiProperty({
+  //   description: 'Debe incluir una imagen de la capacitación',
+  // })
+  // imgUrl!: string;
+
+  @CreateDateColumn()
+  createdAt!: Date;
+
+  @UpdateDateColumn()
+  updatedAt!: Date;
+
+  // @OneToMany(() => TrainingRequest, (request) => request.training, {
+  //   eager: false,
+  // })
+  // @ApiProperty({
+  //   description: 'Solicitudes de capacitación asociadas a este training',
+  //   type: () => TrainingRequest,
+  //   isArray: true,
+  // })
+  // trainingRequests!: TrainingRequest[];
+
+  // @OneToOne(() => FileResource, (file) => file.training, {
+  //   eager: false,
+  // })
+  // @JoinColumn()
+  // fileResource!: FileResource;
 }

@@ -14,24 +14,30 @@ export class TrainingRepository {
   constructor(
     @InjectRepository(Training)
     private readonly trainingOrmRepository: Repository<Training>,
+    // @InjectRepository(FileResource)
+    // private readonly fileResourceOrmRepository: Repository<FileResource>,
   ) {}
 
   async getAllTraining() {
     const training = await this.trainingOrmRepository.find({
       where: { isActive: true },
+      relations: {
+        // fileResource: true,
+      },
     });
     return training.map((training) => ({
       id: training.id,
       title: training.title,
       description: training.description,
       category: training.category,
-      imgUrl: training.imgUrl,
+      // fileResource: training.fileResource,
     }));
   }
 
   async getTrainingById(id: string) {
     const training = await this.trainingOrmRepository.findOne({
       where: { id, isActive: true },
+      // relations: { fileResource: true },
     });
 
     if (!training) {
@@ -43,7 +49,6 @@ export class TrainingRepository {
 
   async createTraining(dataTraining: CreateTrainingDto) {
     const newTraining = this.trainingOrmRepository.create(dataTraining);
-
     return await this.trainingOrmRepository.save(newTraining);
   }
 
@@ -56,7 +61,7 @@ export class TrainingRepository {
     }
 
     await this.trainingOrmRepository.update(id, dataTraining);
-    return id;
+    return this.trainingOrmRepository.findOne({ where: { id } });
   }
 
   async deleteTraining(id: string) {
