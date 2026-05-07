@@ -14,6 +14,7 @@ import typeorm from './config/typeorm';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
 import { MeetingsModule } from './meetings/meetings.module';
+import { TrainingRequestModule } from './training-requests/training-request.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { MeetingsModule } from './meetings/meetings.module';
       },
     }),
     MeetingsModule,
+    TrainingRequestModule,
   ],
   controllers: [AppController],
   providers: [AppService],
