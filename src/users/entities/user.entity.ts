@@ -1,4 +1,11 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { Exclude, Expose } from 'class-transformer';
 import { Role } from '../enums/roles.enum';
 
@@ -8,14 +15,14 @@ import { Role } from '../enums/roles.enum';
 export class Users {
   @Expose({ groups: ['newUser', 'Get'] })
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Expose({ groups: ['newUser', 'Get'] })
   @Column({
     type: 'varchar',
     length: 50,
   })
-  name: string;
+  name!: string;
 
   @Expose({ groups: ['newUser', 'Get'] })
   @Column({
@@ -24,14 +31,14 @@ export class Users {
     nullable: false,
     unique: true,
   })
-  email: string;
+  email!: string;
 
   @Column({
     type: 'varchar',
     nullable: true,
     unique: true,
   })
-  googleId: string;
+  googleId!: string;
 
   @Column({
     type: 'varchar',
@@ -39,39 +46,48 @@ export class Users {
     nullable: true,
   })
   @Exclude()
-  password: string;
+  password!: string;
 
   @Expose({ groups: ['Get'] })
   @Column({
     type: 'varchar',
   })
-  phone: number;
+  phone!: number;
 
   @Expose({ groups: ['Get'] })
   @Column({
     type: 'varchar',
     length: 50,
   })
-  country: string;
+  country!: string;
 
   @Expose({ groups: ['Get'] })
   @Column({
     type: 'varchar',
     length: 100,
   })
-  companyName: string;
+  companyName!: string;
 
   @Expose({ groups: ['Get'] })
   @Column({
     type: 'boolean',
     default: true,
   })
-  isActive: boolean;
+  isActive!: boolean;
 
   @Column({
     type: 'enum',
     enum: Role,
     default: Role.User,
   })
+  role!: Role;
   role: Role;
+
+  @Expose({ groups: ['Get'] })
+  @CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
+  createdAt: Date;
+
+  @Expose({ groups: ['Get'] })
+  @UpdateDateColumn({ type: 'timestamptz', name: 'updated_at' })
+  updatedAt: Date;
 }
