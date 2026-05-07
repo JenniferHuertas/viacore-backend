@@ -64,6 +64,20 @@ export class Users {
   @Expose({ groups: ['Get'] })
   @Column({
     type: 'varchar',
+    length: 50,
+  })
+  city: string;
+
+  @Expose({ groups: ['Get'] })
+  @Column({
+    type: 'varchar',
+    length: 100,
+  })
+  address: string;
+
+  @Expose({ groups: ['Get'] })
+  @Column({
+    type: 'varchar',
     length: 100,
   })
   companyName: string;
@@ -73,20 +87,20 @@ export class Users {
     type: 'boolean',
     default: true,
   })
-  isActive: boolean;
+  isActive?: boolean;
 
   @Column({
     type: 'enum',
     enum: Role,
     default: Role.User,
   })
-  role: Role;
+  role?: Role;
 
   @Expose({ groups: ['Get'] })
   @CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
-  createdAt: Date;
+  createdAt!: Date;
 
   @Expose({ groups: ['Get'] })
   @UpdateDateColumn({ type: 'timestamptz', name: 'updated_at' })
-  updatedAt: Date;
+  updatedAt!: Date;
 }

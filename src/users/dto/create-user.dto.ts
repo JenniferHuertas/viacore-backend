@@ -12,9 +12,6 @@ import {
   Validate,
 } from 'class-validator';
 import { MatchPassword } from 'src/helpers/matchPassword';
-import { Role } from '../enums/roles.enum';
-import { IsEnum } from 'class-validator';
-
 
 export class CreateUserDto {
   @ApiProperty({
@@ -57,6 +54,18 @@ export class CreateUserDto {
   @MinLength(5)
   @MaxLength(20)
   country: string;
+
+  @IsNotEmpty()
+  @IsString()
+  @MinLength(3)
+  @MaxLength(20)
+  city: string;
+
+  @IsNotEmpty()
+  @IsString()
+  @MinLength(5)
+  @MaxLength(50)
+  address: string;
 
   @IsNotEmpty()
   @IsString()

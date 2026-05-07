@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 import {
   BadRequestException,
   Injectable,
@@ -63,7 +64,12 @@ export class AuthService {
     };
     const token = this.jwtService.sign(payload, { expiresIn: '1h' });
 
-    return { login: true, access_token: token };
+    return {
+      id: foundUser.id,
+      role: foundUser.role,
+      login: true,
+      access_token: token,
+    };
   }
 
   async findOrCreateGoogleUser(googleUser: {
@@ -84,6 +90,8 @@ export class AuthService {
         phone: 0,
         country: '',
         companyName: '',
+        city: '',
+        address: '',
       });
       await this.usersRepository.save(user);
     } else if (!user.googleId) {
@@ -99,6 +107,6 @@ export class AuthService {
     };
     const token = this.jwtService.sign(payload, { expiresIn: '1h' });
 
-    return { login: true, access_token: token };
+    return { id: user.id, role: user.role, login: true, access_token: token };
   }
 }
