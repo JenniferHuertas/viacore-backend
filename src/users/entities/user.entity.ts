@@ -1,4 +1,11 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { Exclude, Expose } from 'class-transformer';
 import { Role } from '../enums/roles.enum';
 
@@ -74,4 +81,12 @@ export class Users {
     default: Role.User,
   })
   role: Role;
+
+  @Expose({ groups: ['Get'] })
+  @CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
+  createdAt: Date;
+
+  @Expose({ groups: ['Get'] })
+  @UpdateDateColumn({ type: 'timestamptz', name: 'updated_at' })
+  updatedAt: Date;
 }
