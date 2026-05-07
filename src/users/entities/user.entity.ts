@@ -97,6 +97,7 @@ export class Users {
     default: false,
   })
   profileCompleted!: boolean;
+  companyName!: string;
 
   @Expose({ groups: ['Get'] })
   @Column({
