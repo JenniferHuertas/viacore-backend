@@ -13,8 +13,12 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import typeorm from './config/typeorm';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
+<<<<<<< HEAD:src/app.module.ts
 import { MeetingsModule } from './meetings/meetings.module';
 import { TrainingRequestModule } from './training-requests/training-request.module';
+=======
+import { EventEmitterModule } from '@nestjs/event-emitter';
+>>>>>>> origin/notificaciones:estudio-via3-backend/src/app.module.ts
 
 @Module({
   imports: [
@@ -24,7 +28,9 @@ import { TrainingRequestModule } from './training-requests/training-request.modu
       isGlobal: true,
       envFilePath: '.development.env',
       load: [typeorm],
+      
     }),
+    EventEmitterModule.forRoot(),
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => config.get('typeorm')!,
