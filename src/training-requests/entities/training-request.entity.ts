@@ -8,7 +8,7 @@ import {
 } from 'typeorm';
 import { Expose } from 'class-transformer';
 import { Users } from '../../users/entities/user.entity';
-import { RequestStatus } from '../enums/request-status.enum';
+import { RequestStatus } from '../enums/requests-status.enum';
 //import { Trainings } from './training.entity';
 
 @Entity({
