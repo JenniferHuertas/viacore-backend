@@ -3,6 +3,7 @@ import {
   Get,
   Body,
   Put,
+  Patch,
   Param,
   Delete,
   Query,
@@ -11,12 +12,21 @@ import {
   SerializeOptions,
   UseInterceptors,
 } from '@nestjs/common';
+
 import { UsersService } from './user.service';
+
 import { UpdateUserDto } from './dto/update-user.dto';
+
+import { CompleteProfileDto } from './dto/create-user.dto';
+
 import { AuthGuard } from '../auth/guards/auth.guard';
+
 import { Role } from 'src/auth/roles.enum';
+
 import { Roles } from '../decorator/roles.decorator';
+
 import { RolesGuard } from '../auth/guards/roles.guard';
+
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 @ApiBearerAuth('Bearer')
@@ -30,10 +40,15 @@ export class UsersController {
   @SerializeOptions({ groups: ['Get'] })
   @Roles(Role.Admin)
   @UseGuards(AuthGuard, RolesGuard)
-  findAll(@Query('page') page: string, @Query('limit') limit: string) {
+  findAll(
+    @Query('page') page: string,
+
+    @Query('limit') limit: string,
+  ) {
     if (limit && page) {
       return this.usersService.findAll(+page, +limit);
     }
+
     return this.usersService.findAll();
   }
 
@@ -48,8 +63,25 @@ export class UsersController {
   @UseInterceptors(ClassSerializerInterceptor)
   @SerializeOptions({ groups: ['Get'] })
   @UseGuards(AuthGuard)
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+  update(
+    @Param('id') id: string,
+
+    @Body() updateUserDto: UpdateUserDto,
+  ) {
     return this.usersService.update(id, updateUserDto);
+  }
+
+  @Patch('complete-profile/:id')
+  @UseInterceptors(ClassSerializerInterceptor)
+  @SerializeOptions({ groups: ['Get'] })
+  @UseGuards(AuthGuard)
+  completeProfile(
+    @Param('id') id: string,
+
+    @Body()
+    completeProfileDto: CompleteProfileDto,
+  ) {
+    return this.usersService.completeProfile(id, completeProfileDto);
   }
 
   @Delete(':id')
