@@ -63,6 +63,20 @@ export class Users {
   @Expose({ groups: ['Get'] })
   @Column({
     type: 'varchar',
+    length: 50,
+  })
+  city!: string;
+
+  @Expose({ groups: ['Get'] })
+  @Column({
+    type: 'varchar',
+    length: 100,
+  })
+  address!: string;
+
+  @Expose({ groups: ['Get'] })
+  @Column({
+    type: 'varchar',
     length: 100,
   })
   companyName!: string;
@@ -79,7 +93,7 @@ export class Users {
     enum: Role,
     default: Role.User,
   })
-  role!: Role;
+  role?: Role;
 
   @Expose({ groups: ['Get'] })
   @CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
