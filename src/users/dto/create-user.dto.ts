@@ -1,5 +1,7 @@
 import { ApiProperty, PickType } from '@nestjs/swagger';
+
 import { Exclude } from 'class-transformer';
+
 import {
   IsEmail,
   IsEmpty,
@@ -11,6 +13,7 @@ import {
   MinLength,
   Validate,
 } from 'class-validator';
+
 import { MatchPassword } from 'src/helpers/matchPassword';
 
 export class CreateUserDto {
@@ -20,12 +23,12 @@ export class CreateUserDto {
   })
   @IsNotEmpty()
   @IsEmail()
-  email: string;
+  email!: string;
 
   @IsNotEmpty()
   @IsString()
   @MinLength(3)
-  name: string;
+  name!: string;
 
   @ApiProperty({
     example: 'Password21@',
@@ -37,49 +40,52 @@ export class CreateUserDto {
     message:
       'Password must contain at least one uppercase letter, one lowercase letter, one number and one special character.',
   })
-  password: string;
+  password!: string;
 
   @ApiProperty({
     example: 'Password21@',
   })
   @Validate(MatchPassword, ['password'])
-  confirmPassword: string;
+  confirmPassword!: string;
+
+  @IsNotEmpty()
+  @IsString()
+  address!: string;
+
+  @IsNotEmpty()
+  @IsString()
+  city!: string;
 
   @IsNotEmpty()
   @IsNumber()
-  phone: number;
+  phone!: number;
 
   @IsNotEmpty()
   @IsString()
   @MinLength(5)
   @MaxLength(20)
-  country: string;
+  country!: string;
 
   @IsNotEmpty()
   @IsString()
   @MinLength(3)
   @MaxLength(20)
-  city: string;
-
-  @IsNotEmpty()
-  @IsString()
-  @MinLength(5)
-  @MaxLength(50)
-  address: string;
-
-  @IsNotEmpty()
-  @IsString()
-  @MinLength(3)
-  @MaxLength(20)
-  companyName: string;
+  companyName!: string;
 
   @Exclude()
   @IsEmpty()
   isActive?: boolean;
-
 }
 
 export class LoginUserDto extends PickType(CreateUserDto, [
   'password',
   'email',
+]) {}
+
+export class CompleteProfileDto extends PickType(CreateUserDto, [
+  'phone',
+  'country',
+  'companyName',
+  'city',
+  'address',
 ]) {}
