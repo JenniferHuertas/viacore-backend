@@ -1,0 +1,50 @@
+[
+  {
+    "title": "Liderazgo de equipos",
+    "description": "Desarrollá habilidades clave para liderar personas, inspirar equipos y tomar decisiones estratégicas en entornos desafiantes. Aprendé a identificar los puntos fuertes de cada integrante y potenciarlos para lograr objetivos en común. Esta capacitación te brinda herramientas concretas para ejercer un liderazgo efectivo, humano y orientado a resultados.",
+    "category": "Liderazgo",
+    "imgUrl": ""
+  },
+  {
+    "title": "Comunicación y feedback",
+    "description": "Mejorá la comunicación interna de tu equipo y creá una cultura de feedback honesto y constructivo. Aprendé técnicas para transmitir ideas con claridad, escuchar activamente y resolver malentendidos antes de que se conviertan en conflictos. Una buena comunicación es la base de cualquier equipo de alto rendimiento.",
+    "category": "Comunicacion",
+    "imgUrl": ""
+  },
+  {
+    "title": "Productividad y resultados",
+    "description": "Potenciá el rendimiento individual y colectivo optimizando el uso del tiempo y los recursos disponibles. Aprendé a priorizar tareas, eliminar procesos innecesarios y mantener el foco en los objetivos que realmente importan. Esta capacitación te ayuda a lograr más en menos tiempo, sin sacrificar la calidad.",
+    "category": "Productividad",
+    "imgUrl": ""
+  },
+  {
+    "title": "Gestión de personas",
+    "description": "Aprendé a organizar equipos de forma eficiente, asignar roles según las capacidades de cada persona y hacer un seguimiento efectivo del desempeño. Desarrollá habilidades para delegar con confianza y acompañar a tu equipo en el cumplimiento de sus responsabilidades. Una buena gestión de personas es clave para el crecimiento sostenido de cualquier organización.",
+    "category": "Gestion de personas",
+    "imgUrl": ""
+  },
+  {
+    "title": "Desarrollo personal",
+    "description": "Fortalecé tus habilidades personales y profesionales para enfrentar los desafíos del entorno laboral con mayor confianza y claridad. Trabajá en la gestión emocional, el autoconocimiento y la construcción de hábitos que impulsen tu crecimiento. Una persona más desarrollada es un profesional más comprometido y eficiente.",
+    "category": "Desarrollo personal",
+    "imgUrl": ""
+  },
+  {
+    "title": "Resolución de problemas",
+    "description": "Desarrollá la capacidad de analizar situaciones complejas, identificar causas raíz y tomar decisiones acertadas bajo presión. Aprendé metodologías prácticas para abordar problemas de forma estructurada y encontrar soluciones sostenibles en el tiempo. Equipos que resuelven bien los problemas son equipos que crecen más rápido.",
+    "category": "Resolucion de problemas",
+    "imgUrl": ""
+  },
+  {
+    "title": "Trabajo colaborativo",
+    "description": "Mejorá la coordinación y la sinergia entre los distintos equipos de tu organización para alcanzar objetivos compartidos. Aprendé a trabajar en conjunto, gestionar reuniones efectivas y fortalecer la comunicación interáreas. La colaboración real es lo que convierte a un grupo de personas en un verdadero equipo.",
+    "category": "Trabajo colaborativo",
+    "imgUrl": ""
+  },
+  {
+    "title": "Gestión de proyectos",
+    "description": "Planificá, ejecutá y hacé seguimiento de proyectos utilizando metodologías ágiles como Scrum y frameworks modernos de gestión. Aprendé a definir alcances, distribuir tareas y adaptarte a los cambios sin perder el rumbo. Una buena gestión de proyectos es la diferencia entre una idea y un resultado concreto.",
+    "category": "Proyectos",
+    "imgUrl": ""
+  }
+]

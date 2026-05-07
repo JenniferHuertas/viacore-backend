@@ -2,7 +2,7 @@ import {
   MiddlewareConsumer,
   Module,
   NestModule,
-  ValidationPipe,
+  OnApplicationBootstrap,
 } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -13,12 +13,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import typeorm from './config/typeorm';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
-<<<<<<< HEAD:src/app.module.ts
-import { MeetingsModule } from './meetings/meetings.module';
-import { TrainingRequestModule } from './training-requests/training-request.module';
-=======
-import { EventEmitterModule } from '@nestjs/event-emitter';
->>>>>>> origin/notificaciones:estudio-via3-backend/src/app.module.ts
 
 @Module({
   imports: [
@@ -42,14 +36,18 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
         expiresIn: '30m',
       },
     }),
-    MeetingsModule,
-    TrainingRequestModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule implements NestModule {
+export class AppModule implements NestModule, OnApplicationBootstrap {
+  constructor(private readonly trainingService: TrainingService) {}
   configure(consumer: MiddlewareConsumer) {
     consumer.apply(LoggerMiddleware).forRoutes('*');
+  }
+
+  async onApplicationBootstrap() {
+    await this.trainingService.addTraining();
+    console.log('Capacitaciones cargadas');
   }
 }
