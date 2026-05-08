@@ -6,10 +6,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-import {
-  Exclude,
-  Expose,
-} from 'class-transformer';
+import { Exclude, Expose } from 'class-transformer';
 
 import { Role } from '../enums/roles.enum';
 
@@ -57,7 +54,7 @@ export class Users {
     type: 'varchar',
     nullable: true,
   })
-  phone!: number;
+  phone!: string;
 
   @Expose({ groups: ['Get'] })
   @Column({
@@ -66,6 +63,22 @@ export class Users {
     nullable: true,
   })
   country!: string;
+
+  @Expose({ groups: ['Get'] })
+  @Column({
+    type: 'varchar',
+    length: 50,
+    nullable: true,
+  })
+  city!: string;
+
+  @Expose({ groups: ['Get'] })
+  @Column({
+    type: 'varchar',
+    length: 100,
+    nullable: true,
+  })
+  address!: string;
 
   @Expose({ groups: ['Get'] })
   @Column({
@@ -110,7 +123,7 @@ export class Users {
     enum: Role,
     default: Role.User,
   })
-  role!: Role;
+  role?: Role;
 
   @Expose({ groups: ['Get'] })
   @CreateDateColumn({
