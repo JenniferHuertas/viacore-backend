@@ -28,6 +28,7 @@ import { TrainingRequestModule } from './training-requests/training-request.modu
       envFilePath: '.development.env',
       load: [typeorm],
     }),
+    EventEmitterModule.forRoot(),
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => config.get('typeorm')!,
