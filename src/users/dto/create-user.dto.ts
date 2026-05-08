@@ -6,7 +6,7 @@ import {
   IsEmail,
   IsEmpty,
   IsNotEmpty,
-  IsNumber,
+  IsOptional,
   IsString,
   Matches,
   MaxLength,
@@ -25,9 +25,13 @@ export class CreateUserDto {
   @IsEmail()
   email!: string;
 
+  @ApiProperty({
+    example: 'Daniel Medina',
+  })
   @IsNotEmpty()
   @IsString()
   @MinLength(3)
+  @MaxLength(50)
   name!: string;
 
   @ApiProperty({
@@ -36,56 +40,86 @@ export class CreateUserDto {
   @IsNotEmpty()
   @MinLength(8)
   @MaxLength(15)
-  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$^&*])/, {
-    message:
-      'Password must contain at least one uppercase letter, one lowercase letter, one number and one special character.',
-  })
+  @Matches(
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$^&*])/,
+    {
+      message:
+        'Password must contain at least one uppercase letter, one lowercase letter, one number and one special character.',
+    },
+  )
   password!: string;
 
   @ApiProperty({
     example: 'Password21@',
   })
+  @IsNotEmpty()
   @Validate(MatchPassword, ['password'])
   confirmPassword!: string;
 
-  @IsNotEmpty()
+  @ApiProperty({
+    example: '1133445566',
+  })
+  @IsOptional()
   @IsString()
-  address!: string;
+  phone?: string;
 
-  @IsNotEmpty()
+  @ApiProperty({
+    example: 'Argentina',
+  })
+  @IsOptional()
   @IsString()
-  city!: string;
+  @MinLength(2)
+  @MaxLength(50)
+  country?: string;
 
-  @IsNotEmpty()
-  @IsNumber()
-  phone!: number;
-
-  @IsNotEmpty()
+  @ApiProperty({
+    example: 'ViaCore',
+  })
+  @IsOptional()
   @IsString()
-  @MinLength(5)
-  @MaxLength(20)
-  country!: string;
+  @MinLength(2)
+  @MaxLength(100)
+  companyName?: string;
 
-  @IsNotEmpty()
+  @ApiProperty({
+    example: 'Buenos Aires',
+    required: false,
+  })
+  @IsOptional()
   @IsString()
-  @MinLength(3)
-  @MaxLength(20)
-  companyName!: string;
+  @MaxLength(100)
+  city?: string;
+
+  @ApiProperty({
+    example: 'Av. Corrientes 1234',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(150)
+  address?: string;
 
   @Exclude()
   @IsEmpty()
   isActive?: boolean;
+
+  @Exclude()
+  @IsEmpty()
+  profileCompleted?: boolean;
 }
 
-export class LoginUserDto extends PickType(CreateUserDto, [
-  'password',
-  'email',
-]) {}
+export class LoginUserDto extends PickType(
+  CreateUserDto,
+  ['password', 'email'] as const,
+) {}
 
-export class CompleteProfileDto extends PickType(CreateUserDto, [
-  'phone',
-  'country',
-  'companyName',
-  'city',
-  'address',
-]) {}
+export class CompleteProfileDto extends PickType(
+  CreateUserDto,
+  [
+    'phone',
+    'country',
+    'companyName',
+    'city',
+    'address',
+  ] as const,
+) {}
