@@ -6,13 +6,13 @@ import { TrainingRequestRepository } from './repositories/training-request.repos
 @Injectable()
 export class TrainingRequestService {
   constructor(
-    private readonly repository: TrainingRequestRepository) {}
+    private readonly repository: TrainingRequestRepository) { }
   async create(createTrainingRequestDto: CreateTrainingRequestDto, userId: string) {
     const requestData = {
       ...createTrainingRequestDto,
       user: { id: userId }
     };
-    const result = await this.repository.createRequest(requestData);
+    const result = await this.repository.createRequests(requestData);
     if (!result) {
       throw new BadRequestException('No se pudo procesar la solicitud.');
     }
@@ -21,19 +21,19 @@ export class TrainingRequestService {
     return result;
   }
 
-  /*findAll() {
-    return `This action returns all trainingRequest`;
+  async findAll() {
+    return await this.repository.findAllRequests();
   }
-
-  findOne(id: number) {
-    return `This action returns a #${id} trainingRequest`;
-  }
-
-  update(id: number, updateTrainingRequestDto: UpdateTrainingRequestDto) {
-    return `This action updates a #${id} trainingRequest`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} trainingRequest`;
-  }*/
+  /*
+    findOne(id: number) {
+      return `This action returns a #${id} trainingRequest`;
+    }
+  
+    update(id: number, updateTrainingRequestDto: UpdateTrainingRequestDto) {
+      return `This action updates a #${id} trainingRequest`;
+    }
+  
+    remove(id: number) {
+      return `This action removes a #${id} trainingRequest`;
+    }*/
 }

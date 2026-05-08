@@ -5,12 +5,15 @@ import { UpdateTrainingRequestDto } from './dto/update-training-request.dto';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import type { RequestWithUsers } from './interfaces/requests-payloads.interfaces';
+import { Role } from '../users/enums/roles.enum';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { Roles } from 'src/decorator/roles.decorator';
 
 @ApiTags('Training Requests')
 @ApiBearerAuth('Bearer')
 @Controller('training-requests')
 export class TrainingRequestController {
-  constructor(private readonly trainingRequestService: TrainingRequestService) {}
+  constructor(private readonly trainingRequestService: TrainingRequestService) { }
 
   @UseGuards(AuthGuard)
   @Post()
@@ -21,11 +24,16 @@ export class TrainingRequestController {
     return this.trainingRequestService.create(createTrainingRequestDto, userId);
   }
 
-  /*@Get()
+  @Get()
+  @ApiOperation({ summary: 'Obtener todas las solicitudes (Solo Admin)' })
+  @ApiResponse({ status: 200, description: 'Lista de solicitudes obtenida con éxito.' })
+  @ApiResponse({ status: 403, description: 'Prohibido. Se requiere rol de Admin.' })
+  @Roles(Role.Admin)
+  @UseGuards(AuthGuard, RolesGuard) 
   findAll() {
     return this.trainingRequestService.findAll();
   }
-
+  /*
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.trainingRequestService.findOne(+id);
