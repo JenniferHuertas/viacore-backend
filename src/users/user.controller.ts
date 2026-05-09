@@ -108,11 +108,6 @@ export class UsersController {
     );
   }
 
-  @Patch('complete-profile/:id')
-  @UseInterceptors(ClassSerializerInterceptor)
-  @SerializeOptions({ groups: ['Get'] })
-  @UseGuards(AuthGuard)
-
   @Delete(':id')
   @ApiBearerAuth()
   @Roles(Role.Admin, Role.User)

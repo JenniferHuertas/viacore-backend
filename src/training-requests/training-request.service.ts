@@ -1,45 +1,30 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-
 import { CreateTrainingRequestDto } from './dto/create-training-request.dto';
-
 import { UpdateTrainingRequestDto } from './dto/update-training-request.dto';
-
 import { TrainingRequestRepository } from './repositories/training-request.repository';
+import { TrainingRequests } from './entities/training-request.entity';
 
 @Injectable()
 export class TrainingRequestService {
   constructor(
-    private readonly repository: TrainingRequestRepository,
-  ) {}
+    private readonly repository: TrainingRequestRepository) { }
 
   async create(
     createTrainingRequestDto: CreateTrainingRequestDto,
-    userId: string,
-  ) {
+    userId: string
+  ): Promise<TrainingRequests> {
     const requestData = {
       ...createTrainingRequestDto,
       user: { id: userId },
     };
-
-    const result =
-      await this.repository.createRequest(
-        requestData,
-      );
-
-    if (!result) {
-      throw new BadRequestException(
-        'No se pudo procesar la solicitud.',
-      );
-    }
-
-    return result;
+    return await this.repository.createRequests(requestData);;
   }
 
-  async findAll() {
+  async findAll(): Promise<TrainingRequests[]> {
     return await this.repository.findAllRequests();
   }
 
-  async findOne(id: string) {
+  async findOne(id: string): Promise<TrainingRequests> {
     return await this.repository.findRequestById(
       id,
     );
@@ -48,7 +33,7 @@ export class TrainingRequestService {
   async update(
     id: string,
     updateTrainingRequestDto: UpdateTrainingRequestDto,
-  ) {
+  ): Promise<TrainingRequests> {
     return await this.repository.updateRequest(
       id,
       updateTrainingRequestDto,

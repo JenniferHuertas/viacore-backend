@@ -67,22 +67,6 @@ export class Users {
   @Expose({ groups: ['Get'] })
   @Column({
     type: 'varchar',
-    length: 50,
-    nullable: true,
-  })
-  city!: string;
-
-  @Expose({ groups: ['Get'] })
-  @Column({
-    type: 'varchar',
-    length: 100,
-    nullable: true,
-  })
-  address!: string;
-
-  @Expose({ groups: ['Get'] })
-  @Column({
-    type: 'varchar',
     length: 100,
     nullable: true,
   })
