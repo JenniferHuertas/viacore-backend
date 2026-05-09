@@ -30,16 +30,14 @@ import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/decorator/roles.decorator';
 
 @ApiTags('Training Requests')
-
 @ApiBearerAuth('Bearer')
-
+@UseGuards(AuthGuard)
 @Controller('training-requests')
 export class TrainingRequestController {
   constructor(
     private readonly trainingRequestService: TrainingRequestService,
   ) {}
 
-  @UseGuards(AuthGuard)
   @Post()
   @ApiOperation({
     summary:
@@ -66,43 +64,30 @@ export class TrainingRequestController {
   }
 
   @Get()
+  @Roles(Role.Admin)
+  @UseGuards(RolesGuard) 
   @ApiOperation({ summary: 'Obtener todas las solicitudes (Solo Admin)' })
   @ApiResponse({ status: 200, description: 'Lista de solicitudes obtenida con éxito.' })
   @ApiResponse({ status: 403, description: 'Prohibido. Se requiere rol de Admin.' })
-  @Roles(Role.Admin)
-  @UseGuards(AuthGuard, RolesGuard) 
   async findAll() {
     return await this.trainingRequestService.findAll();
   }
-  /*
+
   @Get(':id')
-  @ApiOperation({
-    summary:
-      'Obtiene una solicitud de capacitación por id',
-  })
-  async findOne(
-    @Param('id') id: string,
-  ) {
-    return this.trainingRequestService.findOne(
-      id,
-    );
+  @ApiOperation({ summary: 'Obtiene una solicitud de capacitación por id' })
+  @ApiResponse({ status: 200, description: 'Solicitud encontrada.' })
+  @ApiResponse({ status: 404, description: 'Solicitud no encontrada.' })
+  findOne(@Param('id') id: string) {
+    return this.trainingRequestService.findOne(id);
   }
 
-  @UseGuards(AuthGuard)
   @Patch(':id')
-  @ApiOperation({
-    summary:
-      'Actualiza una solicitud de capacitación',
-  })
-  async update(
+  @ApiOperation({ summary: 'Actualiza una solicitud de capacitación' })
+  @ApiResponse({ status: 200, description: 'Solicitud actualizada con éxito.' })
+  update(
     @Param('id') id: string,
-
-    @Body()
-    updateTrainingRequestDto: UpdateTrainingRequestDto,
+    @Body() updateTrainingRequestDto: UpdateTrainingRequestDto,
   ) {
-    return this.trainingRequestService.update(
-      id,
-      updateTrainingRequestDto,
-    );
-  }*/
+    return this.trainingRequestService.update(id, updateTrainingRequestDto);
+  }
 }

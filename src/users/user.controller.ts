@@ -108,19 +108,6 @@ export class UsersController {
     );
   }
 
-  @Patch('complete-profile/:id')
-  @UseInterceptors(ClassSerializerInterceptor)
-  @SerializeOptions({ groups: ['Get'] })
-  @UseGuards(AuthGuard)
-  completeProfile(
-    @Param('id') id: string,
-
-    @Body()
-    completeProfileDto: CompleteProfileDto,
-  ) {
-    return this.usersService.completeProfile(id, completeProfileDto);
-  }
-
   @Delete(':id')
   @ApiBearerAuth()
   @Roles(Role.Admin, Role.User)
