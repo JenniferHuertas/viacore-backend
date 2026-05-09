@@ -13,6 +13,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import typeorm from './config/typeorm';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
+import { FileResourceModule } from './file-resource/file-resource.module';
 import { TrainingModule } from './training/training.module';
 import { TrainingService } from './training/training.service';
 import { MeetingsModule } from './meetings/meetings.module';
@@ -40,6 +41,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
         expiresIn: '30m',
       },
     }),
+    FileResourceModule,
     TrainingModule,
     MeetingsModule,
     TrainingRequestModule,

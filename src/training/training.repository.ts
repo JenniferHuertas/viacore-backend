@@ -9,10 +9,13 @@ import { In, Repository } from 'typeorm';
 import { CreateTrainingDto } from './dto/create-training.dto';
 import { UpdateTrainingDto } from './dto/update-training.dto';
 import { SeedTraining } from './dto/seeder-training.dto';
+import { FileResourceService } from 'src/file-resource/file-resource.service';
 
 @Injectable()
 export class TrainingRepository {
   constructor(
+    private readonly fileResourceService: FileResourceService,
+
     @InjectRepository(Training)
     private readonly trainingOrmRepository: Repository<Training>,
     // @InjectRepository(FileResource)
@@ -23,7 +26,7 @@ export class TrainingRepository {
     const training = await this.trainingOrmRepository.find({
       where: { isActive: true },
       relations: {
-        // fileResource: true,
+        fileResource: true,
       },
     });
     return training.map((training) => ({
@@ -31,14 +34,14 @@ export class TrainingRepository {
       title: training.title,
       description: training.description,
       category: training.category,
-      // fileResource: training.fileResource,
+      fileResource: training.fileResource,
     }));
   }
 
   async getTrainingById(id: string) {
     const training = await this.trainingOrmRepository.findOne({
       where: { id, isActive: true },
-      // relations: { fileResource: true },
+      relations: { fileResource: true },
     });
 
     if (!training) {
@@ -48,9 +51,19 @@ export class TrainingRepository {
     return training;
   }
 
-  async createTraining(dataTraining: CreateTrainingDto) {
-    const newTraining = this.trainingOrmRepository.create(dataTraining);
-    return await this.trainingOrmRepository.save(newTraining);
+  async createTraining(dataTraining: CreateTrainingDto, file: Express.Multer.File) {
+    const newTraining = await this.trainingOrmRepository.save(dataTraining);
+
+    if (file) {
+      const newfile = await this.fileResourceService.uploadForEntity(
+        file, 
+        "training",
+        newTraining.id,
+        `${dataTraining.title} - image`,
+      )
+    }
+
+    return newTraining;
   }
 
   async addTraining(dataTrainings: SeedTraining[]) {

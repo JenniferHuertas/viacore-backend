@@ -26,7 +26,7 @@ export class CreateTrainingDto {
   })
   category!: string;
 
-  @IsOptional()
+/*  @IsOptional()
   @IsString({ message: 'La URL de la imágen debe ser un texto' })
   @ApiProperty({
     description:
@@ -34,4 +34,5 @@ export class CreateTrainingDto {
     example: 'http://......jpg',
   })
   imgUrl?: string;
+*/
 }

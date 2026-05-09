@@ -7,10 +7,14 @@ import {
   ParseUUIDPipe,
   Post,
   Put,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
 import { TrainingService } from './training.service';
 import { CreateTrainingDto } from './dto/create-training.dto';
 import { UpdateTrainingDto } from './dto/update-training.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiBody, ApiConsumes } from '@nestjs/swagger';
 
 @Controller('trainings')
 export class TrainingController {
@@ -27,8 +31,28 @@ export class TrainingController {
   }
 
   @Post()
-  createTraining(@Body() dataTraining: CreateTrainingDto) {
-    return this.trainingService.createTraining(dataTraining);
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        title: { type: 'string', example: 'Capacitación NestJS' },
+        description: { type: 'string', example: 'Curso básico de NestJS' },
+        category: { type: 'string', example: 'Backend' },
+        file: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+      required: ['title', 'description', 'category', 'file'],
+    },
+  })
+  createTraining(
+    @UploadedFile() file: Express.Multer.File,
+    @Body() dataTraining: CreateTrainingDto) {
+      console.log("hola11")
+    return this.trainingService.createTraining(dataTraining, file);
   }
 
   @Post('seeder')

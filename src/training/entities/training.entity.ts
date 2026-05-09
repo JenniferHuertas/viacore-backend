@@ -3,14 +3,14 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  // JoinColumn,
+  JoinColumn,
   // OneToMany,
-  // OneToOne,
+  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 // import { TrainingRequest } from '../training-request/training-request.entity';
-// import { FileResource } from '../file-resource/file-resource.entity';
+import { FileResource } from '../../file-resource/entities/file-resource.entity';
 
 @Entity({
   name: 'TRAINING',
@@ -85,9 +85,9 @@ export class Training {
   // })
   // trainingRequests!: TrainingRequest[];
 
-  // @OneToOne(() => FileResource, (file) => file.training, {
-  //   eager: false,
-  // })
-  // @JoinColumn()
-  // fileResource!: FileResource;
+  @OneToOne(() => FileResource, (file) => file.training, {
+    eager: false,
+  })
+  @JoinColumn()
+  fileResource!: FileResource;
 }

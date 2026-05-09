@@ -31,11 +31,19 @@ export class AuthController {
   @Get('google/callback')
   @UseGuards(GoogleAuthGuard)
   googleCallback(@Req() req, @Res() res) {
-    const token = req.user.access_token;
 
+    try {
+    const token = req.user.access_token;
+    const login= req.user.login;
+        
     return res.redirect(
-      `http://localhost:3000/autenticacion/autenticacion-google?token=${token}`,
+      `http://localhost:3000/autenticacion/autenticacion-google?token=${token}&login=${login}`,
     );
+  } catch {
+    return res.redirect(
+      'http://localhost:3000/login?error=google',
+    );
+  }
   }
 
   @Post('signup')

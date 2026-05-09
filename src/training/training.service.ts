@@ -16,8 +16,8 @@ export class TrainingService {
     return this.trainingRepository.getTrainingById(id);
   }
 
-  createTraining(dataTraining: CreateTrainingDto) {
-    return this.trainingRepository.createTraining(dataTraining);
+  createTraining(dataTraining: CreateTrainingDto, file:Express.Multer.File) {
+    return this.trainingRepository.createTraining(dataTraining, file);
   }
 
   addTraining() {
