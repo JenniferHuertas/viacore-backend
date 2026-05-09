@@ -50,8 +50,8 @@ export class TrainingController {
   })
   createTraining(
     @UploadedFile() file: Express.Multer.File,
-    @Body() dataTraining: CreateTrainingDto) {
-      console.log("hola11")
+    @Body() dataTraining: CreateTrainingDto,
+  ) {
     return this.trainingService.createTraining(dataTraining, file);
   }
 
