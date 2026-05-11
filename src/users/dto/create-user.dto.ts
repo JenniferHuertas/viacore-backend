@@ -41,7 +41,7 @@ export class CreateUserDto {
   @MinLength(8)
   @MaxLength(15)
   @Matches(
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$^&*])/,
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[.,!@#$%^&*()_\-+=\[\]{};:'"\\|<>/?`~]).+$/,
     {
       message:
         'Password must contain at least one uppercase letter, one lowercase letter, one number and one special character.',
@@ -56,12 +56,16 @@ export class CreateUserDto {
   @Validate(MatchPassword, ['password'])
   confirmPassword!: string;
 
-  @ApiProperty({
-    example: '1133445566',
-  })
-  @IsOptional()
-  @IsString()
-  phone?: string;
+@ApiProperty({
+  example: '+5493434123456',
+})
+@IsOptional()
+@IsString()
+@Matches(/^\+?[1-9]\d{7,14}$/, {
+  message:
+    'Phone must be a valid international phone number',
+})
+phone?: string;
 
   @ApiProperty({
     example: 'Argentina',
