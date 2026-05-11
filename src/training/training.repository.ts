@@ -16,7 +16,6 @@ import { FileResource } from 'src/file-resource/entities/file-resource.entity';
 export class TrainingRepository {
   constructor(
     private readonly fileResourceService: FileResourceService,
-
     @InjectRepository(Training)
     private readonly trainingOrmRepository: Repository<Training>,
     @InjectRepository(FileResource)
@@ -77,35 +76,22 @@ export class TrainingRepository {
   }
 
   async addTraining(dataTrainings: SeedTraining[]) {
-  const titles = dataTrainings.map((training) => training.title);
+    const titles = dataTrainings.map((training) => training.title);
 
-  const existingTrainings = await this.trainingOrmRepository.find({
-    where: {
-      title: In(titles),
-    },
-  });
-
-  const existingTitles = existingTrainings.map((training) => training.title);
-
-  const trainingToSave: Training[] = [];
-
-  for (const dataTraining of dataTrainings) {
-    if (existingTitles.includes(dataTraining.title)) continue;
-
-    const newTraining = await this.trainingOrmRepository.save({
-      title: dataTraining.title,
-      description: dataTraining.description,
-      category: dataTraining.category,
+    const existingTrainings = await this.trainingOrmRepository.find({
+      where: {
+        title: In(titles),
+      },
     });
 
-<<<<<<< HEAD
     const existingTitles = existingTrainings.map((training) => training.title);
 
     const trainingToSave: Training[] = [];
 
     for (const dataTraining of dataTrainings) {
       if (existingTitles.includes(dataTraining.title)) continue;
-      const newTraining = this.trainingOrmRepository.create({
+
+      const newTraining = await this.trainingOrmRepository.save({
         title: dataTraining.title,
         shortDescription: dataTraining.shortDescription,
         description: dataTraining.description,
@@ -113,26 +99,26 @@ export class TrainingRepository {
         includes: dataTraining.includes,
         category: dataTraining.category,
         imgUrl: dataTraining.imgUrl,
-=======
-    if (dataTraining.imgUrl) {
-      await this.fileResourceService.createFromUrl({
-        url: dataTraining.imgUrl,
-        parentType: 'training',
-        parentId: newTraining.id,
-        title: `${newTraining.title} - image`,
->>>>>>> c727fa7cbf544eaa257fbf12c1952e39a495c82c
       });
+
+      if (dataTraining.imgUrl) {
+        await this.fileResourceService.createFromUrl({
+          url: dataTraining.imgUrl,
+          parentType: 'training',
+          parentId: newTraining.id,
+          title: `${newTraining.title} - image`,
+        });
+      }
+
+      trainingToSave.push(newTraining);
     }
 
-    trainingToSave.push(newTraining);
-  }
+    if (!trainingToSave.length) {
+      return [];
+    }
 
-  if (!trainingToSave.length) {
-    return [];
+    return trainingToSave;
   }
-
-  return trainingToSave;
-}
 
   async updateTraining(id: string, dataTraining: UpdateTrainingDto) {
     const training = await this.trainingOrmRepository.findOne({
