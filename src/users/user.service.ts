@@ -79,6 +79,7 @@ export class UsersService {
 
     await this.usersRepository.update(id, {
       ...completeProfileDto,
+      profileCompleted: true,
     });
 
     return await this.usersRepository.findOneBy({
