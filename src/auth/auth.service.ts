@@ -127,8 +127,6 @@ export class AuthService {
           .trim(),
       });
 
-      console.log("USER BEFORE:", user);
-
     if (!user) {
       user =
         this.usersRepository.create({
