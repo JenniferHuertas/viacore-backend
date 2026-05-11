@@ -1,7 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-} from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { FileResource } from './entities/file-resource.entity';
@@ -17,12 +14,13 @@ export class FileResourceService {
     @InjectRepository(FileResource)
     private readonly fileRepository: Repository<FileResource>,
 
-/*    @InjectRepository(Training)
+    /*    @InjectRepository(Training)
     private readonly trainingRepository: Repository<Training>,
 
     @InjectRepository(TrainingRequest)
     private readonly trainingRequestRepository: Repository<TrainingRequest>,
-*/  ) {}
+*/
+  ) {}
 
   // SUBIDA CLOUDINARY (BUFFER → STREAM)
   private uploadToCloudinary(file: Express.Multer.File): Promise<any> {
@@ -47,7 +45,7 @@ export class FileResourceService {
       throw new BadRequestException('File is required');
     }
 
-/*    if (!dto.trainingId && !dto.trainingRequestId) {
+    /*    if (!dto.trainingId && !dto.trainingRequestId) {
       throw new BadRequestException(
         'File must be linked to Training or TrainingRequest',
       );
@@ -84,8 +82,8 @@ export class FileResourceService {
       title: dto.title,
       fileUrl: uploadResult.secure_url,
       fileType: uploadResult.resource_type,
-//      training,
-//      trainingRequest,
+      //      training,
+      //      trainingRequest,
     });
 
     return this.fileRepository.save(fileResource);
@@ -103,9 +101,7 @@ export class FileResourceService {
     }
 
     if (!parentType || !parentId) {
-      throw new BadRequestException(
-        'parentType and parentId are required',
-      );
+      throw new BadRequestException('parentType and parentId are required');
     }
 
     // SUBIDA A CLOUDINARY (MISMO MÉTODO)
@@ -120,10 +116,10 @@ export class FileResourceService {
 
     // ASOCIACIÓN DINÁMICA (SIN USAR REPOS)
     if (parentType === 'training') {
-      fileResource.training = { id: parentId } as any; 
+      fileResource.training = { id: parentId } as any;
     }
 
-/*    if (parentType === 'trainingRequest') {
+    /*    if (parentType === 'trainingRequest') {
       fileResource.trainingRequestId = parentId;
     }
 */
