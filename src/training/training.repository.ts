@@ -67,35 +67,45 @@ export class TrainingRepository {
   }
 
   async addTraining(dataTrainings: SeedTraining[]) {
-    const titles = dataTrainings.map((training) => training.title);
+  const titles = dataTrainings.map((training) => training.title);
 
-    const existingTrainings = await this.trainingOrmRepository.find({
-      where: {
-        title: In(titles),
-      },
+  const existingTrainings = await this.trainingOrmRepository.find({
+    where: {
+      title: In(titles),
+    },
+  });
+
+  const existingTitles = existingTrainings.map((training) => training.title);
+
+  const trainingToSave: Training[] = [];
+
+  for (const dataTraining of dataTrainings) {
+    if (existingTitles.includes(dataTraining.title)) continue;
+
+    const newTraining = await this.trainingOrmRepository.save({
+      title: dataTraining.title,
+      description: dataTraining.description,
+      category: dataTraining.category,
     });
 
-    const existingTitles = existingTrainings.map((training) => training.title);
-
-    const trainingToSave: Training[] = [];
-
-    for (const dataTraining of dataTrainings) {
-      if (existingTitles.includes(dataTraining.title)) continue;
-      const newTraining = this.trainingOrmRepository.create({
-        title: dataTraining.title,
-        description: dataTraining.description,
-        category: dataTraining.category,
+    if (dataTraining.imgUrl) {
+      await this.fileResourceService.createFromUrl({
+        url: dataTraining.imgUrl,
+        parentType: 'training',
+        parentId: newTraining.id,
+        title: `${newTraining.title} - image`,
       });
-
-      trainingToSave.push(newTraining);
     }
 
-    if (!trainingToSave.length) {
-      return [];
-    }
-
-    return await this.trainingOrmRepository.save(trainingToSave);
+    trainingToSave.push(newTraining);
   }
+
+  if (!trainingToSave.length) {
+    return [];
+  }
+
+  return trainingToSave;
+}
 
   async updateTraining(id: string, dataTraining: UpdateTrainingDto) {
     const training = await this.trainingOrmRepository.findOne({
