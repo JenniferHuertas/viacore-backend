@@ -10,6 +10,7 @@ import { CreateTrainingDto } from './dto/create-training.dto';
 import { UpdateTrainingDto } from './dto/update-training.dto';
 import { SeedTraining } from './dto/seeder-training.dto';
 import { FileResourceService } from 'src/file-resource/file-resource.service';
+import { FileResource } from 'src/file-resource/entities/file-resource.entity';
 
 @Injectable()
 export class TrainingRepository {
@@ -18,8 +19,8 @@ export class TrainingRepository {
 
     @InjectRepository(Training)
     private readonly trainingOrmRepository: Repository<Training>,
-    // @InjectRepository(FileResource)
-    // private readonly fileResourceOrmRepository: Repository<FileResource>,
+    @InjectRepository(FileResource)
+    private readonly fileResourceOrmRepository: Repository<FileResource>,
   ) {}
 
   async getAllTraining() {
@@ -51,16 +52,19 @@ export class TrainingRepository {
     return training;
   }
 
-  async createTraining(dataTraining: CreateTrainingDto, file: Express.Multer.File) {
+  async createTraining(
+    dataTraining: CreateTrainingDto,
+    file?: Express.Multer.File,
+  ) {
     const newTraining = await this.trainingOrmRepository.save(dataTraining);
 
     if (file) {
-      const newfile = await this.fileResourceService.uploadForEntity(
-        file, 
-        "training",
+      await this.fileResourceService.uploadForEntity(
+        file,
+        'training',
         newTraining.id,
         `${dataTraining.title} - image`,
-      )
+      );
     }
 
     return newTraining;

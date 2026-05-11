@@ -8,7 +8,7 @@ import { FileResource } from './entities/file-resource.entity';
 @Module({
   imports: [TypeOrmModule.forFeature([FileResource])],
   controllers: [FileResourceController],
-  providers: [FileResourceService,CloudinaryConfig],
-  exports:[FileResourceService]
+  providers: [FileResourceService, CloudinaryConfig],
+  exports: [FileResourceService],
 })
 export class FileResourceModule {}
