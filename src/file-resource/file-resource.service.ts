@@ -125,4 +125,21 @@ export class FileResourceService {
 */
     return this.fileRepository.save(fileResource);
   }
+
+   //fincion para seeder de training
+  async createFromUrl(params: {
+  url: string;
+  parentType: 'training' | 'trainingRequest';
+  parentId: string;
+  title: string;
+  }) {
+    const fileResource = this.fileRepository.create({
+      fileUrl: params.url,
+      title: params.title,
+      training: { id: params.parentId },
+      fileType: "image"
+    });
+
+    return this.fileRepository.save(fileResource);
+  }
 }
