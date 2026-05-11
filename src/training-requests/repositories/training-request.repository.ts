@@ -2,20 +2,24 @@ import { Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { TrainingRequests } from '../entities/training-request.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { CreateTrainingRequestDto } from '../dto/create-training-request.dto';
-import { UpdateTrainingRequestDto } from '../dto/update-training-request.dto';
 import { RequestStatus } from '../enums/requests-status.enum';
+import type { 
+  ICreateTrainingRequest, 
+  IUpdateTrainingRequest 
+} from '../interfaces/requests-data.interfaces';
+
 
 @Injectable()
 export class TrainingRequestRepository {
   constructor(
     @InjectRepository(TrainingRequests)
     private readonly repository: Repository<TrainingRequests>,
-  ) { }
+  ) {}
 
-  async createRequests(data: CreateTrainingRequestDto): Promise<TrainingRequests> {
+  async createRequests(
+    data: ICreateTrainingRequest & { user: { id: string } }
+  ): Promise<TrainingRequests> {
     const newRequest = this.repository.create(data);
-
     return await this.repository.save(newRequest);
   }
 
@@ -23,9 +27,8 @@ export class TrainingRequestRepository {
     skip: number, 
     take: number, 
     status?: RequestStatus
-  ): Promise<[TrainingRequests[], number]> 
-  {
-    const whereCondition = status ? { status: status} : {};
+  ): Promise<[TrainingRequests[], number]> {
+    const whereCondition = status ? { status: status } : {};
     return await this.repository.findAndCount({
       where: whereCondition,
       relations: ['user', 'training'],
@@ -34,24 +37,29 @@ export class TrainingRequestRepository {
       },
       skip,
       take,
-    })
+    });
   }
 
-  async findRequestById(id: string): Promise<TrainingRequests> {
-    return await this.repository.findOneOrFail({
+  async findRequestById(
+    id: string
+  ): Promise<TrainingRequests | null> {
+    return await this.repository.findOne({
       where: { id },
-      relations: ['user'],
+      relations: ['user', 'training'], 
     });
   }
 
   async updateRequest(
     id: string,
-    data: UpdateTrainingRequestDto,
-  ): Promise<TrainingRequests> {
+    data: IUpdateTrainingRequest,
+  ): Promise<TrainingRequests | null> {
     await this.repository.update(id, data);
-    return await this.repository.findOneOrFail({
-      where: { id },
-      relations: ['user'],
-    });
+    return await this.findRequestById(id);
+  }
+
+  async saveRequest(
+    request: TrainingRequests
+  ): Promise<TrainingRequests> {
+    return await this.repository.save(request);
   }
 }

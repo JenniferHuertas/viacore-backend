@@ -1,25 +1,28 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { CreateTrainingRequestDto } from './dto/create-training-request.dto';
-import { UpdateTrainingRequestDto } from './dto/update-training-request.dto';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { TrainingRequestRepository } from './repositories/training-request.repository';
 import { TrainingRequests } from './entities/training-request.entity';
-import type { RequestStatus } from './enums/requests-status.enum';
+import { RequestStatus } from './enums/requests-status.enum';
 import type { PaginatedTrainingRequests } from './interfaces/requests-results.interface';
+import type {
+  ICreateTrainingRequest,
+  IUpdateTrainingRequest
+} from './interfaces/requests-data.interfaces';
+
 
 @Injectable()
 export class TrainingRequestService {
   constructor(
-    private readonly repository: TrainingRequestRepository) { }
+    private readonly repository: TrainingRequestRepository
+  ) { }
 
   async create(
-    createTrainingRequestDto: CreateTrainingRequestDto,
+    data: ICreateTrainingRequest,
     userId: string
   ): Promise<TrainingRequests> {
-    const requestData = {
-      ...createTrainingRequestDto,
-      user: { id: userId },
-    };
-    return await this.repository.createRequests(requestData);;
+    return await this.repository.createRequests({
+      ...data,
+      user: { id: userId }
+    });
   }
 
   async findAll(
@@ -44,19 +47,49 @@ export class TrainingRequestService {
     };
   }
 
-  async findOne(id: string): Promise<TrainingRequests> {
-    return await this.repository.findRequestById(
-      id,
-    );
+  async findOne(
+    id: string
+  ): Promise<TrainingRequests> {
+    const request =
+      await this.repository.findRequestById(id);
+    if (!request) {
+      throw new NotFoundException(
+        `Solicitud con ID ${id} no encontrada`
+      );
+    }
+    return request;
   }
 
   async update(
     id: string,
-    updateTrainingRequestDto: UpdateTrainingRequestDto,
+    data: IUpdateTrainingRequest,
   ): Promise<TrainingRequests> {
-    return await this.repository.updateRequest(
-      id,
-      updateTrainingRequestDto,
-    );
+    const existingRequest = await this.findOne(id);
+    if (existingRequest.status !== RequestStatus.PENDING) {
+      throw new BadRequestException(
+        `No se puede modificar esta solicitud porque su estado actual es 
+        "${existingRequest.status}". Si necesitas realizar cambios, 
+        por favor crea una nueva solicitud.`
+      );
+    }
+    const updatedRequest = await this.repository.updateRequest(id, data);
+    if (!updatedRequest) {
+      throw new NotFoundException(`
+        No se pudo encontrar la solicitud con ID ${id} para retornar los cambios.`
+      );
+    }
+    return updatedRequest;
+  }
+
+  async updateStatus(
+    id: string,
+    status: RequestStatus
+  ): Promise<TrainingRequests> {
+    const request = await this.findOne(id);
+    request.status = status;
+    // if (status === RequestStatus.CONFIRMED || status === RequestStatus.REJECTED) {
+    //    await this.emailService.sendNotification(request.user.email, status);
+    // }
+    return await this.repository.saveRequest(request);
   }
 }

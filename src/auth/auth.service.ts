@@ -55,7 +55,7 @@ export class AuthService {
       this.usersRepository.create({
         ...createUserDto,
         password: hashedPassword,
-        role: Role.User,
+        role: Role.Admin,
       });
 
     const savedUser =
