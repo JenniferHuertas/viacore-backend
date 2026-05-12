@@ -70,16 +70,4 @@ export class CreateTrainingRequestDto {
       'El contexto es muy corto, brinda más detalles (mínimo 30 caracteres)',
   })
   context!: string;
-
-  @ApiProperty({
-    example: '123e4567-e89b-12d3-a456-426614174000',
-    description: 'ID de la capacitación (Training) que el cliente desea solicitar',
-  })
-  @IsNotEmpty({
-    message: 'El ID de la capacitación es obligatorio',
-  })
-  @IsUUID('all', {
-    message: 'El ID de la capacitación debe ser un identificador UUID válido',
-  })
-  trainingId!: string;
 }
