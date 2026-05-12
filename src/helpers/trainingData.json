@@ -1,0 +1,106 @@
+[
+  {
+    "title": "Liderazgo de equipos",
+    "shortDescription": "Desarrollá habilidades para liderar personas y tomar decisiones estratégicas.",
+    "description": "Desarrollá habilidades clave para liderar personas, inspirar equipos y tomar decisiones estratégicas en entornos desafiantes. Aprendé a identificar los puntos fuertes de cada integrante y potenciarlos para lograr objetivos en común.",
+    "tagline": "Lográ equipos más alineados y con mejores resultados.",
+    "includes": [
+      "Diagnóstico del equipo",
+      "Entrenamiento en liderazgo",
+      "Seguimiento de resultados"
+    ],
+    "category": "Liderazgo",
+    "imgUrl": "https://res.cloudinary.com/dmwy7wbh7/image/upload/v1778282030/file-resources/qaurgbu73wtu7teg8pyc.jpg"
+  },
+  {
+    "title": "Comunicación y feedback",
+    "shortDescription": "Mejorá la comunicación interna, la retroalimentación y la motivación del equipo.",
+    "description": "Mejorá la comunicación interna de tu equipo y creá una cultura de feedback honesto y constructivo. Aprendé técnicas para transmitir ideas con claridad, escuchar activamente y resolver malentendidos antes de que se conviertan en conflictos.",
+    "tagline": "Construí equipos donde todos se escuchan y crecen juntos.",
+    "includes": [
+      "Técnicas de comunicación efectiva",
+      "Feedback constructivo",
+      "Gestión de conflictos"
+    ],
+    "category": "Comunicacion",
+    "imgUrl": "https://res.cloudinary.com/dmwy7wbh7/image/upload/v1778282064/file-resources/rubrqmseurbeg4g4kslu.jpg"
+  },
+  {
+    "title": "Productividad y resultados",
+    "shortDescription": "Potenciá el rendimiento y la eficiencia en el trabajo diario.",
+    "description": "Potenciá el rendimiento individual y colectivo optimizando el uso del tiempo y los recursos disponibles. Aprendé a priorizar tareas, eliminar procesos innecesarios y mantener el foco en los objetivos que realmente importan.",
+    "tagline": "Hacé más en menos tiempo sin sacrificar la calidad.",
+    "includes": [
+      "Gestión del tiempo",
+      "Priorización de tareas",
+      "Eliminación de procesos innecesarios"
+    ],
+    "category": "Productividad",
+    "imgUrl": "https://res.cloudinary.com/dmwy7wbh7/image/upload/v1778282073/file-resources/vwlgcsa697lxnfyspltq.jpg"
+  },
+  {
+    "title": "Gestión de personas",
+    "shortDescription": "Organizá equipos, asigná responsabilidades y gestioná el trabajo de manera eficiente.",
+    "description": "Aprendé a organizar equipos de forma eficiente, asignar roles según las capacidades de cada persona y hacer un seguimiento efectivo del desempeño. Desarrollá habilidades para delegar con confianza y acompañar a tu equipo.",
+    "tagline": "Liderá personas con confianza y criterio.",
+    "includes": [
+      "Asignación de roles y responsabilidades",
+      "Delegación efectiva",
+      "Seguimiento del desempeño"
+    ],
+    "category": "Gestion de personas",
+    "imgUrl": "https://res.cloudinary.com/dmwy7wbh7/image/upload/v1778282082/file-resources/vteg4zrywesbeefjanbn.jpg"
+  },
+  {
+    "title": "Desarrollo personal",
+    "shortDescription": "Fortalecé habilidades personales, gestión emocional y crecimiento profesional.",
+    "description": "Fortalecé tus habilidades personales y profesionales para enfrentar los desafíos del entorno laboral con mayor confianza y claridad. Trabajá en la gestión emocional, el autoconocimiento y la construcción de hábitos que impulsen tu crecimiento.",
+    "tagline": "Invertí en vos para crecer en todo lo demás.",
+    "includes": [
+      "Gestión emocional",
+      "Autoconocimiento",
+      "Construcción de hábitos"
+    ],
+    "category": "Desarrollo personal",
+    "imgUrl": "https://res.cloudinary.com/dmwy7wbh7/image/upload/v1778282092/file-resources/feez7n2qhvtt06t6ybaf.jpg"
+  },
+  {
+    "title": "Resolución de problemas",
+    "shortDescription": "Desarrollá habilidades para analizar situaciones y tomar decisiones efectivas.",
+    "description": "Desarrollá la capacidad de analizar situaciones complejas, identificar causas raíz y tomar decisiones acertadas bajo presión. Aprendé metodologías prácticas para abordar problemas de forma estructurada y encontrar soluciones sostenibles.",
+    "tagline": "Convertí cada obstáculo en una oportunidad de mejora.",
+    "includes": [
+      "Análisis de causas raíz",
+      "Toma de decisiones bajo presión",
+      "Metodologías de resolución estructurada"
+    ],
+    "category": "Resolucion de problemas",
+    "imgUrl": "https://res.cloudinary.com/dmwy7wbh7/image/upload/v1778282093/file-resources/hdxhx0djmlnogfzicxfy.jpg"
+  },
+  {
+    "title": "Trabajo colaborativo",
+    "shortDescription": "Mejorá la interacción entre equipos y la coordinación del trabajo.",
+    "description": "Mejorá la coordinación y la sinergia entre los distintos equipos de tu organización para alcanzar objetivos compartidos. Aprendé a trabajar en conjunto, gestionar reuniones efectivas y fortalecer la comunicación interáreas.",
+    "tagline": "Un equipo que colabora de verdad llega más lejos.",
+    "includes": [
+      "Coordinación entre áreas",
+      "Reuniones efectivas",
+      "Comunicación interequipos"
+    ],
+    "category": "Trabajo colaborativo",
+    "imgUrl": "https://res.cloudinary.com/dmwy7wbh7/image/upload/v1778282103/file-resources/cr8dgaupv7b7t9ktooa5.jpg"
+  },
+  {
+    "title": "Gestión de proyectos",
+    "shortDescription": "Planificá, organizá y ejecutá proyectos utilizando metodologías ágiles.",
+    "description": "Planificá, ejecutá y hacé seguimiento de proyectos utilizando metodologías ágiles como Scrum y frameworks modernos de gestión. Aprendé a definir alcances, distribuir tareas y adaptarte a los cambios sin perder el rumbo.",
+    "tagline": "De la idea al resultado con orden y agilidad.",
+    "includes": [
+      "Metodologías ágiles (Scrum)",
+      "Definición de alcance y tareas",
+      "Seguimiento y adaptación"
+    ],
+    "category": "Proyectos",
+    "imgUrl": "https://res.cloudinary.com/dmwy7wbh7/image/upload/v1778282030/file-resources/qaurgbu73wtu7teg8pyc.jpg"
+  }
+]
