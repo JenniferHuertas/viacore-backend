@@ -166,8 +166,6 @@ export class AuthService {
         expiresIn: '1h',
       });
 
-       console.log("USER AFTER:", user);
-
     return {
       id: user.id,
       role: user.role,
