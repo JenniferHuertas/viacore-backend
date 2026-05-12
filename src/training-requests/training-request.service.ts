@@ -70,7 +70,8 @@ export class TrainingRequestService {
     data: IUpdateTrainingRequest,
   ): Promise<TrainingRequests> {
     const existingRequest = await this.findOne(id);
-    if (existingRequest.status !== RequestStatus.PENDING) {
+    if (existingRequest.status !== RequestStatus.PENDING && 
+      existingRequest.status !== RequestStatus.IN_REVIEW) {
       throw new BadRequestException(
         `No se puede modificar esta solicitud porque su estado actual es 
         "${existingRequest.status}". Si necesitas realizar cambios, 
@@ -88,10 +89,19 @@ export class TrainingRequestService {
 
   async updateStatus(
     id: string,
-    status: RequestStatus
+    newStatus: RequestStatus
   ): Promise<TrainingRequests> {
     const request = await this.findOne(id);
-    request.status = status;
+    if (request.status === RequestStatus.CANCELLED) {
+      throw new BadRequestException('No se puede modificar una solicitud que ya fue cancelada.');
+    }
+    if (request.status === RequestStatus.SCHEDULED && newStatus !== RequestStatus.CANCELLED) {
+      throw new BadRequestException('La capacitación ya está agendada. Solo se permite cancelarla.');
+    }
+    if (newStatus === RequestStatus.PENDING && request.status !== RequestStatus.PENDING) {
+      throw new BadRequestException('Una solicitud en proceso no puede regresar a estado Pendiente.');
+    }
+    request.status = newStatus;
     // if (status === RequestStatus.CONFIRMED || status === RequestStatus.REJECTED) {
     //    await this.emailService.sendNotification(request.user.email, status);
     // }
