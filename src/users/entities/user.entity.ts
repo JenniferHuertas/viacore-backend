@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -9,6 +10,10 @@ import {
 import { Exclude, Expose } from 'class-transformer';
 
 import { Role } from '../enums/roles.enum';
+
+    //import de las entidades de notificaciones para evitar errores de referencia circular
+import { DeviceToken } from '../../notifications/entities/device-token.entity';
+import { Notification } from '../../notifications/entities/notification.entity';
 
 @Entity({
   name: 'USERS',
@@ -122,4 +127,20 @@ export class Users {
     name: 'updated_at',
   })
   updatedAt!: Date;
+
+
+         //Relaciones con notificaciones
+
+
+  @OneToMany(
+  () => Notification,
+  (notification) => notification.user,
+  )
+  notifications!: Notification[];
+
+  @OneToMany(
+  () => DeviceToken,
+  (deviceToken) => deviceToken.user,
+  )
+  deviceTokens!: DeviceToken[];
 }

@@ -22,6 +22,10 @@ import { JwtService } from '@nestjs/jwt';
 
 import { Role } from 'src/users/enums/roles.enum';
 
+   // import para las notifications
+  import { EventEmitter2 } from '@nestjs/event-emitter';
+  import { UserRegisteredEvent } from '../notifications/events/user-registered.event';
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -29,6 +33,9 @@ export class AuthService {
     private readonly usersRepository: Repository<Users>,
 
     private readonly jwtService: JwtService,
+
+    // Inyección del EventEmitter para emitir eventos de notificación
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async create(
@@ -41,7 +48,7 @@ export class AuthService {
 
     if (foundUser) {
       throw new BadRequestException(
-        'User with this email already exists',
+        'El usuario ya existe',
       );
     }
 
@@ -76,7 +83,7 @@ export class AuthService {
 
     if (!foundUser) {
       throw new BadRequestException(
-        'Bad credentials',
+        'Credenciales inválidas',
       );
     }
 
@@ -88,7 +95,7 @@ export class AuthService {
 
     if (!matchingPassword) {
       throw new BadRequestException(
-        'Bad credentials',
+        'Credenciales inválidas',
       );
     }
 
@@ -103,6 +110,17 @@ export class AuthService {
       this.jwtService.sign(payload, {
         expiresIn: '1h',
       });
+
+    // Emitir un evento de notificación cuando un usuario se registre
+    this.eventEmitter.emit(
+    'user.registered',
+
+    new UserRegisteredEvent(
+      foundUser.id,
+      foundUser.email,
+      foundUser.name,
+      ),
+    );
 
     return {
       id: foundUser.id,
