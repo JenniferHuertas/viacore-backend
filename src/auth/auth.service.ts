@@ -1,4 +1,3 @@
-
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 import {
   BadRequestException,
@@ -97,20 +96,44 @@ export class AuthService {
     name: string;
     googleId: string;
   }) {
+    const normalizedEmail =
+      googleUser.email.toLowerCase().trim();
+
+    // Emails admins permitidos
+    const adminEmails = [
+      'colmenares9093@gmail.com',
+    ];
+
+    const isAdmin =
+      adminEmails.includes(
+        normalizedEmail,
+      );
+
     let user = await this.usersRepository.findOneBy({
-      email: googleUser.email.toLowerCase().trim(),
+      email: normalizedEmail,
     });
 
     if (!user) {
       user = this.usersRepository.create({
-        email: googleUser.email.toLowerCase().trim(),
+        email: normalizedEmail,
         name: googleUser.name,
         googleId: googleUser.googleId,
+
+        role: isAdmin
+          ? Role.Admin
+          : Role.User,
       });
 
       user = await this.usersRepository.save(user);
-    } else if (!user.googleId) {
-      user.googleId = googleUser.googleId;
+    } else {
+      if (!user.googleId) {
+        user.googleId = googleUser.googleId;
+      }
+
+      // Si el email está autorizado como admin
+      if (isAdmin) {
+        user.role = Role.Admin;
+      }
 
       await this.usersRepository.save(user);
     }
