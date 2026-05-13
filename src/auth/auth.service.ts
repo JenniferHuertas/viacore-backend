@@ -166,7 +166,6 @@ export class AuthService {
               .trim(),
 
           name: googleUser.name,
-
           googleId:
             googleUser.googleId,
 

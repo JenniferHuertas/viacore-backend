@@ -8,7 +8,7 @@ import {
 } from 'typeorm';
 
 import { Exclude, Expose } from 'class-transformer';
-
+import { TrainingRequests } from '../../training-requests/entities/training-request.entity';
 import { Role } from '../enums/roles.enum';
 
     //import de las entidades de notificaciones para evitar errores de referencia circular
@@ -128,6 +128,8 @@ export class Users {
   })
   updatedAt!: Date;
 
+  @OneToMany(() => TrainingRequests, (request) => request.user)
+  trainingRequests!: TrainingRequests[];
 
          //Relaciones con notificaciones
 

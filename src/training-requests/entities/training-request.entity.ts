@@ -49,12 +49,10 @@ export class TrainingRequests {
   @UpdateDateColumn()
   updatedAt!: Date;
 
-  @ManyToOne(() => Users)
+  @ManyToOne(() => Users, (user) => user.trainingRequests)
   user!: Users;
 
   @Expose({ groups: ['Get'] })
-  @ManyToOne(() => Training, {
-    eager: true,
-  })
+  @ManyToOne(() => Training, (training) => training.trainingRequests)
   training!: Training;
 }

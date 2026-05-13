@@ -4,12 +4,13 @@ import {
   CreateDateColumn,
   Entity,
   JoinColumn,
+  OneToMany,
   // OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-// import { TrainingRequest } from '../training-request/training-request.entity';
+import { TrainingRequests } from '../../training-requests/entities/training-request.entity';
 import { FileResource } from '../../file-resource/entities/file-resource.entity';
 
 @Entity({
@@ -110,15 +111,15 @@ export class Training {
   @UpdateDateColumn()
   updatedAt!: Date;
 
-  // @OneToMany(() => TrainingRequest, (request) => request.training, {
-  //   eager: false,
-  // })
+  @OneToMany(() => TrainingRequests, (request) => request.training, {
+     eager: false,
+  })
   // @ApiProperty({
   //   description: 'Solicitudes de capacitación asociadas a este training',
   //   type: () => TrainingRequest,
   //   isArray: true,
   // })
-  // trainingRequests!: TrainingRequest[];
+   trainingRequests!: TrainingRequests[];
 
   @OneToOne(() => FileResource, (file) => file.training, {
     eager: false,
