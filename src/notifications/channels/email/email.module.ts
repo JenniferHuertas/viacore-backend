@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 
 import { MailerModule } from '@nestjs-modules/mailer';
 
+import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
+
 import { join } from 'path';
 
 import { EmailService } from './email.service';
@@ -30,8 +32,10 @@ import { EmailService } from './email.service';
       template: {
         dir: join(
           process.cwd(),
-          'src/notifications/channels/email/templates',
+          'src/modules/notifications/channels/email/templates',
         ),
+
+        adapter: new HandlebarsAdapter(),
 
         options: {
           strict: true,
