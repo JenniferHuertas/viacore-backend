@@ -20,7 +20,7 @@ import { MeetingsModule } from './meetings/meetings.module';
 import { TrainingRequestModule } from './training-requests/training-request.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { PaymentsModule } from './payments/payments.module';
-// import { BullModule } from '@nestjs/bullmq';
+import { BullModule } from '@nestjs/bullmq';
 import { Notification } from './notifications/entities/notification.entity';
 import { NotificationsModule } from './notifications/notifications.module';
 
@@ -50,12 +50,13 @@ import { NotificationsModule } from './notifications/notifications.module';
     MeetingsModule,
     TrainingRequestModule,
     PaymentsModule,
-    // BullModule.forRoot({
-    //   connection: {
-    //     host: 'localhost',
-    //     port: 6379,
-    //   },
-    // }),
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+    BullModule.forRoot({
+      connection: {
+        host: 'localhost',
+        port: 6379,
+      },
+    }),
     NotificationsModule,
   ],
   controllers: [AppController],
