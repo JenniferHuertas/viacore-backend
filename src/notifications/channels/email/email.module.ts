@@ -21,33 +21,41 @@ import { EmailService } from './email.service';
 
           secure: false,
 
+          ignoreTLS: true,
+
+          connectionTimeout: 10000,
+
           auth: {
             user: process.env.MAIL_USER,
 
-            pass: process.env.MAIL_PASSWORD,
+            pass:
+              process.env.MAIL_PASSWORD,
           },
         },
+
+        verifyTransporters: false,
 
         defaults: {
           from: `"ViaCore" <${process.env.MAIL_USER}>`,
         },
 
-       template: {
-  dir: join(
-    process.cwd(),
-    process.env.NODE_ENV ===
-      'production'
-      ? 'dist/templates'
-      : 'src/notifications/channels/email/templates',
-  ),
+        template: {
+          dir: join(
+            process.cwd(),
 
-  adapter:
-    new HandlebarsAdapter(),
+            process.env.NODE_ENV ===
+              'production'
+              ? 'dist/templates'
+              : 'src/notifications/channels/email/templates',
+          ),
 
-  options: {
-    strict: true,
-  },
-},
+          adapter:
+            new HandlebarsAdapter(),
+
+          options: {
+            strict: true,
+          },
+        },
       }),
     }),
   ],
