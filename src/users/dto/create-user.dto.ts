@@ -30,7 +30,7 @@ export class CreateUserDto {
   })
   @IsNotEmpty()
   @IsString()
-  @MinLength(3)
+  @MinLength(2)
   @MaxLength(50)
   name!: string;
 
@@ -82,7 +82,7 @@ phone?: string;
   @IsOptional()
   @IsString()
   @MinLength(2)
-  @MaxLength(100)
+  @MaxLength(50)
   companyName?: string;
 
   @ApiProperty({
@@ -91,7 +91,8 @@ phone?: string;
   })
   @IsOptional()
   @IsString()
-  @MaxLength(100)
+  @MinLength(2)
+  @MaxLength(50)
   city?: string;
 
   @ApiProperty({
@@ -100,7 +101,8 @@ phone?: string;
   })
   @IsOptional()
   @IsString()
-  @MaxLength(150)
+  @MinLength(2)
+  @MaxLength(50)
   address?: string;
 
   @Exclude()
