@@ -122,6 +122,10 @@ export class AuthService {
         role: isAdmin
           ? Role.Admin
           : Role.User,
+
+        profileCompleted: isAdmin
+          ? true
+          : false,
       });
 
       user = await this.usersRepository.save(user);
@@ -133,6 +137,8 @@ export class AuthService {
       // Si el email está autorizado como admin
       if (isAdmin) {
         user.role = Role.Admin;
+
+        user.profileCompleted = true;
       }
 
       await this.usersRepository.save(user);
