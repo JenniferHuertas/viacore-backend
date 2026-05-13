@@ -4,10 +4,13 @@ import { TrainingRequestController } from './training-request.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TrainingRequests } from './entities/training-request.entity';
 import { TrainingRequestRepository } from './repositories/training-request.repository';
+import { FileResourceModule } from 'src/file-resource/file-resource.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([TrainingRequests])
+    TypeOrmModule.forFeature([TrainingRequests],
+    ),
+    FileResourceModule,
   ],
   controllers: [TrainingRequestController],
   providers: [TrainingRequestService, TrainingRequestRepository],

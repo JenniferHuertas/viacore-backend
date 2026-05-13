@@ -48,11 +48,13 @@ import { NotificationsModule } from './notifications/notifications.module';
     TrainingModule,
     MeetingsModule,
     TrainingRequestModule,
-    BullModule.forRoot({
-      connection: {
-        host: 'localhost',
-        port: 6379,
-      },
+    BullModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        connection: {
+          url: config.get('REDIS_URL'),
+        },
+      }),
     }),
     NotificationsModule,
   ],

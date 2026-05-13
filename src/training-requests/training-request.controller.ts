@@ -10,12 +10,17 @@ import {
   Query,
   ParseEnumPipe,
   ParseUUIDPipe,
+  Delete,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import { TrainingRequestService } from './training-request.service';
 import { CreateTrainingRequestDto } from './dto/create-training-request.dto';
 import { UpdateTrainingRequestDto } from './dto/update-training-request.dto';
 import {
   ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
   ApiOperation,
   ApiQuery,
   ApiResponse,
@@ -34,6 +39,8 @@ import { RequestStatus } from './enums/requests-status.enum';
 import { TrainingRequests } from './entities/training-request.entity';
 import { ChangeStatusDto } from './dto/status-training-request.dto';
 import type { IUpdateTrainingRequest } from './interfaces/requests-data.interfaces';
+import { FileResourceService } from '../file-resource/file-resource.service';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @ApiTags('Training Requests')
 @ApiBearerAuth('Bearer')
@@ -42,6 +49,7 @@ import type { IUpdateTrainingRequest } from './interfaces/requests-data.interfac
 export class TrainingRequestController {
   constructor(
     private readonly trainingRequestService: TrainingRequestService,
+    private readonly fileService: FileResourceService,
   ) {}
 
   @Post()
@@ -145,5 +153,44 @@ export class TrainingRequestController {
     @Body() changeStatusDto: ChangeStatusDto,
   ): Promise<TrainingRequests> {
     return await this.trainingRequestService.updateStatus(id, changeStatusDto.status);
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Elimina lógicamente una solicitud (Soft Delete)' })
+  @ApiResponse({ status: 200, description: 'Solicitud eliminada con éxito.' })
+  async remove(@Param('id', ParseUUIDPipe) id: string) {
+    return await this.trainingRequestService.remove(id);
+  }
+
+  @Post(':id/upload-evidence')
+  @ApiOperation({ summary: 'Sube un archivo (PDF/Excel) y lo adjunta a la solicitud' })
+  @ApiResponse({ status: 201, description: 'Archivo subido y vinculado exitosamente.' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: { type: 'string', format: 'binary' },
+        title: { type: 'string', example: 'Comprobante de pago' }
+      },
+    },
+  })
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadEvidence(
+    @Param('id', ParseUUIDPipe) id: string,
+    @UploadedFile() file: Express.Multer.File,
+    @Body('title') title?: string,
+  ) {
+    await this.trainingRequestService.findOne(id);
+    const savedFile = await this.fileService.uploadForEntity(
+      file, 
+      'trainingRequest', 
+      id, 
+      title || 'Evidencia de Solicitud'
+    );
+    return { 
+      message: 'Archivo vinculado correctamente', 
+      file: savedFile 
+    };
   }
 }

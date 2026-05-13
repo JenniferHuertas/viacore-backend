@@ -107,4 +107,11 @@ export class TrainingRequestService {
     // }
     return await this.repository.saveRequest(request);
   }
+
+  async remove(id: string): Promise<{ message: string }> {
+    const request = await this.findOne(id); 
+    await this.repository.softRemove(request); 
+
+    return { message: `La solicitud con id ${id} ha sido eliminada correctamente.` };
+  }
 }

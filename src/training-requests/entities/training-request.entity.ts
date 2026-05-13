@@ -5,6 +5,8 @@ import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  DeleteDateColumn,
+  OneToMany,
 } from 'typeorm';
 
 import { Expose } from 'class-transformer';
@@ -14,6 +16,7 @@ import { Users } from '../../users/entities/user.entity';
 import { RequestStatus } from '../enums/requests-status.enum';
 
 import { Training } from '../../training/entities/training.entity';
+import { FileResource } from 'src/file-resource/entities/file-resource.entity';
 
 @Entity({
   name: 'TRAINING_REQUESTS',
@@ -49,10 +52,17 @@ export class TrainingRequests {
   @UpdateDateColumn()
   updatedAt!: Date;
 
+  @DeleteDateColumn()
+  deletedAt!: Date;
+
   @ManyToOne(() => Users, (user) => user.trainingRequests)
   user!: Users;
 
   @Expose({ groups: ['Get'] })
   @ManyToOne(() => Training, (training) => training.trainingRequests)
   training!: Training;
+
+  @OneToMany(() => FileResource, (file) => file.trainingRequest)
+  files!: FileResource[];
+
 }
