@@ -10,4 +10,9 @@ export class PaymentsController {
   createPreference(@Body() dto: CreatePaymentDto) {
     return this.paymentsService.createPreference(dto);
   }
+
+  @Post('webhook')
+  handleWebhook(@Body() body: { type: string; data: { id: string | number } }) {
+    return this.paymentsService.handleWebhook(body);
+  }
 }

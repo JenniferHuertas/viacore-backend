@@ -1,15 +1,20 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreatePaymentDto } from './dto/create-payment.dto';
-import MercadoPagoConfig, { Preference } from 'mercadopago';
+import MercadoPagoConfig, {
+  Preference,
+  Payment as MpPayment,
+} from 'mercadopago';
 import { PaymentsRepository } from './payments.repository';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { TrainingRequests } from 'src/training-requests/entities/training-request.entity';
 import { Repository } from 'typeorm';
+import { PaymentStatus } from './enums/payment-status.enum';
 
 @Injectable()
 export class PaymentsService {
   private preference: Preference;
+  private mpPayment: MpPayment;
 
   constructor(
     private readonly paymentsRepository: PaymentsRepository,
@@ -21,6 +26,7 @@ export class PaymentsService {
       accessToken: this.configService.get<string>('MP_ACCESS_TOKEN') ?? '',
     });
     this.preference = new Preference(client);
+    this.mpPayment = new MpPayment(client);
   }
 
   async createPreference(dto: CreatePaymentDto) {
@@ -67,5 +73,37 @@ export class PaymentsService {
       paymentId: payment.id,
       init_point: response.init_point,
     };
+  }
+
+  async handleWebhook(body: { type: string; data: { id: string | number } }) {
+    // MP manda el tipo de evento y el id
+    const { type, data } = body;
+
+    if (type === 'payment') {
+      // Consultás a MP los detalles del pago
+      const mpPayment = await this.mpPayment.get({ id: String(data.id) });
+
+      // Buscás el payment en tu DB por el external_reference (que es tu payment.id)
+      const externalReference = mpPayment.external_reference;
+      const status = mpPayment.status; // 'approved', 'rejected', 'pending'
+      const mercadoPagoId = String(mpPayment.id);
+
+      const payment = await this.paymentsRepository.findById(
+        externalReference ?? '',
+      );
+
+      if (!payment) return { received: true };
+
+      // Actualizás el status en la DB
+      await this.paymentsRepository.updateMercadoPagoId(
+        payment.id,
+        mercadoPagoId,
+      );
+      await this.paymentsRepository.updateStatus(
+        payment.id,
+        status as PaymentStatus,
+      );
+    }
+    return { received: true };
   }
 }

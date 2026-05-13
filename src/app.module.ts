@@ -51,11 +51,14 @@ import { NotificationsModule } from './notifications/notifications.module';
     TrainingRequestModule,
     PaymentsModule,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-    BullModule.forRoot({
-      connection: {
-        host: 'localhost',
-        port: 6379,
-      },
+    BullModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        connection: {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          url: config.get('REDIS_URL'),
+        },
+      }),
     }),
     NotificationsModule,
   ],
