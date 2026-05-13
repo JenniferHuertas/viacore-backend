@@ -14,7 +14,7 @@ export class TrainingRequestRepository extends Repository<TrainingRequests> {
   }
 
   async createRequests(
-    data: ICreateTrainingRequest & { user: { id: string } }
+    data: ICreateTrainingRequest & { user: { id: string }; estimatedPrice: number }
   ): Promise<TrainingRequests> {
     const newRequest = this.create(data);
     return await this.save(newRequest);

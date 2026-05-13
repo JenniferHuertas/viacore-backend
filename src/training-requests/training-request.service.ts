@@ -20,8 +20,20 @@ export class TrainingRequestService {
     data: ICreateTrainingRequest,
     userId: string
   ): Promise<TrainingRequests> {
+    let price = 0;
+    if (data.participantsCount <= 10) {
+      price = 250000;
+    } else if (data.participantsCount <= 20) {
+      price = 500000;
+    } else if (data.participantsCount <= 50) {
+      price = 1000000;
+    }
+    else {
+      price = 1500000;
+    }
     return await this.repository.createRequests({
       ...data,
+      estimatedPrice: price,
       user: { id: userId }
     });
   }
@@ -70,7 +82,7 @@ export class TrainingRequestService {
     data: IUpdateTrainingRequest,
   ): Promise<TrainingRequests> {
     const existingRequest = await this.findOne(id);
-    if (existingRequest.status !== RequestStatus.PENDING && 
+    if (existingRequest.status !== RequestStatus.PENDING &&
       existingRequest.status !== RequestStatus.IN_REVIEW) {
       throw new BadRequestException(
         `No se puede modificar esta solicitud porque su estado actual es 
@@ -109,8 +121,8 @@ export class TrainingRequestService {
   }
 
   async remove(id: string): Promise<{ message: string }> {
-    const request = await this.findOne(id); 
-    await this.repository.softRemove(request); 
+    const request = await this.findOne(id);
+    await this.repository.softRemove(request);
 
     return { message: `La solicitud con id ${id} ha sido eliminada correctamente.` };
   }

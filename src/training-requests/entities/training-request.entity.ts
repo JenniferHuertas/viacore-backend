@@ -22,6 +22,7 @@ import { FileResource } from 'src/file-resource/entities/file-resource.entity';
   name: 'TRAINING_REQUESTS',
 })
 export class TrainingRequests {
+
   @Expose({ groups: ['Get'] })
   @PrimaryGeneratedColumn('uuid')
   id!: string;
@@ -46,15 +47,22 @@ export class TrainingRequests {
   })
   status!: RequestStatus;
 
+  @Expose({ groups: ['Get'] })
   @CreateDateColumn()
   createdAt!: Date;
 
+  @Expose({ groups: ['Get'] })
   @UpdateDateColumn()
   updatedAt!: Date;
+
+  @Expose({ groups: ['Get'] })
+  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
+  estimatedPrice?: number;
 
   @DeleteDateColumn()
   deletedAt!: Date;
 
+  @Expose({ groups: ['Get'] })
   @ManyToOne(() => Users, (user) => user.trainingRequests)
   user!: Users;
 
@@ -62,7 +70,12 @@ export class TrainingRequests {
   @ManyToOne(() => Training, (training) => training.trainingRequests)
   training!: Training;
 
+  @Expose({ groups: ['Get'] })
   @OneToMany(() => FileResource, (file) => file.trainingRequest)
   files!: FileResource[];
+
+  /*@Expose({ groups: ['Get'] })
+  @OneToMany(() => Payment, (payment) => payment.trainingRequest)
+  payments!: Payment[];*/
 
 }

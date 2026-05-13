@@ -13,6 +13,8 @@ import {
   Delete,
   UseInterceptors,
   UploadedFile,
+  SerializeOptions,
+  ClassSerializerInterceptor,
 } from '@nestjs/common';
 import { TrainingRequestService } from './training-request.service';
 import { CreateTrainingRequestDto } from './dto/create-training-request.dto';
@@ -45,6 +47,8 @@ import { FileInterceptor } from '@nestjs/platform-express';
 @ApiTags('Training Requests')
 @ApiBearerAuth('Bearer')
 @UseGuards(AuthGuard)
+@UseInterceptors(ClassSerializerInterceptor)
+@SerializeOptions({ groups: ['Get'] })
 @Controller('training-requests')
 export class TrainingRequestController {
   constructor(
