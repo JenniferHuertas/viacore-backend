@@ -3,28 +3,16 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-
 import { CreateMeetingDto } from './dto/create-meeting.dto';
-
 import { UpdateMeetingDto } from './dto/update-meeting.dto';
-
 import { InjectRepository } from '@nestjs/typeorm';
-
 import { Meetings } from './entities/meeting.entity';
-
 import { Repository } from 'typeorm';
-
 import { NotFoundError } from 'rxjs';
-
 import { MeetingStatus } from './entities/meetingStatus.entity';
-
 import { TrainingRequests } from 'src/training-requests/entities/training-request.entity';
-
 import { RequestStatus } from 'src/training-requests/enums/requests-status.enum';
-import { Users } from 'src/users/entities/user.entity';
-
-import { Users } from 'src/users/entities/user.entity';
-
+import { Users } from '../users/entities/user.entity';
 import { EmailService } from 'src/notifications/channels/email/email.service';
 
 @Injectable()
