@@ -4,6 +4,7 @@ export const formatNotification = (
 ) => {
   return {
     title: title.trim(),
+
     message: message.trim(),
   };
 };

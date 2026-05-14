@@ -1,26 +1,31 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { TrainingRequestRepository } from './repositories/training-request.repository';
 import { TrainingRequests } from './entities/training-request.entity';
 import { RequestStatus } from './enums/requests-status.enum';
 import type { PaginatedTrainingRequests } from './interfaces/requests-results.interface';
 import type {
   ICreateTrainingRequest,
-  IUpdateTrainingRequest
+  IUpdateTrainingRequest,
 } from './interfaces/requests-data.interfaces';
-import type { Users } from 'src/users/entities/user.entity';
+import { Users } from '../users/entities/user.entity';
 import { Role } from 'src/auth/roles.enum';
 import type { UserPayloads } from './interfaces/requests-payloads.interfaces';
-
+import { EmailService } from 'src/notifications/channels/email/email.service';
 
 @Injectable()
 export class TrainingRequestService {
   constructor(
-    private readonly repository: TrainingRequestRepository
+    private readonly repository: TrainingRequestRepository,
+    @InjectRepository(Users)
+    private readonly usersRepository: Repository<Users>,
+    private readonly emailService: EmailService,
   ) { }
 
   async create(
     data: ICreateTrainingRequest,
-    userId: string
+    userId: string,
   ): Promise<TrainingRequests> {
     let price = 0;
     if (data.participantsCount <= 10) {
@@ -33,45 +38,72 @@ export class TrainingRequestService {
     else {
       price = 1500000;
     }
-    return await this.repository.createRequests({
+    const newRequest = await this.repository.createRequests({
       ...data,
       estimatedPrice: price,
-      user: { id: userId }
+      user: { id: userId },
     });
+    const user =
+      await this.usersRepository.findOneBy({
+        id: userId,
+      });
+    if (user) {
+      await this.emailService.sendTrainingRequestCreated(
+        user.email,
+        user.companyName || user.name,
+      );
+    }
+
+    return newRequest;
   }
 
   async findAll(
     page: number = 1,
     limit: number = 10,
-    status?: RequestStatus
+    status?: RequestStatus,
   ): Promise<PaginatedTrainingRequests> {
     const skip = (page - 1) * limit;
+
     const [requests, total] =
       await this.repository.findAllRequests(
-        skip, limit, status
+        skip,
+        limit,
+        status,
       );
+
     return {
       data: requests,
+
       meta: {
         totalItems: total,
+
         itemCount: requests.length,
+
         itemsPerPage: limit,
-        totalPages: Math.ceil(total / limit),
+
+        totalPages: Math.ceil(
+          total / limit,
+        ),
+
         currentPage: page,
       },
     };
   }
 
   async findOne(
-    id: string
+    id: string,
   ): Promise<TrainingRequests> {
     const request =
-      await this.repository.findRequestById(id);
+      await this.repository.findRequestById(
+        id,
+      );
+
     if (!request) {
       throw new NotFoundException(
-        `Solicitud con ID ${id} no encontrada`
+        `Solicitud con ID ${id} no encontrada`,
       );
     }
+
     return request;
   }
 
@@ -118,15 +150,16 @@ export class TrainingRequestService {
     const updatedRequest = await this.repository.updateRequest(id, updatePayload);
     if (!updatedRequest) {
       throw new NotFoundException(`
-        No se pudo encontrar la solicitud con ID ${id} para retornar los cambios.`
+        No se pudo encontrar la solicitud con ID ${id} para retornar los cambios.`,
       );
     }
+
     return updatedRequest;
   }
 
   async updateStatus(
     id: string,
-    newStatus: RequestStatus
+    newStatus: RequestStatus,
   ): Promise<TrainingRequests> {
     const request = await this.findOne(id);
     if (request.status === RequestStatus.CANCELLED) {
@@ -135,7 +168,7 @@ export class TrainingRequestService {
       );
     }
     if (
-      request.status === RequestStatus.SCHEDULED 
+      request.status === RequestStatus.SCHEDULED
       && newStatus !== RequestStatus.CANCELLED
     ) {
       throw new BadRequestException(
@@ -143,18 +176,19 @@ export class TrainingRequestService {
       );
     }
     if (
-      newStatus === RequestStatus.PENDING 
+      newStatus === RequestStatus.PENDING
       && request.status !== RequestStatus.PENDING
     ) {
       throw new BadRequestException(
         'Una solicitud en proceso no puede regresar a estado Pendiente.'
       );
     }
+
     request.status = newStatus;
-    // if (status === RequestStatus.CONFIRMED || status === RequestStatus.REJECTED) {
-    //    await this.emailService.sendNotification(request.user.email, status);
-    // }
-    return await this.repository.saveRequest(request);
+
+    return await this.repository.saveRequest(
+      request,
+    );
   }
 
   async remove(

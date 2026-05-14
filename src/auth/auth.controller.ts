@@ -37,11 +37,11 @@ export class AuthController {
     const login= req.user.login;
         
     return res.redirect(
-      `http://localhost:3000/autenticacion/autenticacion-google?token=${token}&login=${login}`,
+      `https://estudio-via3-frontend.vercel.app/autenticacion/autenticacion-google?token=${token}&login=${login}`,
     );
   } catch {
     return res.redirect(
-      'http://localhost:3000/login?error=google',
+      'https://estudio-via3-frontend.vercel.app/login?error=google',
     );
   }
   }

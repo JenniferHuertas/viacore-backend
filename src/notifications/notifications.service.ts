@@ -5,35 +5,17 @@ import {
 
 import { InjectRepository } from '@nestjs/typeorm';
 
-import {
-  Repository,
-} from 'typeorm';
+import { Repository } from 'typeorm';
 
 import { Notification } from './entities/notification.entity';
-import { DeviceToken } from './entities/device-token.entity';
 
 import { CreateNotificationDto } from './dto/create-notification.dto';
-import { SendNotificationDto } from './dto/send-notification.dto';
-import { RegisterDeviceDto } from './dto/register-device.dto';
-
-import { NotificationStatus } from './enums/notification-status.enum';
-
-import { NotificationsGateway } from './notifications.gateway';
-
-import { NotificationQueue } from './queues/notification.queue';
-
 
 @Injectable()
 export class NotificationsService {
   constructor(
     @InjectRepository(Notification)
     private readonly notificationRepository: Repository<Notification>,
-
-    @InjectRepository(DeviceToken)
-    private readonly deviceTokenRepository: Repository<DeviceToken>,
-
-    private readonly notificationsGateway: NotificationsGateway,
-    private readonly notificationQueue: NotificationQueue,
   ) {}
 
   async create(
@@ -48,52 +30,6 @@ export class NotificationsService {
       notification,
     );
   }
-
-
-
-async send(
-  sendNotificationDto: SendNotificationDto,
-): Promise<Notification> {
-  const notification =
-    await this.create(
-      sendNotificationDto,
-    );
-
-  await this.notificationQueue.addSocketJob({
-    userId: notification.userId,
-
-    notification,
-  });
-
-  const devices =
-    await this.getUserDevices(
-      notification.userId,
-    );
-
-  const tokens = devices.map(
-    (device) => device.token,
-  );
-
-  if (tokens.length > 0) {
-    await this.notificationQueue.addPushJob({
-      tokens,
-
-      title: notification.title,
-
-      body: notification.message,
-
-      data: {
-        notificationId: notification.id,
-        type: notification.type,
-      },
-    });
-  }
-
-  return notification;
-}
-
-
-
 
   async findAllByUser(
     userId: string,
@@ -114,7 +50,7 @@ async send(
     return await this.notificationRepository.find({
       where: {
         userId,
-        status: NotificationStatus.UNREAD,
+        isRead: false,
       },
       order: {
         createdAt: 'DESC',
@@ -128,7 +64,7 @@ async send(
     return await this.notificationRepository.count({
       where: {
         userId,
-        status: NotificationStatus.UNREAD,
+        isRead: false,
       },
     });
   }
@@ -151,11 +87,6 @@ async send(
 
     notification.isRead = true;
 
-    notification.status =
-      NotificationStatus.READ;
-
-    notification.readAt = new Date();
-
     return await this.notificationRepository.save(
       notification,
     );
@@ -167,12 +98,10 @@ async send(
     await this.notificationRepository.update(
       {
         userId,
-        status: NotificationStatus.UNREAD,
+        isRead: false,
       },
       {
-        status: NotificationStatus.READ,
         isRead: true,
-        readAt: new Date(),
       },
     );
   }
@@ -196,56 +125,5 @@ async send(
     await this.notificationRepository.remove(
       notification,
     );
-  }
-
-  async registerDevice(
-    registerDeviceDto: RegisterDeviceDto,
-  ): Promise<DeviceToken> {
-    const existingToken =
-      await this.deviceTokenRepository.findOne({
-        where: {
-          token: registerDeviceDto.token,
-        },
-      });
-
-    if (existingToken) {
-      existingToken.lastUsedAt =
-        new Date();
-
-      existingToken.isActive = true;
-
-      return await this.deviceTokenRepository.save(
-        existingToken,
-      );
-    }
-
-    const device =
-      this.deviceTokenRepository.create({
-        ...registerDeviceDto,
-        lastUsedAt: new Date(),
-      });
-
-    return await this.deviceTokenRepository.save(
-      device,
-    );
-  }
-
-  async removeDevice(
-    token: string,
-  ): Promise<void> {
-    await this.deviceTokenRepository.delete({
-      token,
-    });
-  }
-
-  async getUserDevices(
-    userId: string,
-  ): Promise<DeviceToken[]> {
-    return await this.deviceTokenRepository.find({
-      where: {
-        userId,
-        isActive: true,
-      },
-    });
   }
 }
