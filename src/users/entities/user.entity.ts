@@ -17,6 +17,7 @@ import { TrainingRequests } from '../../training-requests/entities/training-requ
 import { Role } from '../enums/roles.enum';
 
 import { Notification } from '../../notifications/entities/notification.entity';
+import { ChatMessage } from 'src/chat/entities/chat.entity';
 
 @Entity({
   name: 'USERS',
@@ -142,4 +143,10 @@ export class Users {
     (notification) => notification.user,
   )
   notifications!: Notification[];
+
+  @OneToMany(() => ChatMessage, (message) => message.sender)
+  messagesSent!: ChatMessage[];
+
+  @OneToMany(() => ChatMessage, (message) => message.receiver)
+  messagesReceived!: ChatMessage[];
 }

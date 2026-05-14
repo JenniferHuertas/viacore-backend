@@ -8,17 +8,15 @@ import {
   DeleteDateColumn,
   OneToMany,
 } from 'typeorm';
-
-import { Expose } from 'class-transformer';
-
+import { Exclude, Expose } from 'class-transformer';
 import { Users } from '../../users/entities/user.entity';
-
 import { RequestStatus } from '../enums/requests-status.enum';
-
 import { Training } from '../../training/entities/training.entity';
 import { FileResource } from '../../file-resource/entities/file-resource.entity';
 import { Meetings } from '../../meetings/entities/meeting.entity';
+import { Payment } from 'src/payments/entities/payment.entity';
 
+@Exclude()
 @Entity({
   name: 'TRAINING_REQUESTS',
 })
@@ -79,8 +77,8 @@ export class TrainingRequests {
   @OneToMany(() => Meetings, (meeting) => meeting.trainingRequest)
   meetings!: Meetings[];
 
-  /*@Expose({ groups: ['Get'] })
+  @Expose({ groups: ['Get'] })
   @OneToMany(() => Payment, (payment) => payment.trainingRequest)
-  payments!: Payment[];*/
+  payments!: Payment[];
 
 }

@@ -34,6 +34,7 @@ import { MeetingsModule } from './meetings/meetings.module';
 import { TrainingRequestModule } from './training-requests/training-request.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { PaymentsModule } from './payments/payments.module';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
@@ -74,6 +75,7 @@ import { PaymentsModule } from './payments/payments.module';
     TrainingRequestModule,
     NotificationsModule,
     PaymentsModule,
+    ChatModule,
   ],
 
   controllers: [AppController],
