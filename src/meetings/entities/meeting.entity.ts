@@ -45,9 +45,7 @@ export class Meetings {
   @ManyToOne(() => Users)
   user!: Users;
 
-  @ManyToOne(
-    () => TrainingRequests,
-  )
+  @ManyToOne(() => TrainingRequests, (request) => request.meetings)
   trainingRequest!: TrainingRequests;
 
   @CreateDateColumn()

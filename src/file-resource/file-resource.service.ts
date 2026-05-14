@@ -1,12 +1,10 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { FileResource } from './entities/file-resource.entity';
 import { UploadFileDto } from './dto/upload-file.dto';
 import { v2 as cloudinary } from 'cloudinary';
 import { Readable } from 'stream';
-//import { Training } from '../training/training.entity';
-//import { TrainingRequest } from '../training-request/training-request.entity';
 
 @Injectable()
 export class FileResourceService {
@@ -31,7 +29,9 @@ export class FileResourceService {
           resource_type: 'auto',
         },
         (error, result) => {
-          if (error) return reject(error);
+          if (error) {
+            return reject(new InternalServerErrorException(`Error en Cloudinary: ${error.message}`));
+          }
           resolve(result);
         },
       );
@@ -95,7 +95,7 @@ export class FileResourceService {
     parentType: 'training' | 'trainingRequest',
     parentId: string,
     title = 'Archivo adjunto',
-  ) {
+  ): Promise<FileResource> {
     if (!file) {
       throw new BadRequestException('File is required');
     }
@@ -119,10 +119,10 @@ export class FileResourceService {
       fileResource.training = { id: parentId } as any;
     }
 
-    /*    if (parentType === 'trainingRequest') {
+    if (parentType === 'trainingRequest') {
       fileResource.trainingRequestId = parentId;
     }
-*/
+
     return this.fileRepository.save(fileResource);
   }
 

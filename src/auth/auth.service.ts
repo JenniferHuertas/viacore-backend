@@ -21,11 +21,7 @@ import { JwtService } from '@nestjs/jwt';
 
 import { Role } from 'src/users/enums/roles.enum';
 
-import { EventEmitter2 } from '@nestjs/event-emitter';
-
-import { UserRegisteredEvent } from 'src/notifications/events/user-registered.event';
-
-import { UserLoggedInEvent } from 'src/notifications/events/user-logged-in.event';
+import { EmailService } from 'src/notifications/channels/email/email.service';
 
 @Injectable()
 export class AuthService {
@@ -35,12 +31,10 @@ export class AuthService {
 
     private readonly jwtService: JwtService,
 
-    private readonly eventEmitter: EventEmitter2,
+    private readonly emailService: EmailService,
   ) {}
 
-  async create(
-    createUserDto: CreateUserDto,
-  ) {
+  async create(createUserDto: CreateUserDto) {
     const foundUser =
       await this.usersRepository.findOneBy({
         email: createUserDto.email,
@@ -61,8 +55,12 @@ export class AuthService {
     const newUser =
       this.usersRepository.create({
         ...createUserDto,
+
         password: hashedPassword,
+
         role: Role.User,
+
+        profileCompleted: true,
       });
 
     const savedUser =
@@ -70,15 +68,21 @@ export class AuthService {
         newUser,
       );
 
-    this.eventEmitter.emit(
-      'user.registered',
-
-      new UserRegisteredEvent(
-        savedUser.id,
+    try {
+      await this.emailService.sendWelcomeEmail(
         savedUser.email,
         savedUser.name,
-      ),
-    );
+      );
+
+      console.log(
+        'WELCOME EMAIL ENVIADO',
+      );
+    } catch (error) {
+      console.log(
+        'ERROR MAIL:',
+        error,
+      );
+    }
 
     return savedUser;
   }
@@ -111,8 +115,11 @@ export class AuthService {
 
     const payload = {
       id: foundUser.id,
+
       email: foundUser.email,
+
       role: foundUser.role,
+
       profileCompleted:
         foundUser.profileCompleted,
     };
@@ -122,20 +129,13 @@ export class AuthService {
         expiresIn: '1h',
       });
 
-    this.eventEmitter.emit(
-      'user.logged-in',
-
-      new UserLoggedInEvent(
-        foundUser.id,
-        foundUser.email,
-        foundUser.name,
-      ),
-    );
-
     return {
       id: foundUser.id,
+
       role: foundUser.role,
+
       login: true,
+
       access_token: token,
     };
   }
@@ -143,44 +143,84 @@ export class AuthService {
   async findOrCreateGoogleUser(
     googleUser: {
       email: string;
+
       name: string;
+
       googleId: string;
     },
   ) {
+    const normalizedEmail =
+      googleUser.email
+        .toLowerCase()
+        .trim();
+
+    // Emails admins permitidos
+    const adminEmails = [
+      'colmenares8093@gmail.com',
+    ];
+
+    const isAdmin =
+      adminEmails.includes(
+        normalizedEmail,
+      );
+
     let user =
       await this.usersRepository.findOneBy({
-        email:
-          googleUser.email
-            .toLowerCase()
-            .trim(),
+        email: normalizedEmail,
       });
 
-    let isNewUser = false;
-
     if (!user) {
-      user =
-        this.usersRepository.create({
-          email:
-            googleUser.email
-              .toLowerCase()
-              .trim(),
+      user = this.usersRepository.create({
+        email: normalizedEmail,
 
-          name: googleUser.name,
-          googleId:
-            googleUser.googleId,
+        name: googleUser.name,
 
-          role: Role.User,
-        });
+        googleId:
+          googleUser.googleId,
+
+        role: isAdmin
+          ? Role.Admin
+          : Role.User,
+
+        profileCompleted:
+          isAdmin
+            ? true
+            : false,
+      });
 
       user =
         await this.usersRepository.save(
           user,
         );
 
-      isNewUser = true;
-    } else if (!user.googleId) {
-      user.googleId =
-        googleUser.googleId;
+      try {
+        await this.emailService.sendWelcomeEmail(
+          user.email,
+          user.name,
+        );
+
+        console.log(
+          'WELCOME EMAIL GOOGLE ENVIADO',
+        );
+      } catch (error) {
+        console.log(
+          'ERROR MAIL GOOGLE:',
+          error,
+        );
+      }
+    } else {
+      if (!user.googleId) {
+        user.googleId =
+          googleUser.googleId;
+      }
+
+      // Si el email está autorizado como admin
+      if (isAdmin) {
+        user.role = Role.Admin;
+
+        user.profileCompleted =
+          true;
+      }
 
       await this.usersRepository.save(
         user,
@@ -189,8 +229,11 @@ export class AuthService {
 
     const payload = {
       id: user.id,
+
       email: user.email,
+
       role: user.role,
+
       profileCompleted:
         user.profileCompleted,
     };
@@ -200,32 +243,13 @@ export class AuthService {
         expiresIn: '1h',
       });
 
-    if (isNewUser) {
-      this.eventEmitter.emit(
-        'user.registered',
-
-        new UserRegisteredEvent(
-          user.id,
-          user.email,
-          user.name,
-        ),
-      );
-    }
-
-    this.eventEmitter.emit(
-      'user.logged-in',
-
-      new UserLoggedInEvent(
-        user.id,
-        user.email,
-        user.name,
-      ),
-    );
-
     return {
       id: user.id,
+
       role: user.role,
+
       login: true,
+
       access_token: token,
     };
   }

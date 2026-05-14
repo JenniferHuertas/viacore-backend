@@ -10,6 +10,10 @@ import { Meetings } from './entities/meeting.entity';
 
 import { TrainingRequests } from 'src/training-requests/entities/training-request.entity';
 
+import { Users } from 'src/users/entities/user.entity';
+
+import { EmailModule } from 'src/notifications/channels/email/email.module';
+
 @Module({
   controllers: [
     MeetingsController,
@@ -18,12 +22,13 @@ import { TrainingRequests } from 'src/training-requests/entities/training-reques
   providers: [MeetingsService],
 
   imports: [
-    TypeOrmModule.forFeature(
-      [
-        Meetings,
-        TrainingRequests,
-      ],
-    ),
+    TypeOrmModule.forFeature([
+      Meetings,
+      TrainingRequests,
+      Users,
+    ]),
+
+    EmailModule,
   ],
 })
 export class MeetingsModule {}
