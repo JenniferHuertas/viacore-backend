@@ -10,39 +10,53 @@ import { EmailService } from './email.service';
 
 @Module({
   imports: [
-    MailerModule.forRoot({
-      transport: {
-        host: process.env.MAIL_HOST,
+    MailerModule.forRootAsync({
+      useFactory: () => ({
+        transport: {
+          host: process.env.MAIL_HOST,
 
-        port: Number(process.env.MAIL_PORT),
+          port: Number(
+            process.env.MAIL_PORT,
+          ),
 
-        secure: false,
+          secure: false,
 
-        auth: {
-          user: process.env.MAIL_USER,
+          ignoreTLS: true,
 
-          pass: process.env.MAIL_PASSWORD,
+          connectionTimeout: 10000,
+
+          auth: {
+            user: process.env.MAIL_USER,
+
+            pass:
+              process.env.MAIL_PASSWORD,
+          },
         },
-      },
 
-      defaults: {
-        from: `"Via3" <${process.env.MAIL_USER}>`,
-      },
+        verifyTransporters: false,
 
-      template: {
-        dir: join(
-          process.cwd(),
-          process.env.NODE_ENV === 'production'
-            ? 'dist/notifications/channels/email/templates'
-            : 'src/notifications/channels/email/templates',
-        ),
-
-        adapter: new HandlebarsAdapter(),
-
-        options: {
-          strict: true,
+        defaults: {
+          from: `"ViaCore" <${process.env.MAIL_USER}>`,
         },
-      },
+
+        template: {
+          dir: join(
+            process.cwd(),
+
+            process.env.NODE_ENV ===
+              'production'
+              ? 'dist/templates'
+              : 'src/notifications/channels/email/templates',
+          ),
+
+          adapter:
+            new HandlebarsAdapter(),
+
+          options: {
+            strict: true,
+          },
+        },
+      }),
     }),
   ],
 

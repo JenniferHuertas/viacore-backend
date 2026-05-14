@@ -9,9 +9,6 @@ import {
 
 import { Users } from '../../users/entities/user.entity';
 
-import { NotificationChannel } from '../enums/notification-channel.enum';
-import { NotificationPriority } from '../enums/notification-priority.enum';
-import { NotificationStatus } from '../enums/notification-status.enum';
 import { NotificationType } from '../enums/notification-type.enum';
 
 @Entity('notifications')
@@ -37,59 +34,9 @@ export class Notification {
   type!: NotificationType;
 
   @Column({
-    type: 'enum',
-    enum: NotificationChannel,
-    array: true,
-    default: [],
-  })
-  channels!: NotificationChannel[];
-
-  @Column({
-    type: 'enum',
-    enum: NotificationPriority,
-    default: NotificationPriority.MEDIUM,
-  })
-  priority!: NotificationPriority;
-
-  @Column({
-    type: 'enum',
-    enum: NotificationStatus,
-    default: NotificationStatus.UNREAD,
-  })
-  status!: NotificationStatus;
-
-  @Column({
     default: false,
   })
   isRead!: boolean;
-
-  @Column({
-    nullable: true,
-  })
-  entityType?: string;
-
-  @Column({
-    nullable: true,
-  })
-  entityId?: string;
-
-  @Column({
-    type: 'jsonb',
-    nullable: true,
-  })
-  metadata?: Record<string, any>;
-
-  @Column({
-    type: 'timestamp',
-    nullable: true,
-  })
-  readAt?: Date;
-
-  @Column({
-    type: 'timestamp',
-    nullable: true,
-  })
-  expiresAt?: Date;
 
   @ManyToOne(
     () => Users,

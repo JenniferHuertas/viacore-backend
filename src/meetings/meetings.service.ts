@@ -1,25 +1,19 @@
 import {
   ConflictException,
   Injectable,
+  NotFoundException,
 } from '@nestjs/common';
-
 import { CreateMeetingDto } from './dto/create-meeting.dto';
-
 import { UpdateMeetingDto } from './dto/update-meeting.dto';
-
 import { InjectRepository } from '@nestjs/typeorm';
-
 import { Meetings } from './entities/meeting.entity';
-
 import { Repository } from 'typeorm';
-
 import { NotFoundError } from 'rxjs';
-
 import { MeetingStatus } from './entities/meetingStatus.entity';
-
 import { TrainingRequests } from 'src/training-requests/entities/training-request.entity';
-
 import { RequestStatus } from 'src/training-requests/enums/requests-status.enum';
+import { Users } from '../users/entities/user.entity';
+import { EmailService } from 'src/notifications/channels/email/email.service';
 
 @Injectable()
 export class MeetingsService {
@@ -31,6 +25,11 @@ export class MeetingsService {
       TrainingRequests,
     )
     private readonly trainingRequestsRepository: Repository<TrainingRequests>,
+
+    @InjectRepository(Users)
+    private readonly usersRepository: Repository<Users>,
+
+    private readonly emailService: EmailService,
   ) {}
 
   horarios = [
@@ -70,9 +69,15 @@ export class MeetingsService {
       );
 
     if (!request) {
-      throw new NotFoundError(
+      throw new NotFoundException(
         'Solicitud no encontrada',
       );
+    }
+    const userExists = await this.meetingsRepository.manager.getRepository(Users).findOne({
+      where: { id: createMeetingDto.targetUserId }
+    });
+    if (!userExists) {
+      throw new NotFoundException(`El usuario con ID ${createMeetingDto.targetUserId} no existe.`);
     }
 
     const newMeetingData = {
@@ -103,6 +108,22 @@ export class MeetingsService {
     await this.trainingRequestsRepository.save(
       request,
     );
+
+    const user =
+      await this.usersRepository.findOneBy({
+        id: createMeetingDto.targetUserId,
+      });
+
+    if (user) {
+      await this.emailService.sendMeetingCreated(
+        user.email,
+
+        user.companyName ||
+          user.name,
+
+        `${createMeetingDto.date} ${createMeetingDto.time}`,
+      );
+    }
 
     return meeting;
   }
