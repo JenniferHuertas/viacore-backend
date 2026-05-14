@@ -14,6 +14,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { TrainingRequests } from 'src/training-requests/entities/training-request.entity';
 import { Repository } from 'typeorm';
 import { PaymentStatus } from './enums/payment-status.enum';
+import { RequestStatus } from 'src/training-requests/enums/requests-status.enum';
 
 @Injectable()
 export class PaymentsService {
@@ -112,6 +113,14 @@ export class PaymentsService {
         payment.id,
         status as PaymentStatus,
       );
+
+      // Actualizo el estado de la trainingRequest
+      if (status === 'approved') {
+        await this.trainingRequestOrmRepository.update(
+          payment.trainingRequest.id,
+          { status: RequestStatus.CONFIRMED },
+        );
+      }
     }
     return { received: true, message: 'Pago recibido' };
   }
