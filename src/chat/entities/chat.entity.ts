@@ -25,7 +25,7 @@ export class ChatMessage {
   @Expose({ groups: ['get'] })
   @Column({
     type: 'enum',
-    enum: ['user', 'admin'],
+    enum: ['user', 'admin', 'assistant'],
     default: 'user',
   })
   role!: string;
@@ -38,10 +38,9 @@ export class ChatMessage {
   @CreateDateColumn()
   createdAt!: Date;
 
-  // Relaciones
-  @Expose({ groups: ['get'] })
-  @ManyToOne(() => Users, (user) => user.messagesSent)
-  sender!: Users;
+@Expose({ groups: ['get'] })
+  @ManyToOne(() => Users, (user) => user.messagesSent, { nullable: true }) 
+  sender?: Users;
 
   @Expose({ groups: ['get'] })
   @ManyToOne(() => Users, { nullable: true })
