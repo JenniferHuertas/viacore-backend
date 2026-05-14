@@ -15,6 +15,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
 import { MeetingsModule } from './meetings/meetings.module';
 import { TrainingRequestModule } from './training-requests/training-request.module';
+import { CalendlyModule } from './calendly/calendly.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { TrainingRequestModule } from './training-requests/training-request.modu
     }),
     MeetingsModule,
     TrainingRequestModule,
+    CalendlyModule,
   ],
   controllers: [AppController],
   providers: [AppService],
