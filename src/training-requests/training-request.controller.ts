@@ -16,9 +16,6 @@ import {
   SerializeOptions,
   ClassSerializerInterceptor,
 } from '@nestjs/common';
-import { TrainingRequestService } from './training-request.service';
-import { CreateTrainingRequestDto } from './dto/create-training-request.dto';
-import { UpdateTrainingRequestDto } from './dto/update-training-request.dto';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -28,21 +25,24 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { TrainingRequestService } from './training-request.service';
+import { FileResourceService } from '../file-resource/file-resource.service';
 import { AuthGuard } from '../auth/guards/auth.guard';
-import type { RequestWithUsers } from './interfaces/requests-payloads.interfaces';
-
-import { Role } from '../users/enums/roles.enum';
-
 import { RolesGuard } from 'src/auth/guards/roles.guard';
-
 import { Roles } from 'src/decorator/roles.decorator';
+import type { RequestWithUsers } from './interfaces/requests-payloads.interfaces';
 import type { PaginatedTrainingRequests } from './interfaces/requests-results.interface';
+import type { IUpdateTrainingRequest } from './interfaces/requests-data.interfaces';
+import { Role } from '../users/enums/roles.enum';
 import { RequestStatus } from './enums/requests-status.enum';
 import { TrainingRequests } from './entities/training-request.entity';
+import { CreateTrainingRequestDto } from './dto/create-training-request.dto';
+import { UpdateTrainingRequestDto } from './dto/update-training-request.dto';
 import { ChangeStatusDto } from './dto/status-training-request.dto';
-import type { IUpdateTrainingRequest } from './interfaces/requests-data.interfaces';
-import { FileResourceService } from '../file-resource/file-resource.service';
-import { FileInterceptor } from '@nestjs/platform-express';
+
+
+
 
 @ApiTags('Training Requests')
 @ApiBearerAuth('Bearer')
@@ -54,7 +54,7 @@ export class TrainingRequestController {
   constructor(
     private readonly trainingRequestService: TrainingRequestService,
     private readonly fileService: FileResourceService,
-  ) {}
+  ) { }
 
   @Post()
   @ApiOperation({ summary: 'Crea una nueva solicitud de capacitación' })
@@ -62,13 +62,13 @@ export class TrainingRequestController {
   async create(
     @Body() createTrainingRequestDto: CreateTrainingRequestDto,
     @Req() req: RequestWithUsers,
-  ): Promise<TrainingRequests> { 
+  ): Promise<TrainingRequests> {
     const userId = req.user.id;
     const requestInput = {
       participantsCount: createTrainingRequestDto.participantsCount,
       objectives: createTrainingRequestDto.objectives,
       context: createTrainingRequestDto.context,
-      training: { id: createTrainingRequestDto.trainingId } 
+      training: { id: createTrainingRequestDto.trainingId }
     };
     return await this.trainingRequestService.create(requestInput, userId);
   }
@@ -88,7 +88,6 @@ export class TrainingRequestController {
     req: RequestWithUsers,
   ) {
     const userId = req.user.id;
-
     return await this.trainingRequestService.findMyRequests(
       userId,
     );
@@ -118,7 +117,7 @@ export class TrainingRequestController {
   @ApiResponse({ status: 200, description: 'Solicitud encontrada.' })
   @ApiResponse({ status: 404, description: 'Solicitud no encontrada.' })
   async findOne(
-    @Param('id', ParseUUIDPipe) id: string 
+    @Param('id', ParseUUIDPipe) id: string
   ): Promise<TrainingRequests> {
     return await this.trainingRequestService.findOne(id);
   }
@@ -127,8 +126,9 @@ export class TrainingRequestController {
   @ApiOperation({ summary: 'Actualiza una solicitud de capacitación' })
   @ApiResponse({ status: 200, description: 'Solicitud actualizada con éxito.' })
   async update(
-    @Param('id', ParseUUIDPipe) id: string, 
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updateTrainingRequestDto: UpdateTrainingRequestDto,
+    @Req() req: RequestWithUsers
   ): Promise<TrainingRequests> {
     const requestInput: IUpdateTrainingRequest = {};
     if (updateTrainingRequestDto.participantsCount !== undefined) {
@@ -143,12 +143,12 @@ export class TrainingRequestController {
     if (updateTrainingRequestDto.trainingId !== undefined) {
       requestInput.training = { id: updateTrainingRequestDto.trainingId };
     }
-    return await this.trainingRequestService.update(id, requestInput);
+    return await this.trainingRequestService.update(id, requestInput, req.user);
   }
 
   @Patch(':id/status')
   @Roles(Role.Admin)
-  @UseGuards(RolesGuard) 
+  @UseGuards(RolesGuard)
   @ApiOperation({ summary: 'Actualizar el estado de una solicitud (Solo Admin)' })
   @ApiResponse({ status: 200, description: 'Estado actualizado correctamente.' })
   @ApiResponse({ status: 404, description: 'No se encontró la solicitud.' })
@@ -162,8 +162,11 @@ export class TrainingRequestController {
   @Delete(':id')
   @ApiOperation({ summary: 'Elimina lógicamente una solicitud (Soft Delete)' })
   @ApiResponse({ status: 200, description: 'Solicitud eliminada con éxito.' })
-  async remove(@Param('id', ParseUUIDPipe) id: string) {
-    return await this.trainingRequestService.remove(id);
+  async remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: RequestWithUsers
+  ) {
+    return await this.trainingRequestService.remove(id, req.user);
   }
 
   @Post(':id/upload-evidence')
@@ -187,14 +190,16 @@ export class TrainingRequestController {
   ) {
     await this.trainingRequestService.findOne(id);
     const savedFile = await this.fileService.uploadForEntity(
-      file, 
-      'trainingRequest', 
-      id, 
+      file,
+      'trainingRequest',
+      id,
       title || 'Evidencia de Solicitud'
     );
-    return { 
-      message: 'Archivo vinculado correctamente', 
-      file: savedFile 
+    return {
+      message: 'Archivo vinculado correctamente',
+      file: savedFile
     };
   }
 }
+
+

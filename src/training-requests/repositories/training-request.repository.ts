@@ -28,7 +28,7 @@ export class TrainingRequestRepository extends Repository<TrainingRequests> {
     const whereCondition = status ? { status: status } : {};
     return await this.findAndCount({
       where: whereCondition,
-      relations: ['user', 'training', 'files'],
+      relations: ['user', 'training', 'files', 'meetings'],
       order: {
         createdAt: 'DESC',
       },
@@ -42,7 +42,7 @@ export class TrainingRequestRepository extends Repository<TrainingRequests> {
   ): Promise<TrainingRequests | null> {
     return await this.findOne({
       where: { id },
-      relations: ['user', 'training', 'files'],
+      relations: ['user', 'training', 'files', 'meetings'],
     });
   }
 
@@ -51,7 +51,7 @@ export class TrainingRequestRepository extends Repository<TrainingRequests> {
       where: {
         user: { id: userId },
       },
-      relations: ['user', 'training', 'files'],
+      relations: ['user', 'training', 'files', 'meetings'],
       order: {
         createdAt: 'DESC',
       },
@@ -60,7 +60,7 @@ export class TrainingRequestRepository extends Repository<TrainingRequests> {
 
   async updateRequest(
     id: string,
-    data: IUpdateTrainingRequest,
+    data: IUpdateTrainingRequest & { estimatedPrice?: number }
   ): Promise<TrainingRequests | null> {
     await this.update(id, data);
     return await this.findRequestById(id);

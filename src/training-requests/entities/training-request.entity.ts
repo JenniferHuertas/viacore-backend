@@ -16,7 +16,8 @@ import { Users } from '../../users/entities/user.entity';
 import { RequestStatus } from '../enums/requests-status.enum';
 
 import { Training } from '../../training/entities/training.entity';
-import { FileResource } from 'src/file-resource/entities/file-resource.entity';
+import { FileResource } from '../../file-resource/entities/file-resource.entity';
+import { Meetings } from '../../meetings/entities/meeting.entity';
 
 @Entity({
   name: 'TRAINING_REQUESTS',
@@ -73,6 +74,10 @@ export class TrainingRequests {
   @Expose({ groups: ['Get'] })
   @OneToMany(() => FileResource, (file) => file.trainingRequest)
   files!: FileResource[];
+
+  @Expose({ groups: ['Get'] })
+  @OneToMany(() => Meetings, (meeting) => meeting.trainingRequest)
+  meetings!: Meetings[];
 
   /*@Expose({ groups: ['Get'] })
   @OneToMany(() => Payment, (payment) => payment.trainingRequest)
