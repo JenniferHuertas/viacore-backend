@@ -266,10 +266,6 @@ export class TrainingRequestService {
         request,
       );
 
-    // =========================
-    // EMAILS AUTOMÁTICOS
-    // =========================
-
     if (request.user?.email) {
 
       switch (newStatus) {
@@ -386,14 +382,14 @@ export class TrainingRequestService {
       }
     }
 
-    // =========================
-    // NOTIFICATIONS AUTOMÁTICAS
-    // =========================
-
     if (request.user?.id) {
 
       let notificationType:
         NotificationType;
+
+      let title = '';
+
+      let message = '';
 
       switch (newStatus) {
 
@@ -402,12 +398,24 @@ export class TrainingRequestService {
           notificationType =
             NotificationType.REQUEST_IN_REVIEW;
 
+          title =
+            'Solicitud en revisión';
+
+          message =
+            'Tu solicitud está siendo evaluada por el equipo de ViaCore.';
+
           break;
 
         case RequestStatus.AWAITING_PAYMENT:
 
           notificationType =
             NotificationType.REQUEST_AWAITING_PAYMENT;
+
+          title =
+            'Pago pendiente';
+
+          message =
+            'La capacitación fue aprobada y está esperando confirmación de pago.';
 
           break;
 
@@ -416,12 +424,24 @@ export class TrainingRequestService {
           notificationType =
             NotificationType.REQUEST_SCHEDULED;
 
+          title =
+            'Capacitación agendada';
+
+          message =
+            'Tu capacitación fue agendada correctamente.';
+
           break;
 
         case RequestStatus.CONFIRMED:
 
           notificationType =
             NotificationType.REQUEST_CONFIRMED;
+
+          title =
+            'Capacitación confirmada';
+
+          message =
+            'Tu capacitación fue confirmada exitosamente.';
 
           break;
 
@@ -430,12 +450,24 @@ export class TrainingRequestService {
           notificationType =
             NotificationType.REQUEST_CANCELLED;
 
+          title =
+            'Solicitud cancelada';
+
+          message =
+            'La solicitud fue cancelada.';
+
           break;
 
         default:
 
           notificationType =
             NotificationType.REQUEST_IN_REVIEW;
+
+          title =
+            'Actualización de solicitud';
+
+          message =
+            `El estado cambió a ${newStatus}`;
       }
 
       await this.notificationsService.create({
@@ -443,19 +475,23 @@ export class TrainingRequestService {
         type: notificationType,
 
         userId: request.user.id,
-      });
 
-      // =========================
-      // WEBSOCKET REALTIME
-      // =========================
+        title,
+
+        message,
+      });
 
       this.notificationsGateway.emitNotificationToUser(
         request.user.id,
         {
           type: notificationType,
-          title: 'Nueva notificación',
-          message: `Estado actualizado a ${newStatus}`,
+
+          title,
+
+          message,
+
           status: newStatus,
+
           requestId: request.id,
         },
       );
