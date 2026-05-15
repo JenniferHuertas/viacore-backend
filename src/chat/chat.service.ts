@@ -12,9 +12,16 @@ export class ChatService {
     private readonly geminiService: GeminiService,
   ) {}
 
-async createMessage(
-  data: ICreateChatMessage, userId?: string
-): Promise<ChatMessage> {
+  async createMessage(
+    data: ICreateChatMessage, userId?: string
+  ): Promise<ChatMessage> {
+    let contextForAi = "El usuario es un visitante anónimo. No tiene sesión iniciada.";
+    if (userId) {
+      const hasQuotes = false; 
+      contextForAi = hasQuotes 
+        ? "El usuario está logueado y tiene cotizaciones activas en el sistema." 
+        : "El usuario está logueado pero NO tiene cotizaciones aún.";
+    }
     const messagePayload: DeepPartial<ChatMessage> = {
       message: data.message,
       role: 'user',
@@ -25,7 +32,7 @@ async createMessage(
       receiver: data.receiverId ? { id: data.receiverId } : undefined,
     };
     await this.chatMessageRepository.saveMessage(messagePayload);
-    const aiResponseText = await this.geminiService.generateResponse(data.message);
+    const aiResponseText = await this.geminiService.generateResponse(data.message, contextForAi);
     const aiMessagePayload: DeepPartial<ChatMessage> = {
       message: aiResponseText,
       role: 'assistant',
