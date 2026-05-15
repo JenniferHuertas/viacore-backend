@@ -25,7 +25,7 @@ export class ChatMessage {
   @Expose({ groups: ['get'] })
   @Column({
     type: 'enum',
-    enum: ['user', 'admin', 'assitant'],
+    enum: ['user', 'admin', 'assistant'],
     default: 'user',
   })
   role!: string;
