@@ -13,19 +13,22 @@ import { NotificationType } from '../enums/notification-type.enum';
 
 @Entity('notifications')
 export class Notification {
+
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
   @Column({
     type: 'varchar',
     length: 255,
+    nullable: true,
   })
-  title!: string;
+  title?: string;
 
   @Column({
     type: 'text',
+    nullable: true,
   })
-  message!: string;
+  message?: string;
 
   @Column({
     type: 'enum',

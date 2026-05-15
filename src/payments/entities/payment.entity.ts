@@ -11,7 +11,7 @@ import { PaymentStatus } from '../enums/payment-status.enum';
 import { Users } from 'src/users/entities/user.entity';
 import { TrainingRequests } from 'src/training-requests/entities/training-request.entity';
 
-@Entity('payments')
+@Entity('PAYMENTS')
 export class Payment {
   @PrimaryGeneratedColumn('uuid')
   id!: string;

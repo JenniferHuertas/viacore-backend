@@ -84,7 +84,7 @@ export class NotificationsListener {
       message: `Tu solicitud fue aceptada`,
 
       type:
-        NotificationType.TRAINING_REQUEST_ACCEPTED,
+        NotificationType.REQUEST_CONFIRMED,
     });
   }
 
@@ -99,8 +99,7 @@ export class NotificationsListener {
       message: `Tu solicitud fue rechazada`,
 
       type:
-        NotificationType.TRAINING_REQUEST_REJECTED,
+        NotificationType.REQUEST_CANCELLED,
     });
   }
 }
-``

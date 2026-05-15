@@ -9,19 +9,27 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { TrainingRequests } from './entities/training-request.entity';
 
 import { TrainingRequestRepository } from './repositories/training-request.repository';
+
 import { FileResourceModule } from 'src/file-resource/file-resource.module';
 
 import { Users } from 'src/users/entities/user.entity';
 
 import { EmailModule } from 'src/notifications/channels/email/email.module';
 
+import { NotificationsModule } from 'src/notifications/notifications.module';
+
 @Module({
   imports: [
     TypeOrmModule.forFeature([
-      TrainingRequests, Users
+      TrainingRequests,
+      Users,
     ]),
+
     FileResourceModule,
+
     EmailModule,
+
+    NotificationsModule,
   ],
 
   controllers: [
