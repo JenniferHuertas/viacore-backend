@@ -34,6 +34,8 @@ import { NotificationsService } from 'src/notifications/notifications.service';
 
 import { NotificationType } from 'src/notifications/enums/notification-type.enum';
 
+import { NotificationsGateway } from 'src/notifications/gateways/notifications.gateway';
+
 @Injectable()
 export class TrainingRequestService {
   constructor(
@@ -45,6 +47,8 @@ export class TrainingRequestService {
     private readonly emailService: EmailService,
 
     private readonly notificationsService: NotificationsService,
+
+    private readonly notificationsGateway: NotificationsGateway,
   ) {}
 
   async create(
@@ -262,10 +266,6 @@ export class TrainingRequestService {
         request,
       );
 
-    // =========================
-    // EMAILS AUTOMÁTICOS
-    // =========================
-
     if (request.user?.email) {
 
       switch (newStatus) {
@@ -382,33 +382,119 @@ export class TrainingRequestService {
       }
     }
 
-    // =========================
-    // NOTIFICATIONS AUTOMÁTICAS
-    // =========================
-
     if (request.user?.id) {
 
-      let notificationType =
-        NotificationType.TRAINING_REQUEST_ACCEPTED;
+      let notificationType:
+        NotificationType;
 
-      if (
-        newStatus === RequestStatus.CANCELLED
-      ) {
-        notificationType =
-          NotificationType.TRAINING_REQUEST_REJECTED;
+      let title = '';
+
+      let message = '';
+
+      switch (newStatus) {
+
+        case RequestStatus.IN_REVIEW:
+
+          notificationType =
+            NotificationType.REQUEST_IN_REVIEW;
+
+          title =
+            'Solicitud en revisión';
+
+          message =
+            'Tu solicitud está siendo evaluada por el equipo de ViaCore.';
+
+          break;
+
+        case RequestStatus.AWAITING_PAYMENT:
+
+          notificationType =
+            NotificationType.REQUEST_AWAITING_PAYMENT;
+
+          title =
+            'Pago pendiente';
+
+          message =
+            'La capacitación fue aprobada y está esperando confirmación de pago.';
+
+          break;
+
+        case RequestStatus.SCHEDULED:
+
+          notificationType =
+            NotificationType.REQUEST_SCHEDULED;
+
+          title =
+            'Capacitación agendada';
+
+          message =
+            'Tu capacitación fue agendada correctamente.';
+
+          break;
+
+        case RequestStatus.CONFIRMED:
+
+          notificationType =
+            NotificationType.REQUEST_CONFIRMED;
+
+          title =
+            'Capacitación confirmada';
+
+          message =
+            'Tu capacitación fue confirmada exitosamente.';
+
+          break;
+
+        case RequestStatus.CANCELLED:
+
+          notificationType =
+            NotificationType.REQUEST_CANCELLED;
+
+          title =
+            'Solicitud cancelada';
+
+          message =
+            'La solicitud fue cancelada.';
+
+          break;
+
+        default:
+
+          notificationType =
+            NotificationType.REQUEST_IN_REVIEW;
+
+          title =
+            'Actualización de solicitud';
+
+          message =
+            `El estado cambió a ${newStatus}`;
       }
 
       await this.notificationsService.create({
 
-        title: 'Estado actualizado',
-
-        message:
-          `Tu solicitud cambió a estado ${newStatus}`,
-
         type: notificationType,
 
         userId: request.user.id,
+
+        title,
+
+        message,
       });
+
+      this.notificationsGateway.emitNotificationToUser(
+        request.user.id,
+        {
+          type: notificationType,
+
+          title,
+
+          message,
+
+          status: newStatus,
+
+          requestId: request.id,
+        },
+      );
     }
 
     return updatedRequest;
