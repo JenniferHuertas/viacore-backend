@@ -7,11 +7,14 @@ import {
   Headers,
   Query,
   BadRequestException,
+  UseGuards,
 } from '@nestjs/common';
 import { PaymentsService } from './payments.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
+import { ApiBearerAuth } from '@nestjs/swagger';
+import { AuthGuard } from 'src/auth/guards/auth.guard';
 
 @Controller('payments')
 export class PaymentsController {
@@ -21,16 +24,22 @@ export class PaymentsController {
   ) {}
 
   @Get('user/:userId')
+  @ApiBearerAuth('Bearer')
+  @UseGuards(AuthGuard)
   findByUserId(@Param('userId') userId: string) {
     return this.paymentsService.findByUserId(userId);
   }
 
   @Get(':id')
+  @ApiBearerAuth('Bearer')
+  @UseGuards(AuthGuard)
   findById(@Param('id') id: string) {
     return this.paymentsService.findById(id);
   }
 
   @Post('create-preference')
+  @ApiBearerAuth('Bearer')
+  @UseGuards(AuthGuard)
   createPreference(@Body() dto: CreatePaymentDto) {
     return this.paymentsService.createPreference(dto);
   }
