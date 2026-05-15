@@ -112,14 +112,9 @@ export class Training {
   updatedAt!: Date;
 
   @OneToMany(() => TrainingRequests, (request) => request.training, {
-     eager: false,
+    eager: false,
   })
-  // @ApiProperty({
-  //   description: 'Solicitudes de capacitación asociadas a este training',
-  //   type: () => TrainingRequest,
-  //   isArray: true,
-  // })
-   trainingRequests!: TrainingRequests[];
+  trainingRequests!: TrainingRequests[];
 
   @OneToOne(() => FileResource, (file) => file.training, {
     eager: false,

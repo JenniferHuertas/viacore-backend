@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -21,9 +22,17 @@ import type {
   IUpdateTrainingRequest,
 } from './interfaces/requests-data.interfaces';
 
-import { Users } from 'src/users/entities/user.entity';
+import { Users } from '../users/entities/user.entity';
+
+import { Role } from 'src/auth/roles.enum';
+
+import type { UserPayloads } from './interfaces/requests-payloads.interfaces';
 
 import { EmailService } from 'src/notifications/channels/email/email.service';
+
+import { NotificationsService } from 'src/notifications/notifications.service';
+
+import { NotificationType } from 'src/notifications/enums/notification-type.enum';
 
 @Injectable()
 export class TrainingRequestService {
@@ -34,15 +43,31 @@ export class TrainingRequestService {
     private readonly usersRepository: Repository<Users>,
 
     private readonly emailService: EmailService,
+
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async create(
     data: ICreateTrainingRequest,
     userId: string,
   ): Promise<TrainingRequests> {
-    const request =
+    let price = 0;
+
+    if (data.participantsCount <= 10) {
+      price = 250000;
+    } else if (data.participantsCount <= 20) {
+      price = 500000;
+    } else if (data.participantsCount <= 50) {
+      price = 1000000;
+    } else {
+      price = 1500000;
+    }
+
+    const newRequest =
       await this.repository.createRequests({
         ...data,
+
+        estimatedPrice: price,
 
         user: { id: userId },
       });
@@ -59,7 +84,7 @@ export class TrainingRequestService {
       );
     }
 
-    return request;
+    return newRequest;
   }
 
   async findAll(
@@ -114,7 +139,7 @@ export class TrainingRequestService {
 
   async findMyRequests(
     userId: string,
-  ) {
+  ): Promise<TrainingRequests[]> {
     return await this.repository.findMyRequests(
       userId,
     );
@@ -123,11 +148,22 @@ export class TrainingRequestService {
   async update(
     id: string,
     data: IUpdateTrainingRequest,
+    currentUser: UserPayloads,
   ): Promise<TrainingRequests> {
     const existingRequest =
       await this.findOne(id);
 
     if (
+      currentUser.role !== Role.Admin &&
+      existingRequest.user.id !== currentUser.id
+    ) {
+      throw new ForbiddenException(
+        'No tienes permiso para editar esta solicitud.',
+      );
+    }
+
+    if (
+      currentUser.role !== Role.Admin &&
       existingRequest.status !==
         RequestStatus.PENDING &&
       existingRequest.status !==
@@ -135,15 +171,41 @@ export class TrainingRequestService {
     ) {
       throw new BadRequestException(
         `No se puede modificar esta solicitud porque su estado actual es 
-        "${existingRequest.status}". Si necesitas realizar cambios, 
-        por favor crea una nueva solicitud.`,
+        "${existingRequest.status}". Si necesitas realizar cambios, por favor
+         crea una nueva solicitud.`,
       );
+    }
+
+    const updatePayload:
+      IUpdateTrainingRequest & {
+        estimatedPrice?: number;
+      } = {
+      ...data,
+    };
+
+    if (
+      data.participantsCount &&
+      data.participantsCount !==
+        existingRequest.participantsCount
+    ) {
+      let price = 0;
+
+      if (data.participantsCount <= 10)
+        price = 250000;
+      else if (data.participantsCount <= 20)
+        price = 500000;
+      else if (data.participantsCount <= 50)
+        price = 1000000;
+      else price = 1500000;
+
+      updatePayload.estimatedPrice =
+        price;
     }
 
     const updatedRequest =
       await this.repository.updateRequest(
         id,
-        data,
+        updatePayload,
       );
 
     if (!updatedRequest) {
@@ -195,8 +257,196 @@ export class TrainingRequestService {
 
     request.status = newStatus;
 
-    return await this.repository.saveRequest(
+    const updatedRequest =
+      await this.repository.saveRequest(
+        request,
+      );
+
+    // =========================
+    // EMAILS AUTOMÁTICOS
+    // =========================
+
+    if (request.user?.email) {
+
+      switch (newStatus) {
+
+        case RequestStatus.IN_REVIEW:
+
+          await this.emailService.sendEmail(
+
+            request.user.email,
+
+            'Solicitud en revisión',
+
+            `
+            <h2>
+              Tu solicitud está en revisión
+            </h2>
+
+            <p>
+              El equipo de ViaCore está
+              evaluando tu capacitación.
+            </p>
+            `,
+          );
+
+          break;
+
+        case RequestStatus.AWAITING_PAYMENT:
+
+          await this.emailService.sendEmail(
+
+            request.user.email,
+
+            'Pago pendiente',
+
+            `
+            <h2>
+              Tu solicitud requiere un pago
+            </h2>
+
+            <p>
+              La capacitación fue aprobada
+              y está esperando confirmación
+              de pago.
+            </p>
+            `,
+          );
+
+          break;
+
+        case RequestStatus.SCHEDULED:
+
+          await this.emailService.sendEmail(
+
+            request.user.email,
+
+            'Capacitación agendada',
+
+            `
+            <h2>
+              Tu capacitación fue agendada
+            </h2>
+
+            <p>
+              Pronto recibirás más información
+              sobre la reunión.
+            </p>
+            `,
+          );
+
+          break;
+
+        case RequestStatus.CONFIRMED:
+
+          await this.emailService.sendEmail(
+
+            request.user.email,
+
+            'Capacitación confirmada',
+
+            `
+            <h2>
+              Tu capacitación fue confirmada
+            </h2>
+
+            <p>
+              El proceso fue confirmado
+              correctamente.
+            </p>
+            `,
+          );
+
+          break;
+
+        case RequestStatus.CANCELLED:
+
+          await this.emailService.sendEmail(
+
+            request.user.email,
+
+            'Solicitud cancelada',
+
+            `
+            <h2>
+              Tu solicitud fue cancelada
+            </h2>
+
+            <p>
+              La capacitación fue cancelada.
+            </p>
+            `,
+          );
+
+          break;
+      }
+    }
+
+    // =========================
+    // NOTIFICATIONS AUTOMÁTICAS
+    // =========================
+
+    if (request.user?.id) {
+
+      let notificationType =
+        NotificationType.TRAINING_REQUEST_ACCEPTED;
+
+      if (
+        newStatus === RequestStatus.CANCELLED
+      ) {
+        notificationType =
+          NotificationType.TRAINING_REQUEST_REJECTED;
+      }
+
+      await this.notificationsService.create({
+
+        title: 'Estado actualizado',
+
+        message:
+          `Tu solicitud cambió a estado ${newStatus}`,
+
+        type: notificationType,
+
+        userId: request.user.id,
+      });
+    }
+
+    return updatedRequest;
+  }
+
+  async remove(
+    id: string,
+    currentUser: UserPayloads,
+  ): Promise<{ message: string }> {
+    const request =
+      await this.findOne(id);
+
+    if (
+      currentUser.role !== Role.Admin &&
+      request.user.id !== currentUser.id
+    ) {
+      throw new ForbiddenException(
+        'No tienes permiso para eliminar esta solicitud.',
+      );
+    }
+
+    if (
+      currentUser.role !== Role.Admin &&
+      request.status !==
+        RequestStatus.PENDING
+    ) {
+      throw new BadRequestException(
+        `No puedes eliminar esta solicitud porque su estado es 
+        "${request.status}". Si necesitas cancelarla, contacta a soporte.`,
+      );
+    }
+
+    await this.repository.softRemove(
       request,
     );
+
+    return {
+      message: `La solicitud con id ${id} ha sido eliminada correctamente.`,
+    };
   }
 }

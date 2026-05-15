@@ -5,23 +5,29 @@ import {
   OneToOne,
   CreateDateColumn,
   UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 import { Training } from '../../training/entities/training.entity';
-//import { TrainingRequest } from '../training-request/training-request.entity';
+import { TrainingRequests } from '../../training-requests/entities/training-request.entity';
+
 
 @Entity('FILE_RESOURCE')
 export class FileResource {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  title: string;
+  title!: string;
 
   @Column()
-  fileUrl: string;
+  fileUrl!: string;
 
   @Column()
-  fileType: string;
+  fileType!: string;
+
+  @Column({ type: 'uuid', nullable: true })
+  trainingRequestId?: string;
 
   // 1–1 con Training (material / imagen)
   @OneToOne(() => Training, (training) => training.fileResource, {
@@ -30,20 +36,13 @@ export class FileResource {
   })
   training?: Training;
 
-  // 0–1 con TrainingRequest (documento adjunto)
-  /*@OneToOne(
-    () => TrainingRequest,
-    (trainingRequest) => trainingRequest.file,
-    {
-      nullable: true,
-      onDelete: 'CASCADE',
-    },
-  )
-  trainingRequest?: TrainingRequest;*/
+  @ManyToOne(() => TrainingRequests, (request) => request.files, { nullable: true, onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'trainingRequestId' })
+  trainingRequest?: TrainingRequests;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 }
