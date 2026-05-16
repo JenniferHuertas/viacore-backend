@@ -106,7 +106,7 @@ async function bootstrap() {
       'http://localhost:3000',
 
       'https://estudio-via3-frontend.vercel.app',
-      'https://estudio-via3-frontend-git-develop-estudio-via-3-s-projects.vercel.app/',
+      'https://estudio-via3-frontend-git-develop-estudio-via-3-s-projects.vercel.app',
     ],
 
     credentials: true,
