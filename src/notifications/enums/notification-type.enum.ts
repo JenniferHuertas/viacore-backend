@@ -26,4 +26,8 @@ export enum NotificationType {
 
   REQUEST_CANCELLED =
     'REQUEST_CANCELLED',
+
+  CONTACT_MESSAGE_CREATED = 
+    "CONTACT_MESSAGE_CREATED",
 }
+
