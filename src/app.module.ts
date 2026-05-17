@@ -35,6 +35,7 @@ import { TrainingRequestModule } from './training-requests/training-request.modu
 import { NotificationsModule } from './notifications/notifications.module';
 import { PaymentsModule } from './payments/payments.module';
 import { ChatModule } from './chat/chat.module';
+import { BullModule } from '@nestjs/bull';
 
 @Module({
   imports: [
@@ -76,9 +77,7 @@ import { ChatModule } from './chat/chat.module';
     BullModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
-        connection: {
-          url: config.get('REDIS_URL'),
-        },
+        redis: config.get('REDIS_URL') as string,
       }),
     }),
     NotificationsModule,
