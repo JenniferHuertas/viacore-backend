@@ -72,10 +72,12 @@ export class EmailService {
     email: string,
     companyName: string,
     meetingDate: string,
+    meetingLink: string,
   ) {
     const html = this.compileTemplate('meeting-created', {
       companyName,
       meetingDate,
+      meetingLink,
     });
     await this.sendEmail(email, 'Reunión agendada', html);
   }

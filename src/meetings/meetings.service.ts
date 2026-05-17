@@ -122,6 +122,8 @@ export class MeetingsService {
           user.name,
 
         `${createMeetingDto.date} ${createMeetingDto.time}`,
+
+        meeting.link,
       );
     }
 
