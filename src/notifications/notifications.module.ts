@@ -10,6 +10,8 @@ import { Notification } from './entities/notification.entity';
 
 import { NotificationsGateway } from './gateways/notifications.gateway';
 
+import { EmailService } from './channels/email/email.service';
+
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -23,12 +25,18 @@ import { NotificationsGateway } from './gateways/notifications.gateway';
 
   providers: [
     NotificationsService,
+
     NotificationsGateway,
+
+    EmailService,
   ],
 
   exports: [
     NotificationsService,
+
     NotificationsGateway,
+
+    EmailService,
   ],
 })
 export class NotificationsModule {}
