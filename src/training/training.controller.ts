@@ -7,6 +7,7 @@ import {
   ParseUUIDPipe,
   Post,
   Put,
+  Query,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -26,8 +27,10 @@ export class TrainingController {
   constructor(private readonly trainingService: TrainingService) {}
 
   @Get()
-  getAllTraining() {
-    return this.trainingService.getAllTraining();
+  getAllTraining(
+    @Query('status') status?: string
+  ) {
+    return this.trainingService.getAllTraining(status);
   }
 
   @Get(':id')
