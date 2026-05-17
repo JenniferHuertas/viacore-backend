@@ -103,14 +103,11 @@ async function bootstrap() {
 
   app.enableCors({
     origin: [
-      'http://localhost:3000',
-
-      'https://estudio-via3-frontend.vercel.app',
-      'https://estudio-via3-frontend-git-develop-estudio-via-3-s-projects.vercel.app',
-    ],
-
+    'http://localhost:3000',
+    'https://estudio-via3-frontend.vercel.app',
+  ],
     credentials: true,
-  });
+});
 
   app.useGlobalFilters(
     new TypeOrmExceptionFilter(),

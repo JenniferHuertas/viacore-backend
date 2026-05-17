@@ -25,7 +25,6 @@ export class AuthController {
   @Get('google')
   @UseGuards(GoogleAuthGuard)
   googleLogin() {
-    // Passport redirige automáticamente a Google
   }
 
   @Get('google/callback')
@@ -37,14 +36,14 @@ export class AuthController {
     const login= req.user.login;
         
     return res.redirect(
-      `https://estudio-via3-frontend.vercel.app/autenticacion/autenticacion-google?token=${token}&login=${login}`,
+      `${process.env.FRONTEND_URL}/autenticacion/autenticacion-google?token=${token}&login=${login}`,
     );
   } catch {
     return res.redirect(
-      'https://estudio-via3-frontend.vercel.app/login?error=google',
+      `${process.env.FRONTEND_URL}/login?error=google`,
     );
   }
-  }
+}
 
   @Post('signup')
   @UseInterceptors(ClassSerializerInterceptor)

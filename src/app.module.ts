@@ -73,6 +73,14 @@ import { ChatModule } from './chat/chat.module';
     MeetingsModule,
 
     TrainingRequestModule,
+    BullModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        connection: {
+          url: config.get('REDIS_URL'),
+        },
+      }),
+    }),
     NotificationsModule,
     PaymentsModule,
     ChatModule,
