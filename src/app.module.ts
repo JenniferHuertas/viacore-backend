@@ -41,6 +41,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { PaymentsModule } from './payments/payments.module';
 
 import { ChatModule } from './chat/chat.module';
+import { BullModule } from '@nestjs/bull';
 
 import { ContactModule } from './contact/contact.module';
 
@@ -84,7 +85,12 @@ import { ContactModule } from './contact/contact.module';
     MeetingsModule,
 
     TrainingRequestModule,
-
+    BullModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        redis: config.get('REDIS_URL') as string,
+      }),
+    }),
     NotificationsModule,
 
     PaymentsModule,

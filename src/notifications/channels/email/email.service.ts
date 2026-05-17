@@ -141,46 +141,26 @@ export class EmailService {
     email: string,
     companyName: string,
     meetingDate: string,
+    meetingLink: string,
   ) {
-    const html =
-      this.compileTemplate(
-        'meeting-created',
-        {
-          companyName,
-          meetingDate,
-        },
-      );
-
-    await this.sendEmail(
-      email,
-      'Reunión agendada',
-      html,
-    );
+    const html = this.compileTemplate('meeting-created', {
+      companyName,
+      meetingDate,
+      meetingLink,
+    });
+    await this.sendEmail(email, 'Reunión agendada', html);
   }
 
   async sendContactConfirmation(
     email: string,
     nombre: string,
   ) {
-    const html =
-      this.compileTemplate(
-        'contact-confirmation',
-        {
-          nombre,
-
-          platformUrl:
-            process.env.PLATFORM_URL ??
-            'https://viacore.com',
-
-          year:
-            new Date().getFullYear(),
-        },
-      );
-
-    await this.sendEmail(
-      email,
-      'Recibimos tu consulta',
-      html,
-    );
+    const html = this.compileTemplate('contact-confirmation', {
+      nombre,
+      platformUrl: process.env.PLATFORM_URL ?? 'https://viacore.com',
+      year: new Date().getFullYear(),
+    });
+    await this.sendEmail(email, 'Recibimos tu consulta', html);
+  }
   }
 }
