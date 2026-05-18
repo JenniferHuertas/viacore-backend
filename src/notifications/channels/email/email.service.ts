@@ -1,7 +1,11 @@
 import { Injectable } from '@nestjs/common';
+
 import axios from 'axios';
+
 import * as handlebars from 'handlebars';
+
 import * as fs from 'fs';
+
 import * as path from 'path';
 
 @Injectable()
@@ -38,6 +42,7 @@ export class EmailService {
         {
           sender: {
             name: 'ViaCore',
+
             email:
               'danielmauriciomedina95@gmail.com',
           },
@@ -108,6 +113,13 @@ export class EmailService {
         {
           fullName,
           amount,
+
+          platformUrl:
+            process.env.PLATFORM_URL ??
+            'https://viacore.com',
+
+          year:
+            new Date().getFullYear(),
         },
       );
 
@@ -127,6 +139,13 @@ export class EmailService {
         'training-request-created',
         {
           companyName,
+
+          platformUrl:
+            process.env.PLATFORM_URL ??
+            'https://viacore.com',
+
+          year:
+            new Date().getFullYear(),
         },
       );
 
@@ -148,6 +167,13 @@ export class EmailService {
         {
           companyName,
           meetingDate,
+
+          platformUrl:
+            process.env.PLATFORM_URL ??
+            'https://viacore.com',
+
+          year:
+            new Date().getFullYear(),
         },
       );
 
@@ -180,6 +206,136 @@ export class EmailService {
     await this.sendEmail(
       email,
       'Recibimos tu consulta',
+      html,
+    );
+  }
+
+  async sendTrainingInReview(
+    email: string,
+    companyName: string,
+  ) {
+    const html =
+      this.compileTemplate(
+        'training-in-review',
+        {
+          companyName,
+
+          platformUrl:
+            process.env.PLATFORM_URL ??
+            'https://viacore.com',
+
+          year:
+            new Date().getFullYear(),
+        },
+      );
+
+    await this.sendEmail(
+      email,
+      'Solicitud en revisión',
+      html,
+    );
+  }
+
+  async sendTrainingAwaitingPayment(
+    email: string,
+    companyName: string,
+  ) {
+    const html =
+      this.compileTemplate(
+        'training-awaiting-payment',
+        {
+          companyName,
+
+          platformUrl:
+            process.env.PLATFORM_URL ??
+            'https://viacore.com',
+
+          year:
+            new Date().getFullYear(),
+        },
+      );
+
+    await this.sendEmail(
+      email,
+      'Pago pendiente',
+      html,
+    );
+  }
+
+  async sendTrainingScheduled(
+    email: string,
+    companyName: string,
+  ) {
+    const html =
+      this.compileTemplate(
+        'training-scheduled',
+        {
+          companyName,
+
+          platformUrl:
+            process.env.PLATFORM_URL ??
+            'https://viacore.com',
+
+          year:
+            new Date().getFullYear(),
+        },
+      );
+
+    await this.sendEmail(
+      email,
+      'Capacitación agendada',
+      html,
+    );
+  }
+
+  async sendTrainingConfirmed(
+    email: string,
+    companyName: string,
+  ) {
+    const html =
+      this.compileTemplate(
+        'training-confirmed',
+        {
+          companyName,
+
+          platformUrl:
+            process.env.PLATFORM_URL ??
+            'https://viacore.com',
+
+          year:
+            new Date().getFullYear(),
+        },
+      );
+
+    await this.sendEmail(
+      email,
+      'Capacitación confirmada',
+      html,
+    );
+  }
+
+  async sendTrainingCancelled(
+    email: string,
+    companyName: string,
+  ) {
+    const html =
+      this.compileTemplate(
+        'training-cancelled',
+        {
+          companyName,
+
+          platformUrl:
+            process.env.PLATFORM_URL ??
+            'https://viacore.com',
+
+          year:
+            new Date().getFullYear(),
+        },
+      );
+
+    await this.sendEmail(
+      email,
+      'Solicitud cancelada',
       html,
     );
   }
