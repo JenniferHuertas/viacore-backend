@@ -15,68 +15,152 @@ export class EmailService {
       'templates',
       `${templateName}.hbs`,
     );
-    const source = fs.readFileSync(templatePath, 'utf8');
-    const template = handlebars.compile(source);
+
+    const source = fs.readFileSync(
+      templatePath,
+      'utf8',
+    );
+
+    const template =
+      handlebars.compile(source);
+
     return template(context);
   }
 
-  async sendEmail(to: string, subject: string, htmlContent: string) {
+  async sendEmail(
+    to: string,
+    subject: string,
+    htmlContent: string,
+  ) {
     try {
       await axios.post(
         'https://api.brevo.com/v3/smtp/email',
         {
           sender: {
             name: 'ViaCore',
-            email: 'danielmauriciomedina95@gmail.com',
+            email:
+              'danielmauriciomedina95@gmail.com',
           },
+
           to: [{ email: to }],
+
           subject,
+
           htmlContent,
         },
         {
           headers: {
-            'api-key': process.env.BREVO_API_KEY,
-            'Content-Type': 'application/json',
+            'api-key':
+              process.env.BREVO_API_KEY,
+
+            'Content-Type':
+              'application/json',
           },
         },
       );
-      console.log(`EMAIL ENVIADO A ${to}`);
+
+      console.log(
+        `EMAIL ENVIADO A ${to}`,
+      );
     } catch (error: any) {
       console.error(
         'ERROR ENVIANDO EMAIL',
-        error.response?.data || error.message,
+        error.response?.data ||
+          error.message,
       );
     }
   }
 
-  async sendWelcomeEmail(email: string, fullName: string) {
-    const html = this.compileTemplate('welcome', {
-      fullName,
-      platformUrl: process.env.PLATFORM_URL ?? 'https://viacore.com',
-      year: new Date().getFullYear(),
-    });
-    await this.sendEmail(email, 'Bienvenido a ViaCore', html);
+  async sendWelcomeEmail(
+    email: string,
+    fullName: string,
+  ) {
+    const html =
+      this.compileTemplate(
+        'welcome',
+        {
+          fullName,
+
+          platformUrl:
+            process.env.PLATFORM_URL ??
+            'https://viacore.com',
+
+          year:
+            new Date().getFullYear(),
+        },
+      );
+
+    await this.sendEmail(
+      email,
+      'Bienvenido a ViaCore',
+      html,
+    );
   }
 
-  async sendPaymentApproved(email: string, fullName: string, amount: number) {
-    const html = this.compileTemplate('payment-approved', { fullName, amount });
-    await this.sendEmail(email, 'Pago aprobado', html);
+  async sendPaymentApproved(
+    email: string,
+    fullName: string,
+    amount: number,
+  ) {
+    const html =
+      this.compileTemplate(
+        'payment-approved',
+        {
+          fullName,
+          amount,
+        },
+      );
+
+    await this.sendEmail(
+      email,
+      'Pago aprobado',
+      html,
+    );
   }
 
-  async sendTrainingRequestCreated(email: string, companyName: string) {
-    const html = this.compileTemplate('training-request-created', { companyName });
-    await this.sendEmail(email, 'Nueva solicitud de capacitación', html);
+  async sendTrainingRequestCreated(
+    email: string,
+    companyName: string,
+  ) {
+    const html =
+      this.compileTemplate(
+        'training-request-created',
+        {
+          companyName,
+        },
+      );
+
+    await this.sendEmail(
+      email,
+      'Nueva solicitud de capacitación',
+      html,
+    );
   }
 
   async sendMeetingCreated(
     email: string,
     companyName: string,
     meetingDate: string,
+    meetingLink: string,
   ) {
     const html = this.compileTemplate('meeting-created', {
       companyName,
       meetingDate,
+      meetingLink,
     });
     await this.sendEmail(email, 'Reunión agendada', html);
+  }
+
+  async sendContactConfirmation(
+    email: string,
+    nombre: string,
+  ) {
+    const html = this.compileTemplate('contact-confirmation', {
+      nombre,
+      platformUrl: process.env.PLATFORM_URL ?? 'https://viacore.com',
+      year: new Date().getFullYear(),
+    });
+    await this.sendEmail(email, 'Recibimos tu consulta', html);
+  }
   }
 }

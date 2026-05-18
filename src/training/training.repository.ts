@@ -24,7 +24,9 @@ export class TrainingRepository {
 
   async getAllTraining() {
     const training = await this.trainingOrmRepository.find({
-      where: { isActive: true },
+      where: { 
+        isActive: true,
+       },
       relations: {
         fileResource: true,
       },

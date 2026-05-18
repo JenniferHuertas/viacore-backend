@@ -19,16 +19,23 @@ export class UsersService {
   constructor(
     @InjectRepository(Users)
     private readonly usersRepository: Repository<Users>,
-  ) {}
+  ) { }
 
   async findAll(
     page: number = 1,
     limit: number = 5,
   ) {
-    return await this.usersRepository.find({
+    const [usuarios, total] = await this.usersRepository.findAndCount({
       skip: (page - 1) * limit,
       take: limit,
+      order: { id: 'DESC' }
     });
+    return {
+      data: usuarios,
+      total: total,
+      totalPages: Math.ceil(total / limit),
+      currentPage: page
+    };
   }
 
   async findOne(id: string) {
