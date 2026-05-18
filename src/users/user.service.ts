@@ -7,14 +7,11 @@ import { Repository } from 'typeorm';
 import { Users } from './entities/user.entity';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { CompleteProfileDto } from './dto/create-user.dto';
-import { JwtService } from '@nestjs/jwt';
-
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(Users)
     private readonly usersRepository: Repository<Users>,
-    private readonly jwtService: JwtService,
   ) { }
   async findAll(
     page: number = 1,
@@ -47,7 +44,7 @@ export class UsersService {
       });
     if (!user) {
       throw new NotFoundException(
-        `User with id ${id} not found`,
+        User with id ${id} not found,
       );
     }
     await this.usersRepository.update(
@@ -58,37 +55,27 @@ export class UsersService {
       id,
     });
   }
-   async completeProfile(
+  async completeProfile(
     id: string,
     completeProfileDto: CompleteProfileDto,
   ) {
-    const user = await this.usersRepository.findOneBy({ id });
+    const user =
+      await this.usersRepository.findOneBy({
+        id,
+      });
     if (!user) {
-      throw new NotFoundException(`User with id ${id} not found`);
+      throw new NotFoundException(
+        User with id ${id} not found,
+      );
     }
-
     await this.usersRepository.update(id, {
       ...completeProfileDto,
       profileCompleted: true,
     });
-
-    const updatedUser = await this.usersRepository.findOneBy({ id });
-
-    const payload = {
-      id: updatedUser.id,
-      email: updatedUser.email,
-      role: updatedUser.role,
-      profileCompleted: updatedUser.profileCompleted,
-    };
-
-    const access_token = this.jwtService.sign(payload, { expiresIn: '1h' });
-
-    return {
-      ...updatedUser,
-      access_token, // ← nuevo token con profileCompleted: true
-    };
+    return await this.usersRepository.findOneBy({
+      id,
+    });
   }
-}
   async remove(id: string) {
     const user =
       await this.usersRepository.findOneBy({
@@ -96,14 +83,14 @@ export class UsersService {
       });
     if (!user) {
       throw new NotFoundException(
-        `User with id ${id} not found`,
+        User with id ${id} not found,
       );
     }
     await this.usersRepository.update(id, {
       isActive: false,
     });
     return {
-      message: `User with id ${id} deactivated successfully`,
+      message: User with id ${id} deactivated successfully,
     };
   }
 }
