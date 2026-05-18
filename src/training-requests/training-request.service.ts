@@ -225,18 +225,10 @@ export class TrainingRequestService {
     id: string,
     newStatus: RequestStatus,
   ): Promise<TrainingRequests> {
-    const request =
-      await this.findOne(id);
-
-    if (
-      request.status ===
-      RequestStatus.CANCELLED
-    ) {
-      throw new BadRequestException(
-        'No se puede modificar una solicitud que ya fue cancelada.',
-      );
+    const request = await this.findOne(id);
+    if (request.status === RequestStatus.CANCELLED) {
+      throw new BadRequestException('No se puede modificar una solicitud que ya fue cancelada.');
     }
-
     if (
       request.status ===
         RequestStatus.SCHEDULED &&
@@ -249,20 +241,13 @@ export class TrainingRequestService {
         'La capacitación ya está agendada. Solo se permite cancelarla o pasarla a Esperando Pago.',
       );
     }
-
     if (
-      newStatus ===
-        RequestStatus.PENDING &&
-      request.status !==
-        RequestStatus.PENDING
+      newStatus === RequestStatus.PENDING &&
+      request.status !== RequestStatus.PENDING
     ) {
-      throw new BadRequestException(
-        'Una solicitud en proceso no puede regresar a estado Pendiente.',
-      );
+      throw new BadRequestException('Una solicitud en proceso no puede regresar a estado Pendiente.');
     }
-
     request.status = newStatus;
-
     const updatedRequest =
       await this.repository.saveRequest(
         request,

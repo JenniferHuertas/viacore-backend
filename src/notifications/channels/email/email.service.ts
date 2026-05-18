@@ -88,7 +88,7 @@ export class EmailService {
 
           platformUrl:
             process.env.PLATFORM_URL ??
-            'https://viacore.com',
+            'https://estudio-via3-frontend.vercel.app/',
 
           year:
             new Date().getFullYear(),
@@ -116,7 +116,7 @@ export class EmailService {
 
           platformUrl:
             process.env.PLATFORM_URL ??
-            'https://viacore.com',
+            'https://estudio-via3-frontend.vercel.app/',
 
           year:
             new Date().getFullYear(),
@@ -142,7 +142,7 @@ export class EmailService {
 
           platformUrl:
             process.env.PLATFORM_URL ??
-            'https://viacore.com',
+            'https://estudio-via3-frontend.vercel.app/',
 
           year:
             new Date().getFullYear(),
@@ -160,54 +160,28 @@ export class EmailService {
     email: string,
     companyName: string,
     meetingDate: string,
+    meetingLink: string,
   ) {
-    const html =
-      this.compileTemplate(
-        'meeting-created',
-        {
-          companyName,
-          meetingDate,
-
-          platformUrl:
-            process.env.PLATFORM_URL ??
-            'https://viacore.com',
-
-          year:
-            new Date().getFullYear(),
-        },
-      );
-
-    await this.sendEmail(
-      email,
-      'Reunión agendada',
-      html,
-    );
+    const html = this.compileTemplate('meeting-created', {
+      companyName,
+      meetingDate,
+      meetingLink,
+      platformUrl: process.env.PLATFORM_URL ??'https://estudio-via3-frontend.vercel.app/',
+      year:new Date().getFullYear(),
+    });
+    await this.sendEmail(email, 'Reunión agendada', html);
   }
 
   async sendContactConfirmation(
     email: string,
     nombre: string,
   ) {
-    const html =
-      this.compileTemplate(
-        'contact-confirmation',
-        {
-          nombre,
-
-          platformUrl:
-            process.env.PLATFORM_URL ??
-            'https://viacore.com',
-
-          year:
-            new Date().getFullYear(),
-        },
-      );
-
-    await this.sendEmail(
-      email,
-      'Recibimos tu consulta',
-      html,
-    );
+    const html = this.compileTemplate('contact-confirmation', {
+      nombre,
+      platformUrl: process.env.PLATFORM_URL ?? 'https://estudio-via3-frontend.vercel.app/',
+      year: new Date().getFullYear(),
+    });
+    await this.sendEmail(email, 'Recibimos tu consulta', html);
   }
 
   async sendTrainingInReview(
@@ -222,7 +196,7 @@ export class EmailService {
 
           platformUrl:
             process.env.PLATFORM_URL ??
-            'https://viacore.com',
+            'https://estudio-via3-frontend.vercel.app/',
 
           year:
             new Date().getFullYear(),
@@ -248,7 +222,7 @@ export class EmailService {
 
           platformUrl:
             process.env.PLATFORM_URL ??
-            'https://viacore.com',
+            'https://estudio-via3-frontend.vercel.app/',
 
           year:
             new Date().getFullYear(),
@@ -274,7 +248,7 @@ export class EmailService {
 
           platformUrl:
             process.env.PLATFORM_URL ??
-            'https://viacore.com',
+            'https://estudio-via3-frontend.vercel.app/',
 
           year:
             new Date().getFullYear(),
@@ -300,7 +274,7 @@ export class EmailService {
 
           platformUrl:
             process.env.PLATFORM_URL ??
-            'https://viacore.com',
+            'https://estudio-via3-frontend.vercel.app/',
 
           year:
             new Date().getFullYear(),
@@ -326,7 +300,7 @@ export class EmailService {
 
           platformUrl:
             process.env.PLATFORM_URL ??
-            'https://viacore.com',
+            'https://estudio-via3-frontend.vercel.app/',
 
           year:
             new Date().getFullYear(),
