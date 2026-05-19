@@ -103,7 +103,7 @@ export class PaymentsService {
         ],
 
         back_urls: {
-          success: `${this.configService.get('FRONTEND_URL')}/payments/success`,
+          success: `${this.configService.get('FRONTEND_URL')}/pago/${payment.id}/confirmacion`,
 
           failure: `${this.configService.get('FRONTEND_URL')}/payments/failure`,
 
