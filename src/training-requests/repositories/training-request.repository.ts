@@ -46,8 +46,14 @@ export class TrainingRequestRepository extends Repository<TrainingRequests> {
     });
   }
 
-  async findMyRequests(userId: string): Promise<TrainingRequests[]> {
-    return await this.find({
+  async findMyRequests(
+    userId: string,
+    page: number = 1,
+    limit: number = 10
+  ): Promise<[TrainingRequests[], number]> { 
+    const skip = (page - 1) * limit;
+
+    return await this.findAndCount({
       where: {
         user: { id: userId },
       },
@@ -55,6 +61,8 @@ export class TrainingRequestRepository extends Repository<TrainingRequests> {
       order: {
         createdAt: 'DESC',
       },
+      skip: skip,
+      take: limit,
     });
   }
 

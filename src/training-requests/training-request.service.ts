@@ -49,7 +49,7 @@ export class TrainingRequestService {
     private readonly notificationsService: NotificationsService,
 
     private readonly notificationsGateway: NotificationsGateway,
-  ) {}
+  ) { }
 
   async create(
     data: ICreateTrainingRequest,
@@ -143,10 +143,26 @@ export class TrainingRequestService {
 
   async findMyRequests(
     userId: string,
-  ): Promise<TrainingRequests[]> {
-    return await this.repository.findMyRequests(
+    page: number = 1,
+    limit: number = 10
+  ): Promise<{ 
+    data: TrainingRequests[]; 
+    total: number; 
+    totalPages: number; 
+    currentPage: number }> { 
+
+    const [data, total] = await this.repository.findMyRequests(
       userId,
+      page,
+      limit
     );
+
+    return {
+      data,
+      total,
+      totalPages: Math.ceil(total / limit),
+      currentPage: page,
+    };
   }
 
   async update(
@@ -169,9 +185,9 @@ export class TrainingRequestService {
     if (
       currentUser.role !== Role.Admin &&
       existingRequest.status !==
-        RequestStatus.PENDING &&
+      RequestStatus.PENDING &&
       existingRequest.status !==
-        RequestStatus.IN_REVIEW
+      RequestStatus.IN_REVIEW
     ) {
       throw new BadRequestException(
         `No se puede modificar esta solicitud porque su estado actual es 
@@ -190,7 +206,7 @@ export class TrainingRequestService {
     if (
       data.participantsCount &&
       data.participantsCount !==
-        existingRequest.participantsCount
+      existingRequest.participantsCount
     ) {
       let price = 0;
 
@@ -246,7 +262,7 @@ export class TrainingRequestService {
     }
     request.status = newStatus;
     const updatedRequest = await this.repository.saveRequest(request);
-    this.sendStatusNotifications(updatedRequest, newStatus).catch((err) => 
+    this.sendStatusNotifications(updatedRequest, newStatus).catch((err) =>
       console.error('Error enviando notificaciones:', err)
     );
 
@@ -282,22 +298,22 @@ export class TrainingRequestService {
 
   private getEmailConfigForStatus(status: RequestStatus) {
     const configs = {
-      [RequestStatus.IN_REVIEW]: { 
+      [RequestStatus.IN_REVIEW]: {
         subject: 'Solicitud en revisión', html: `
         <h2>Tu solicitud está en revisión</h2><p>El equipo de 
         ViaCore está evaluando tu capacitación.</p>` },
-      [RequestStatus.AWAITING_PAYMENT]: { 
+      [RequestStatus.AWAITING_PAYMENT]: {
         subject: `
         Pago pendiente', html: '<h2>Tu solicitud requiere un pago</h2>
         <p>La capacitación fue aprobada y está esperando confirmación de pago.</p>` },
-      [RequestStatus.SCHEDULED]: { 
+      [RequestStatus.SCHEDULED]: {
         subject: `
         Capacitación agendada', html: '<h2>Tu capacitación fue agendada</h2>
         <p>Pronto recibirás más información sobre la reunión.</p>` },
-      [RequestStatus.CONFIRMED]: { 
+      [RequestStatus.CONFIRMED]: {
         subject: `Capacitación confirmada', html: '<h2>Tu capacitación fue confirmada</h2>
         <p>El proceso fue confirmado correctamente.</p>` },
-      [RequestStatus.CANCELLED]: { 
+      [RequestStatus.CANCELLED]: {
         subject: `
         Solicitud cancelada', html: '<h2>Tu solicitud fue cancelada</h2>
         <p>La capacitación fue cancelada.</p>` },
@@ -307,27 +323,28 @@ export class TrainingRequestService {
 
   private getNotificationConfigForStatus(status: RequestStatus) {
     const configs = {
-      [RequestStatus.IN_REVIEW]: { 
+      [RequestStatus.IN_REVIEW]: {
         type: NotificationType.REQUEST_IN_REVIEW, title: `
         Solicitud en revisión', message: 'Tu solicitud está siendo evaluada 
         por el equipo de ViaCore.` },
-      [RequestStatus.AWAITING_PAYMENT]: { 
+      [RequestStatus.AWAITING_PAYMENT]: {
         type: NotificationType.REQUEST_AWAITING_PAYMENT, title: `
         Pago pendiente', message: 'La capacitación fue aprobada y 
         está esperando confirmación de pago.` },
-      [RequestStatus.SCHEDULED]: { 
+      [RequestStatus.SCHEDULED]: {
         type: NotificationType.REQUEST_SCHEDULED, title: `
         Capacitación agendada', message: 'Tu capacitación fue agendada correctamente.` },
-      [RequestStatus.CONFIRMED]: { 
+      [RequestStatus.CONFIRMED]: {
         type: NotificationType.REQUEST_CONFIRMED, title: `
         Capacitación confirmada', message: 'Tu capacitación fue confirmada exitosamente.` },
-      [RequestStatus.CANCELLED]: { 
+      [RequestStatus.CANCELLED]: {
         type: NotificationType.REQUEST_CANCELLED, title: `
         Solicitud cancelada', message: 'La solicitud fue cancelada.` },
     };
-    return configs[status] || { 
-      type: NotificationType.REQUEST_IN_REVIEW, 
-      title: 'Actualización', message: `El estado cambió a ${status}` };
+    return configs[status] || {
+      type: NotificationType.REQUEST_IN_REVIEW,
+      title: 'Actualización', message: `El estado cambió a ${status}`
+    };
   }
 
   async remove(
@@ -349,7 +366,7 @@ export class TrainingRequestService {
     if (
       currentUser.role !== Role.Admin &&
       request.status !==
-        RequestStatus.PENDING
+      RequestStatus.PENDING
     ) {
       throw new BadRequestException(
         `No puedes eliminar esta solicitud porque su estado es 
