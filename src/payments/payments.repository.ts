@@ -4,6 +4,7 @@ import { Payment } from './entities/payment.entity';
 import { Repository } from 'typeorm';
 import { PaymentStatus } from './enums/payment-status.enum';
 import { Between, MoreThanOrEqual, LessThanOrEqual } from 'typeorm';
+import { PaymentResponseDto } from './dto/payment-response.dto';
 
 @Injectable()
 export class PaymentsRepository {
@@ -46,7 +47,7 @@ export class PaymentsRepository {
     return await this.paymentOrmRepository.save(payment);
   }
 
-  async findById(id: string) {
+  async findById(id: string): Promise<Payment | null> {
     return await this.paymentOrmRepository.findOne({
       where: { id },
       relations: ['user', 'trainingRequest'],
@@ -68,7 +69,7 @@ export class PaymentsRepository {
     });
   }
 
-  async findByUserId(userId: string) {
+  async findByUserId(userId: string): Promise<PaymentResponseDto[]> {
     return await this.paymentOrmRepository.find({
       where: { user: { id: userId } },
       relations: ['user', 'trainingRequest'],
@@ -90,12 +91,34 @@ export class PaymentsRepository {
     });
   }
 
-  async updateStatus(id: string, status: PaymentStatus) {
+  async updateStatus(
+    id: string,
+    status: PaymentStatus,
+  ): Promise<PaymentResponseDto | null> {
     await this.paymentOrmRepository.update(id, { status });
     return this.findById(id);
   }
 
-  async updateMercadoPagoId(id: string, mercadoPagoId: string) {
+  async updateMercadoPagoId(id: string, mercadoPagoId: string): Promise<void> {
     await this.paymentOrmRepository.update(id, { mercadoPagoId });
+  }
+
+  async findAll(): Promise<PaymentResponseDto[]> {
+    return await this.paymentOrmRepository.find({
+      relations: ['user', 'trainingRequest'],
+      select: {
+        id: true,
+        amount: true,
+        status: true,
+        mercadoPagoId: true,
+        createdAt: true,
+        user: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      },
+      order: { createdAt: 'DESC' },
+    });
   }
 }

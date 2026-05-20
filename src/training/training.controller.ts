@@ -5,8 +5,8 @@ import {
   Get,
   Param,
   ParseUUIDPipe,
+  Patch,
   Post,
-  Put,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -15,23 +15,35 @@ import { TrainingService } from './training.service';
 import { CreateTrainingDto } from './dto/create-training.dto';
 import { UpdateTrainingDto } from './dto/update-training.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiBearerAuth, ApiBody, ApiConsumes } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiResponse,
+} from '@nestjs/swagger';
 import { AuthGuard } from 'src/auth/guards/auth.guard';
 import { Roles } from 'src/decorator/roles.decorator';
 import { Role } from 'src/auth/roles.enum';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { TrainingCardResponseDto } from './dto/training-card-response.dto';
+import { TrainingDetailResponseDto } from './dto/training-detail-response.dto';
+import { Training } from './entities/training.entity';
 
 @Controller('trainings')
 export class TrainingController {
   constructor(private readonly trainingService: TrainingService) {}
 
   @Get()
-  getAllTraining() {
+  @ApiResponse({ status: 200, type: [TrainingCardResponseDto] })
+  getAllTraining(): Promise<TrainingCardResponseDto[]> {
     return this.trainingService.getAllTraining();
   }
 
   @Get(':id')
-  getTrainingById(@Param('id', ParseUUIDPipe) id: string) {
+  @ApiResponse({ status: 200, type: TrainingDetailResponseDto })
+  getTrainingById(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<TrainingDetailResponseDto> {
     return this.trainingService.getTrainingById(id);
   }
 
@@ -77,19 +89,21 @@ export class TrainingController {
       ],
     },
   })
+  @ApiResponse({ status: 201, type: Training })
   createTraining(
     @UploadedFile() file: Express.Multer.File,
     @Body() dataTraining: CreateTrainingDto,
-  ) {
+  ): Promise<Training> {
     return this.trainingService.createTraining(dataTraining, file);
   }
 
   @Post('seeder')
-  seedTraining() {
+  @ApiResponse({ status: 201, type: [Training] })
+  seedTraining(): Promise<Training[]> {
     return this.trainingService.addTraining();
   }
 
-  @Put(':id')
+  @Patch(':id')
   @ApiBearerAuth('Bearer')
   @Roles(Role.Admin)
   @UseGuards(AuthGuard, RolesGuard)
@@ -120,10 +134,12 @@ export class TrainingController {
       },
     },
   })
+  @ApiResponse({ status: 200, type: Training })
+  @UseInterceptors(FileInterceptor('file'))
   updateTraining(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dataTraining: UpdateTrainingDto,
-  ) {
+  ): Promise<Training | null> {
     return this.trainingService.updateTraining(id, dataTraining);
   }
 
@@ -131,7 +147,10 @@ export class TrainingController {
   @ApiBearerAuth('Bearer')
   @Roles(Role.Admin)
   @UseGuards(AuthGuard, RolesGuard)
-  deleteTraining(@Param('id', ParseUUIDPipe) id: string) {
+  @ApiResponse({ status: 200 })
+  deleteTraining(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<{ message: string }> {
     return this.trainingService.deleteTraining(id);
   }
 }

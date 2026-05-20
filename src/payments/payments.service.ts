@@ -29,6 +29,11 @@ import { EmailService } from 'src/notifications/channels/email/email.service';
 import { NotificationsService } from 'src/notifications/notifications.service';
 
 import { NotificationType } from 'src/notifications/enums/notification-type.enum';
+import {
+  CreatePreferenceResponseDto,
+  PaymentResponseDto,
+  WebhookResponseDto,
+} from './dto/payment-response.dto';
 
 @Injectable()
 export class PaymentsService {
@@ -49,17 +54,12 @@ export class PaymentsService {
     private readonly notificationsService: NotificationsService,
   ) {
     const client = new MercadoPagoConfig({
-      accessToken:
-        this.configService.get<string>(
-          'MP_ACCESS_TOKEN',
-        ) ?? '',
+      accessToken: this.configService.get<string>('MP_ACCESS_TOKEN') ?? '',
     });
 
-    this.preference =
-      new Preference(client);
+    this.preference = new Preference(client);
 
-    this.mpPayment =
-      new MpPayment(client);
+    this.mpPayment = new MpPayment(client);
   }
 
   async findAll(
@@ -90,28 +90,20 @@ export class PaymentsService {
 
   async createPreference(
     dto: CreatePaymentDto,
-  ) {
-    const trainingRequest =
-      await this.trainingRequestOrmRepository.findOne({
-        where: {
-          id: dto.trainingRequestId,
-        },
+  ): Promise<CreatePreferenceResponseDto> {
+    const trainingRequest = await this.trainingRequestOrmRepository.findOne({
+      where: {
+        id: dto.trainingRequestId,
+      },
 
-        relations: [
-          'training',
-          'user',
-        ],
-      });
+      relations: ['training', 'user'],
+    });
 
     if (!trainingRequest) {
-      throw new NotFoundException(
-        'Solicitud de capacitación no encontrada',
-      );
+      throw new NotFoundException('Solicitud de capacitación no encontrada');
     }
 
-    const amount = Number(
-      trainingRequest.estimatedPrice,
-    );
+    const amount = Number(trainingRequest.estimatedPrice);
 
     if (!amount || amount <= 0) {
       throw new BadRequestException(
@@ -119,96 +111,75 @@ export class PaymentsService {
       );
     }
 
-    const payment =
-      await this.paymentsRepository.create({
-        user: trainingRequest.user,
+    const payment = await this.paymentsRepository.create({
+      user: trainingRequest.user,
 
-        trainingRequest:
-          trainingRequest,
+      trainingRequest: trainingRequest,
 
-        amount: amount,
-      });
+      amount: amount,
+    });
 
-    const response =
-      await this.preference.create({
-        body: {
-          items: [
-            {
-              id: payment.id,
+    const response = await this.preference.create({
+      body: {
+        items: [
+          {
+            id: payment.id,
 
-              title: `${trainingRequest.training.title}`,
+            title: `${trainingRequest.training.title}`,
 
-              quantity: 1,
+            quantity: 1,
 
-              unit_price: amount,
+            unit_price: amount,
 
-              currency_id: 'ARS',
-            },
-          ],
-
-          back_urls: {
-            success: `${this.configService.get(
-              'FRONTEND_URL',
-            )}/payments/success`,
-
-            failure: `${this.configService.get(
-              'FRONTEND_URL',
-            )}/payments/failure`,
-
-            pending: `${this.configService.get(
-              'FRONTEND_URL',
-            )}/payments/pending`,
+            currency_id: 'ARS',
           },
+        ],
 
-          notification_url: `${this.configService.get(
-            'BACKEND_URL',
-          )}/payments/webhook`,
+        back_urls: {
+          success: `${this.configService.get('FRONTEND_URL')}/pago/${payment.id}/confirmacion`,
 
-          external_reference:
-            payment.id,
+          failure: `${this.configService.get('FRONTEND_URL')}/payments/failure`,
+
+          pending: `${this.configService.get('FRONTEND_URL')}/payments/pending`,
         },
-      });
+
+        notification_url: `${this.configService.get(
+          'BACKEND_URL',
+        )}/payments/webhook`,
+
+        external_reference: payment.id,
+      },
+    });
 
     return {
       paymentId: payment.id,
 
-      init_point:
-        response.init_point,
+      init_point: response.init_point,
     };
   }
 
-  async handleWebhook(
-    body: {
-      type: string;
-
-      data: {
-        id: string | number;
-      };
-    },
-  ) {
-
+  async handleWebhook(body: {
+    type: string;
+    data: {
+      id: string | number;
+    };
+  }): Promise<WebhookResponseDto> {
     const { type, data } = body;
 
     if (type === 'payment') {
+      const mpPayment = await this.mpPayment.get({
+        id: String(data.id),
+      });
 
-      const mpPayment =
-        await this.mpPayment.get({
-          id: String(data.id),
-        });
+      const externalReference = mpPayment.external_reference;
 
-      const externalReference =
-        mpPayment.external_reference;
+      const status = mpPayment.status;
 
-      const status =
-        mpPayment.status;
+      const mercadoPagoId = String(mpPayment.id);
 
-      const mercadoPagoId =
-        String(mpPayment.id);
-
-      const payment =
-        await this.paymentsRepository.findById(
-          externalReference ?? '',
-        );
+      const payment = await this.paymentsRepository.findById(
+        externalReference ?? '',
+      );
 
       if (!payment) {
         return { received: true };
@@ -224,49 +195,28 @@ export class PaymentsService {
         status as PaymentStatus,
       );
 
-      // =========================
-      // EMAIL AUTOMÁTICO
-      // =========================
-
-      if (
-        status === PaymentStatus.APPROVED &&
-        payment.user?.email
-      ) {
-
+      if (status === PaymentStatus.APPROVED && payment.user?.email) {
         await this.emailService.sendPaymentApproved(
-
           payment.user.email,
 
-          payment.user.companyName ||
-            payment.user.name,
+          payment.user.companyName || payment.user.name,
 
           Number(payment.amount),
         );
       }
 
-      // =========================
-      // NOTIFICATION AUTOMÁTICA
-      // =========================
-
-      if (
-        status === PaymentStatus.APPROVED &&
-        payment.user
-      ) {
-
+      if (status === PaymentStatus.APPROVED && payment.user) {
         await this.notificationsService.create({
-
           title: 'Pago aprobado',
 
-          message:
-            'Tu pago fue aprobado correctamente.',
+          message: 'Tu pago fue aprobado correctamente.',
 
-          type:
-            NotificationType.PAYMENT_APPROVED,
+          type: NotificationType.PAYMENT_APPROVED,
 
           userId: payment.user.id,
         });
       }
-      // Actualizo el estado de la trainingRequest
+
       if (status === 'approved') {
         await this.trainingRequestOrmRepository.update(
           payment.trainingRequest.id,
@@ -282,24 +232,19 @@ export class PaymentsService {
     };
   }
 
-  async findById(id: string) {
-    const payment =
-      await this.paymentsRepository.findById(
-        id,
-      );
-
+  async findById(id: string): Promise<PaymentResponseDto> {
+    const payment = await this.paymentsRepository.findById(id);
     if (!payment) {
-      throw new NotFoundException(
-        'Pago no encontrado',
-      );
+      throw new NotFoundException('Pago no encontrado');
     }
-
     return payment;
   }
 
-  findByUserId(userId: string) {
-    return this.paymentsRepository.findByUserId(
-      userId,
-    );
+  findByUserId(userId: string): Promise<PaymentResponseDto[]> {
+    return this.paymentsRepository.findByUserId(userId);
+  }
+
+  findAll(): Promise<PaymentResponseDto[]> {
+    return this.paymentsRepository.findAll();
   }
 }

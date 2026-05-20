@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
+
 import {
   BadRequestException,
   Injectable,
@@ -42,7 +42,7 @@ export class AuthService {
 
     if (foundUser) {
       throw new BadRequestException(
-        'El usuario ya existe',
+        'Este correo ya está registrado. Por favor, inicia sesión.',
       );
     }
 
@@ -157,6 +157,7 @@ export class AuthService {
     // Emails admins permitidos
     const adminEmails = [
       'colmenares8093@gmail.com',
+      'admin.viacore@gmail.com',
     ];
 
     const isAdmin =

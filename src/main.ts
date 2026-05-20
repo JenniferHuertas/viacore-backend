@@ -2,6 +2,8 @@ import 'multer';
 
 import * as express from 'express';
 
+import cookieParser from 'cookie-parser';
+
 import { NestFactory } from '@nestjs/core';
 
 import { AppModule } from './app.module';
@@ -21,6 +23,8 @@ async function bootstrap() {
     await NestFactory.create(
       AppModule,
     );
+
+  app.use(cookieParser());
 
   app.use(
     express.json({
@@ -104,9 +108,7 @@ async function bootstrap() {
   app.enableCors({
     origin: [
       'http://localhost:3000',
-
       'https://estudio-via3-frontend.vercel.app',
-      'https://estudio-via3-frontend-git-develop-estudio-via-3-s-projects.vercel.app',
     ],
 
     credentials: true,

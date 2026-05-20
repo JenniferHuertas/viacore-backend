@@ -11,6 +11,8 @@ import { UpdateTrainingDto } from './dto/update-training.dto';
 import { SeedTraining } from './dto/seeder-training.dto';
 import { FileResourceService } from 'src/file-resource/file-resource.service';
 import { FileResource } from 'src/file-resource/entities/file-resource.entity';
+import { TrainingCardResponseDto } from './dto/training-card-response.dto';
+import { TrainingDetailResponseDto } from './dto/training-detail-response.dto';
 
 @Injectable()
 export class TrainingRepository {
@@ -22,9 +24,11 @@ export class TrainingRepository {
     private readonly fileResourceOrmRepository: Repository<FileResource>,
   ) {}
 
-  async getAllTraining() {
+  async getAllTraining(): Promise<TrainingCardResponseDto[]> {
     const training = await this.trainingOrmRepository.find({
-      where: { isActive: true },
+      where: {
+        isActive: true,
+      },
       relations: {
         fileResource: true,
       },
@@ -37,7 +41,7 @@ export class TrainingRepository {
     }));
   }
 
-  async getTrainingById(id: string) {
+  async getTrainingById(id: string): Promise<TrainingDetailResponseDto> {
     const training = await this.trainingOrmRepository.findOne({
       where: { id, isActive: true },
       relations: { fileResource: true },
@@ -51,16 +55,18 @@ export class TrainingRepository {
       id: training.id,
       fileResource: training.fileResource,
       title: training.title,
+      shortDescription: training.shortDescription,
       description: training.description,
       tagline: training.tagline,
       includes: training.includes,
+      category: training.category,
     };
   }
 
   async createTraining(
     dataTraining: CreateTrainingDto,
     file?: Express.Multer.File,
-  ) {
+  ): Promise<Training> {
     const newTraining = await this.trainingOrmRepository.save(dataTraining);
 
     if (file) {
@@ -75,7 +81,7 @@ export class TrainingRepository {
     return newTraining;
   }
 
-  async addTraining(dataTrainings: SeedTraining[]) {
+  async addTraining(dataTrainings: SeedTraining[]): Promise<Training[]> {
     const titles = dataTrainings.map((training) => training.title);
 
     const existingTrainings = await this.trainingOrmRepository.find({
@@ -120,7 +126,10 @@ export class TrainingRepository {
     return trainingToSave;
   }
 
-  async updateTraining(id: string, dataTraining: UpdateTrainingDto) {
+  async updateTraining(
+    id: string,
+    dataTraining: UpdateTrainingDto,
+  ): Promise<Training | null> {
     const training = await this.trainingOrmRepository.findOne({
       where: { id, isActive: true },
     });
@@ -132,7 +141,7 @@ export class TrainingRepository {
     return this.trainingOrmRepository.findOne({ where: { id } });
   }
 
-  async deleteTraining(id: string) {
+  async deleteTraining(id: string): Promise<{ message: string }> {
     const training = await this.trainingOrmRepository.findOne({
       where: { id },
     });
