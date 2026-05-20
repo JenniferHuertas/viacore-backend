@@ -62,6 +62,32 @@ export class PaymentsService {
       new MpPayment(client);
   }
 
+  async findAll(
+    startDate: string,
+    endDate: string,
+  ) {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    if (isNaN(start.getTime())) {
+      throw new BadRequestException('startDate inválida');
+    }
+
+    if (isNaN(end.getTime())) {
+      throw new BadRequestException('endDate inválida');
+    }
+
+    // 🔑 Normalizar rango completo del día
+    start.setHours(0, 0, 0, 0);
+    end.setHours(23, 59, 59, 999);
+    end.setUTCDate(end.getUTCDate() + 1);
+
+    return this.paymentsRepository.findAllWithDateRange(
+      start,
+      end,
+    );
+  }
+
   async createPreference(
     dto: CreatePaymentDto,
   ) {

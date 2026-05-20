@@ -23,6 +23,24 @@ export class PaymentsController {
     private readonly configService: ConfigService,
   ) {}
 
+  @Get()
+  @ApiBearerAuth('Bearer')
+  findAll(
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    if (!startDate || !endDate) {
+      throw new BadRequestException(
+        'startDate y endDate son obligatorios',
+      );
+    }
+
+    return this.paymentsService.findAll(
+      startDate,
+      endDate,
+    );
+  }
+
   @Get('user/:userId')
   @ApiBearerAuth('Bearer')
   @UseGuards(AuthGuard)
