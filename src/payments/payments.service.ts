@@ -29,6 +29,11 @@ import { EmailService } from 'src/notifications/channels/email/email.service';
 import { NotificationsService } from 'src/notifications/notifications.service';
 
 import { NotificationType } from 'src/notifications/enums/notification-type.enum';
+import {
+  CreatePreferenceResponseDto,
+  PaymentResponseDto,
+  WebhookResponseDto,
+} from './dto/payment-response.dto';
 
 @Injectable()
 export class PaymentsService {
@@ -57,7 +62,9 @@ export class PaymentsService {
     this.mpPayment = new MpPayment(client);
   }
 
-  async createPreference(dto: CreatePaymentDto) {
+  async createPreference(
+    dto: CreatePaymentDto,
+  ): Promise<CreatePreferenceResponseDto> {
     const trainingRequest = await this.trainingRequestOrmRepository.findOne({
       where: {
         id: dto.trainingRequestId,
@@ -127,11 +134,10 @@ export class PaymentsService {
 
   async handleWebhook(body: {
     type: string;
-
     data: {
       id: string | number;
     };
-  }) {
+  }): Promise<WebhookResponseDto> {
     const { type, data } = body;
 
     if (type === 'payment') {
@@ -163,10 +169,6 @@ export class PaymentsService {
         status as PaymentStatus,
       );
 
-      // =========================
-      // EMAIL AUTOMÁTICO
-      // =========================
-
       if (status === PaymentStatus.APPROVED && payment.user?.email) {
         await this.emailService.sendPaymentApproved(
           payment.user.email,
@@ -176,10 +178,6 @@ export class PaymentsService {
           Number(payment.amount),
         );
       }
-
-      // =========================
-      // NOTIFICATION AUTOMÁTICA
-      // =========================
 
       if (status === PaymentStatus.APPROVED && payment.user) {
         await this.notificationsService.create({
@@ -192,7 +190,7 @@ export class PaymentsService {
           userId: payment.user.id,
         });
       }
-      // Actualizo el estado de la trainingRequest
+
       if (status === 'approved') {
         await this.trainingRequestOrmRepository.update(
           payment.trainingRequest.id,
@@ -208,17 +206,19 @@ export class PaymentsService {
     };
   }
 
-  async findById(id: string) {
+  async findById(id: string): Promise<PaymentResponseDto> {
     const payment = await this.paymentsRepository.findById(id);
-
     if (!payment) {
       throw new NotFoundException('Pago no encontrado');
     }
-
     return payment;
   }
 
-  findByUserId(userId: string) {
+  findByUserId(userId: string): Promise<PaymentResponseDto[]> {
     return this.paymentsRepository.findByUserId(userId);
+  }
+
+  findAll(): Promise<PaymentResponseDto[]> {
+    return this.paymentsRepository.findAll();
   }
 }
