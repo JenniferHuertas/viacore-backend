@@ -32,6 +32,7 @@ import { TrainingService } from './training/training.service';
 import { MeetingsModule } from './meetings/meetings.module';
 
 import { TrainingRequestModule } from './training-requests/training-request.module';
+import { CalendlyService } from './calendly/calendly.service';
 
 @Module({
   imports: [
@@ -78,7 +79,10 @@ import { TrainingRequestModule } from './training-requests/training-request.modu
   providers: [AppService],
 })
 export class AppModule implements NestModule, OnApplicationBootstrap {
-  constructor(private readonly trainingService: TrainingService) {}
+  constructor(
+    private readonly trainingService: TrainingService,
+    private readonly calendlyService: CalendlyService,
+  ) {}
 
   configure(consumer: MiddlewareConsumer) {
     consumer.apply(LoggerMiddleware).forRoutes('*');
@@ -88,5 +92,7 @@ export class AppModule implements NestModule, OnApplicationBootstrap {
     await this.trainingService.addTraining();
 
     console.log('Capacitaciones cargadas');
+
+    await this.calendlyService.registerWebhook()
   }
 }

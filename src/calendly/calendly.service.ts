@@ -20,6 +20,11 @@ export interface CreateOneOffEventDto {
   guestName: string;
 }
 
+import { Repository } from 'typeorm';
+
+import { Meetings } from '../meetings/entities/meeting.entity';
+import { MeetingStatus } from 'src/meetings/entities/meetingStatus.entity';
+
 @Injectable()
 export class CalendlyService {
   private readonly logger = new Logger(CalendlyService.name);
@@ -28,7 +33,10 @@ export class CalendlyService {
   // en cada request a la API de Calendly.
   private userUri: string | null = null;
 
-  constructor(private readonly httpService: HttpService) {}
+  constructor(
+    private readonly httpService: HttpService,
+    private readonly meetingsRepository: Repository<Meetings>
+  ) {}
 
   // Se obtiene automáticamente el user URI desde Calendly.
   // Esto evita depender de variables manuales en .env.
@@ -97,13 +105,53 @@ export class CalendlyService {
 
   // Se deja preparado el manejo de webhooks para futuras
 // sincronizaciones automáticas entre Calendly y el backend.
-async handleWebhook(payload: any) {
-  this.logger.log(
-    `Webhook recibido desde Calendly: ${payload?.event}`,
-  );
+ async handleInviteeCreated(payload: any): Promise<void> {
+    const calendlyUri: string = payload.event;
+    const joinUrl: string | undefined = payload.location?.join_url;
+    const startTime: string = payload.scheduled_event?.start_time;
+    const endTime: string = payload.scheduled_event?.end_time;
 
-  return {
-    received: true,
-  };
-}
+    // Buscar por eventTypeUri — Calendly lo incluye en payload.event_type
+    const eventTypeUri: string = payload.event_type;
+
+    const event = await this.meetingsRepository.findOne({
+      where: { calendlyUri },
+    });
+
+    if (!event) {
+      this.logger.warn(`Evento no encontrado para eventTypeUri: ${eventTypeUri}`);
+      return;
+    }
+
+    event.calendlyUri = calendlyUri;
+    event.status = MeetingStatus.CONFIRMED;
+    event.time = new Date(startTime).toISOString().split('T')[1];
+    event.date = new Date(startTime);
+
+    if (joinUrl) {
+      event.joinUrl = joinUrl;
+      this.logger.log(`join_url guardado: ${joinUrl}`);
+    }
+
+    await this.meetingsRepository.save(event);
+  }
+
+  async handleInviteeCanceled(payload: any): Promise<void> {
+
+  }
+
+  async registerWebhook(): Promise<void> {
+    const orgUri = process.env.CALENDLY_ORG_URI; // GET /users/me → current_organization
+
+    await firstValueFrom(
+      this.httpService.post('/webhook_subscriptions', {
+        url: 'https://tu-app.com/webhooks/calendly',
+        events: ['invitee.created', 'invitee.canceled'],
+        organization: orgUri,
+        scope: 'organization',
+      }),
+    );
+
+    this.logger.log('Webhook registrado en Calendly');
+  }
 }

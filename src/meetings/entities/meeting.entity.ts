@@ -35,6 +35,18 @@ export class Meetings {
   schedulingUrl!: string;
 
   @Column({
+    type: 'varchar',
+    nullable: true,
+  })
+  calendlyUri!: string;
+
+  @Column({
+    type: 'varchar',
+    nullable: true
+  })
+  joinUrl!: string
+
+  @Column({
     type: 'enum',
     enum: MeetingStatus,
     enumName: 'MeetingStatus',

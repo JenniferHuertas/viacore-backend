@@ -16,8 +16,6 @@ import { CalendlyController } from './calendly.controller';
   ],
 
   controllers: [
-    // Se agrega el controller para manejar webhooks
-    // y sincronización futura con Calendly.
     CalendlyController,
   ],
 
