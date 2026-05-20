@@ -41,13 +41,18 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { PaymentsModule } from './payments/payments.module';
 
 import { ChatModule } from './chat/chat.module';
+
 import { BullModule } from '@nestjs/bull';
 
 import { ContactModule } from './contact/contact.module';
 
+import { ProfileModule } from './profile/profile.module';
+
 @Module({
   imports: [
     UsersModule,
+
+    ProfileModule,
 
     AuthModule,
 
@@ -85,12 +90,19 @@ import { ContactModule } from './contact/contact.module';
     MeetingsModule,
 
     TrainingRequestModule,
+
     BullModule.forRootAsync({
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        redis: config.get('REDIS_URL') as string,
+
+      useFactory: (
+        config: ConfigService,
+      ) => ({
+        redis: config.get(
+          'REDIS_URL',
+        ) as string,
       }),
     }),
+
     NotificationsModule,
 
     PaymentsModule,
@@ -100,9 +112,13 @@ import { ContactModule } from './contact/contact.module';
     ContactModule,
   ],
 
-  controllers: [AppController],
+  controllers: [
+    AppController,
+  ],
 
-  providers: [AppService],
+  providers: [
+    AppService,
+  ],
 })
 export class AppModule
   implements
@@ -116,12 +132,14 @@ export class AppModule
   configure(
     consumer: MiddlewareConsumer,
   ) {
+
     consumer
       .apply(LoggerMiddleware)
       .forRoutes('*');
   }
 
   async onApplicationBootstrap() {
+
     await this.trainingService.addTraining();
 
     console.log(
