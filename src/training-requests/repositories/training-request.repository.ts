@@ -74,9 +74,13 @@ export class TrainingRequestRepository extends Repository<TrainingRequests> {
     return await this.findRequestById(id);
   }
 
-  async saveRequest(
+async saveRequest(
     request: TrainingRequests
   ): Promise<TrainingRequests> {
     return await this.save(request);
+  }
+
+  async deleteRequest(id: string): Promise<void> {
+    await this.delete(id);
   }
 }
