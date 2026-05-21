@@ -193,37 +193,43 @@ export class EmailService {
 
       materialTitle,
 
-      materialUrl,
+async sendTrainingScheduledToCompany(
+  email: string,
+  companyName: string,
+) {
+  const html = this.compileTemplate('training-scheduled', {
+    companyName,
+    platformUrl: process.env.PLATFORM_URL ?? 'https://estudio-via3-frontend.vercel.app/',
+    year: new Date().getFullYear(),
+  });
 
-      year: new Date().getFullYear(),
-    });
+  await this.sendEmail(email, 'Capacitación agendada', html);
+}
 
-    await this.sendEmail(email, 'Nuevo material disponible', html);
-  }
+async sendTrainingConfirmedToCompany(
+  email: string,
+  companyName: string,
+) {
+  const html = this.compileTemplate('training-confirmed', {
+    companyName,
+    platformUrl: process.env.PLATFORM_URL ?? 'https://estudio-via3-frontend.vercel.app/',
+    year: new Date().getFullYear(),
+  });
 
-  async sendTrainingInReview(email: string, companyName: string) {
-    const html = this.compileTemplate('training-in-review', {
-      companyName,
+  await this.sendEmail(email, 'Capacitación confirmada', html);
+}
 
-      platformUrl:
-        process.env.PLATFORM_URL ?? 'https://estudio-via3-frontend.vercel.app/',
+async sendTrainingCancelledToCompany(
+  email: string,
+  companyName: string,
+) {
+  const html = this.compileTemplate('training-cancelled', {
+    companyName,
+    platformUrl: process.env.PLATFORM_URL ?? 'https://estudio-via3-frontend.vercel.app/',
+    year: new Date().getFullYear(),
+  });
 
-      year: new Date().getFullYear(),
-    });
+  await this.sendEmail(email, 'Solicitud cancelada', html);
+}
 
-    await this.sendEmail(email, 'Solicitud en revisión', html);
-  }
-
-  async sendTrainingAwaitingPayment(email: string, companyName: string) {
-    const html = this.compileTemplate('training-awaiting-payment', {
-      companyName,
-
-      platformUrl:
-        process.env.PLATFORM_URL ?? 'https://estudio-via3-frontend.vercel.app/',
-
-      year: new Date().getFullYear(),
-    });
-
-    await this.sendEmail(email, 'Pago pendiente', html);
-  }
 }

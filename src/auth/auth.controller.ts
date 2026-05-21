@@ -37,6 +37,7 @@ import { ApiTags } from '@nestjs/swagger';
 
 @Controller('auth')
 export class AuthController {
+
   constructor(
     private readonly authService: AuthService,
   ) {}
@@ -52,6 +53,7 @@ export class AuthController {
 
     @Res() res: Response,
   ) {
+
     try {
 
       const token =
@@ -63,9 +65,9 @@ export class AuthController {
         {
           httpOnly: true,
 
-          secure: false,
+          secure: true,
 
-          sameSite: 'lax',
+          sameSite: 'none',
 
           maxAge:
             1000 * 60 * 60,
@@ -75,7 +77,7 @@ export class AuthController {
       );
 
       return res.redirect(
-        `${process.env.FRONTEND_URL}`,
+        `${process.env.FRONTEND_URL}/autenticacion/autenticacion-google`,
       );
 
     } catch {
@@ -97,6 +99,7 @@ export class AuthController {
     @Body()
     createUserDto: CreateUserDto,
   ) {
+
     return this.authService.create(
       createUserDto,
     );
@@ -122,9 +125,9 @@ export class AuthController {
       {
         httpOnly: true,
 
-        secure: false,
+        secure: true,
 
-        sameSite: 'lax',
+        sameSite: 'none',
 
         maxAge:
           1000 * 60 * 60,
@@ -153,9 +156,9 @@ export class AuthController {
       {
         httpOnly: true,
 
-        secure: false,
+        secure: true,
 
-        sameSite: 'lax',
+        sameSite: 'none',
 
         path: '/',
       },
