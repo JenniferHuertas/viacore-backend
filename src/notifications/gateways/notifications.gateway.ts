@@ -22,17 +22,31 @@ export class NotificationsGateway
   server!: Server;
 
   handleConnection(
-    _client: Socket,
-  ) {}
+    client: Socket,
+  ) {
+    console.log(
+      'Cliente conectado:',
+      client.id,
+    );
+  }
 
   handleDisconnect(
-    _client: Socket,
-  ) {}
+    client: Socket,
+  ) {
+    console.log(
+      'Cliente desconectado:',
+      client.id,
+    );
+  }
 
   emitNotificationToUser(
     userId: string,
     notification: unknown,
   ) {
+    console.log(
+      `Enviando notificación a user-${userId}`,
+    );
+
     this.server
       .to(`user-${userId}`)
       .emit(
@@ -46,6 +60,14 @@ export class NotificationsGateway
     client: Socket,
     userId: string,
   ) {
+    console.log(
+      `Cliente ${client.id} intentando unirse a user-${userId}`,
+    );
+
     client.join(`user-${userId}`);
+
+    console.log(
+      `Cliente ${client.id} unido a user-${userId}`,
+    );
   }
 }

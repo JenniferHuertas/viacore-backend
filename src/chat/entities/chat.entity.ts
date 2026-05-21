@@ -5,7 +5,10 @@ import {
   CreateDateColumn,
   ManyToOne,
 } from 'typeorm';
-import { Expose, Exclude } from 'class-transformer';
+import {
+  Expose,
+  Exclude,
+} from 'class-transformer';
 import { Users } from '../../users/entities/user.entity';
 import { TrainingRequests } from '../../training-requests/entities/training-request.entity';
 
@@ -14,12 +17,16 @@ import { TrainingRequests } from '../../training-requests/entities/training-requ
   name: 'CHAT_MESSAGES',
 })
 export class ChatMessage {
+
   @Expose({ groups: ['get'] })
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
   @Expose({ groups: ['get'] })
-  @Column({ type: 'text', nullable: false })
+  @Column({
+    type: 'text',
+    nullable: false,
+  })
   message!: string;
 
   @Expose({ groups: ['get'] })
@@ -31,22 +38,38 @@ export class ChatMessage {
   role!: string;
 
   @Expose({ groups: ['get'] })
-  @Column({ type: 'boolean', default: false })
+  @Column({
+    type: 'boolean',
+    default: false,
+  })
   isAiGenerated!: boolean;
 
   @Expose({ groups: ['get'] })
   @CreateDateColumn()
   createdAt!: Date;
 
-@Expose({ groups: ['get'] })
+  // Relaciones
+
+  @Expose({ groups: ['get'] })
   @ManyToOne(() => Users, (user) => user.messagesSent, { nullable: true }) 
   sender?: Users;
 
   @Expose({ groups: ['get'] })
-  @ManyToOne(() => Users, { nullable: true })
+  @ManyToOne(
+    () => Users,
+    {
+      nullable: true,
+    },
+  )
   receiver?: Users;
 
   @Expose({ groups: ['get'] })
-  @ManyToOne(() => TrainingRequests, (request) => request.id, { nullable: true })
+  @ManyToOne(
+    () => TrainingRequests,
+    (request) => request.id,
+    {
+      nullable: true,
+    },
+  )
   trainingRequest!: TrainingRequests;
 }

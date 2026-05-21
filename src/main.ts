@@ -45,6 +45,7 @@ async function bootstrap() {
         'This is an API for an E-commerce',
       )
       .setVersion('1.0.0')
+
       .addBearerAuth(
         {
           type: 'http',
@@ -84,9 +85,9 @@ async function bootstrap() {
 
   // --- CONFIGURACIÓN DINÁMICA DE CORS ---
   const originsEnv = process.env.ALLOWED_ORIGINS;
-  
-  const allowedOrigins = originsEnv 
-    ? originsEnv.split(',').map(url => url.trim()) 
+
+  const allowedOrigins = originsEnv
+    ? originsEnv.split(',').map(url => url.trim())
     : ['http://localhost:3000'];
 
   app.enableCors({
