@@ -452,4 +452,5 @@ async sendTrainingCancelledToCompany(
 
   await this.sendEmail(email, 'Solicitud cancelada', html);
 }
-  
+
+}
