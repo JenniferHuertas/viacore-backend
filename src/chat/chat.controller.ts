@@ -15,8 +15,7 @@ export class ChatController {
   @ApiResponse({ status: 201, type: ChatMessage })
   async create(
     @Body() createChatDto: CreateChatDto,
-    @Req() req: any 
-    /*@Req() req: { user: { id: string } }*/
+    @Req() req: Request & { user?: { id: string } }
   ): Promise<ChatMessage> {
 
     const servicePayload: ICreateChatMessage = {
@@ -24,7 +23,7 @@ export class ChatController {
       trainingRequestId: createChatDto.trainingRequestId,
       receiverId: createChatDto.receiverId,
     };
-    const userId = req.user?.id || '56c59e62-3cf6-4410-80ae-9a5cd4ede14c';
+    const userId = req.user?.id;
     return await this.chatService.createMessage(servicePayload, userId);
   }
 

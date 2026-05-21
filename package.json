@@ -26,6 +26,7 @@
     "migration:show": "npm run typeorm -- -d ./src/config/typeorm.ts migration:show"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@nestjs-modules/mailer": "^1.10.3",
     "@nestjs/bull": "^11.0.4",
     "@nestjs/common": "^11.1.19",

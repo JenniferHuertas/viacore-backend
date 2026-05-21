@@ -5,14 +5,11 @@ import {
   CreateDateColumn,
   ManyToOne,
 } from 'typeorm';
-
 import {
   Expose,
   Exclude,
 } from 'class-transformer';
-
 import { Users } from '../../users/entities/user.entity';
-
 import { TrainingRequests } from '../../training-requests/entities/training-request.entity';
 
 @Exclude()
@@ -54,11 +51,8 @@ export class ChatMessage {
   // Relaciones
 
   @Expose({ groups: ['get'] })
-  @ManyToOne(
-    () => Users,
-    (user) => user.messagesSent,
-  )
-  sender!: Users;
+  @ManyToOne(() => Users, (user) => user.messagesSent, { nullable: true }) 
+  sender?: Users;
 
   @Expose({ groups: ['get'] })
   @ManyToOne(
