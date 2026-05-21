@@ -361,4 +361,134 @@ export class EmailService {
       html,
     );
   }
+
+  async sendTrainingInReview(
+    email: string,
+    companyName: string,
+  ) {
+    const html =
+      this.compileTemplate(
+        'training-in-review',
+        {
+          companyName,
+
+          platformUrl:
+            process.env.PLATFORM_URL ??
+            'https://estudio-via3-frontend.vercel.app/',
+
+          year:
+            new Date().getFullYear(),
+        },
+      );
+
+    await this.sendEmail(
+      email,
+      'Solicitud en revisión',
+      html,
+    );
+  }
+
+  async sendTrainingAwaitingPayment(
+    email: string,
+    companyName: string,
+  ) {
+    const html =
+      this.compileTemplate(
+        'training-awaiting-payment',
+        {
+          companyName,
+
+          platformUrl:
+            process.env.PLATFORM_URL ??
+            'https://estudio-via3-frontend.vercel.app/',
+
+          year:
+            new Date().getFullYear(),
+        },
+      );
+
+    await this.sendEmail(
+      email,
+      'Pago pendiente',
+      html,
+    );
+  }
+
+  async sendTrainingScheduled(
+    email: string,
+    companyName: string,
+  ) {
+    const html =
+      this.compileTemplate(
+        'training-scheduled',
+        {
+          companyName,
+
+          platformUrl:
+            process.env.PLATFORM_URL ??
+            'https://estudio-via3-frontend.vercel.app/',
+
+          year:
+            new Date().getFullYear(),
+        },
+      );
+
+    await this.sendEmail(
+      email,
+      'Capacitación agendada',
+      html,
+    );
+  }
+
+  async sendTrainingConfirmed(
+    email: string,
+    companyName: string,
+  ) {
+    const html =
+      this.compileTemplate(
+        'training-confirmed',
+        {
+          companyName,
+
+          platformUrl:
+            process.env.PLATFORM_URL ??
+            'https://estudio-via3-frontend.vercel.app/',
+
+          year:
+            new Date().getFullYear(),
+        },
+      );
+
+    await this.sendEmail(
+      email,
+      'Capacitación confirmada',
+      html,
+    );
+  }
+
+  async sendTrainingCancelled(
+    email: string,
+    companyName: string,
+  ) {
+    const html =
+      this.compileTemplate(
+        'training-cancelled',
+        {
+          companyName,
+
+          platformUrl:
+            process.env.PLATFORM_URL ??
+            'https://estudio-via3-frontend.vercel.app/',
+
+          year:
+            new Date().getFullYear(),
+        },
+      );
+
+    await this.sendEmail(
+      email,
+      'Solicitud cancelada',
+      html,
+    );
+  }
 }
