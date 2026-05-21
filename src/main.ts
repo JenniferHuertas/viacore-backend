@@ -1,5 +1,3 @@
-import 'multer';
-
 import * as express from 'express';
 
 import cookieParser from 'cookie-parser';
