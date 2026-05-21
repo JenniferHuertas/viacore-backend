@@ -4,7 +4,7 @@ import { IsOptional, IsString, IsUUID } from 'class-validator';
 export class UploadFileDto {
   @ApiProperty()
   @IsString()
-  title: string;
+  title?: string;
 
   @ApiPropertyOptional({ format: 'uuid' })
   @IsOptional()

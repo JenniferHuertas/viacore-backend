@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Payment } from './entities/payment.entity';
 import { Repository } from 'typeorm';
 import { PaymentStatus } from './enums/payment-status.enum';
+import { Between, MoreThanOrEqual, LessThanOrEqual } from 'typeorm';
 import { PaymentResponseDto } from './dto/payment-response.dto';
 
 @Injectable()
@@ -12,7 +13,36 @@ export class PaymentsRepository {
     private readonly paymentOrmRepository: Repository<Payment>,
   ) {}
 
-  async create(data: Partial<Payment>): Promise<Payment> {
+  async findAllWithDateRange(
+  startDate: Date,
+  endDate: Date,
+) {
+  return this.paymentOrmRepository.find({
+    where: {
+      createdAt: Between(startDate, endDate),
+    },
+    relations: ['user', 'trainingRequest'],
+    order: { createdAt: 'DESC' },
+    select: {
+      id: true,
+      amount: true,
+      status: true,
+      paymentMethod: true,
+      mercadoPagoId: true,
+      createdAt: true,
+      user: {
+        id: true,
+        name: true,
+        email: true,
+      },
+      trainingRequest: {
+        id: true,
+      },
+    },
+  });
+}
+
+  async create(data: Partial<Payment>) {
     const payment = this.paymentOrmRepository.create(data);
     return await this.paymentOrmRepository.save(payment);
   }
