@@ -333,8 +333,6 @@ export class EmailService {
     );
   }
 
-}
-
   async sendNewMaterialAvailable(
     email: string,
     fullName: string,
