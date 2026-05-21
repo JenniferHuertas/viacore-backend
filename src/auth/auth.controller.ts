@@ -35,15 +35,16 @@ export class AuthController {
     try {
     const token = req.user.access_token;
     const login= req.user.login;
+
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
         
     return res.redirect(
-      `https://estudio-via3-frontend.vercel.app/autenticacion/autenticacion-google?token=${token}&login=${login}`,
+      `${frontendUrl}/autenticacion/autenticacion-google?token=${token}&login=${login}`,
     );
   } catch {
-    return res.redirect(
-      'https://estudio-via3-frontend.vercel.app/login?error=google',
-    );
-  }
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+      return res.redirect(`${frontendUrl}/login?error=google`);
+    }
   }
 
   @Post('signup')
