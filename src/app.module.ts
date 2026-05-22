@@ -154,6 +154,6 @@ export class AppModule
       'Capacitaciones cargadas',
     );
 
-    this.calendlyService.createWebhookSubscription('https://shy-shopping-trunks.ngrok-free.dev')
+    //this.calendlyService.createWebhookSubscription('https://shy-shopping-trunks.ngrok-free.dev') //aca va el link del deploy
   }
 }
