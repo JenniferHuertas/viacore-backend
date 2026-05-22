@@ -157,6 +157,7 @@ export class AuthService {
     // Emails admins permitidos
     const adminEmails = [
       'colmenares8093@gmail.com',
+      'admin.viacore@gmail.com',
     ];
 
     const isAdmin =

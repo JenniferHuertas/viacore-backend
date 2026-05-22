@@ -11,12 +11,16 @@ import {
   ClassSerializerInterceptor,
   SerializeOptions,
   UseInterceptors,
+  Res,
+  Req,
 } from '@nestjs/common';
-import { 
-  UsersService, 
-  PaginatedUsersResponse, 
-  AuthTokenResponse 
-} from './user.service';
+
+import type { Request, Response } from 'express';
+
+import { JwtService } from '@nestjs/jwt';
+
+import { UsersService } from './user.service';
+
 import { UpdateUserDto } from './dto/update-user.dto';
 import { CompleteProfileDto } from './dto/create-user.dto';
 import { AuthGuard } from '../auth/guards/auth.guard';
@@ -24,23 +28,25 @@ import { Role } from 'src/auth/roles.enum';
 import { Roles } from '../decorator/roles.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { Users } from './entities/user.entity';
 
 @ApiBearerAuth('Bearer')
 @ApiTags('Users')
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+
+    private readonly jwtService: JwtService,
+  ) {}
 
   @Get()
   @UseInterceptors(ClassSerializerInterceptor)
-  @SerializeOptions({ groups: ['Get'] })
+  @SerializeOptions({
+    groups: ['Get'],
+  })
   @Roles(Role.Admin)
   @UseGuards(AuthGuard, RolesGuard)
-  findAll(
-    @Query('page') page: string,
-    @Query('limit') limit: string,
-  ): Promise<PaginatedUsersResponse> { 
+  findAll(@Query('page') page: string, @Query('limit') limit: string) {
     if (limit && page) {
       return this.usersService.findAll(+page, +limit);
     }
@@ -49,38 +55,66 @@ export class UsersController {
 
   @Get(':id')
   @UseInterceptors(ClassSerializerInterceptor)
-  @SerializeOptions({ groups: ['Get'] })
-  findOne(@Param('id') id: string): Promise<Users | null> {
+  @SerializeOptions({
+    groups: ['Get'],
+  })
+  findOne(
+    @Param('id')
+    id: string,
+  ) {
     return this.usersService.findOne(id);
   }
 
   @Put(':id')
   @UseInterceptors(ClassSerializerInterceptor)
-  @SerializeOptions({ groups: ['Get'] })
+  @SerializeOptions({
+    groups: ['Get'],
+  })
   @UseGuards(AuthGuard)
   update(
-    @Param('id') id: string,
-    @Body() updateUserDto: UpdateUserDto, 
-  ): Promise<Users | null> {
-    return this.usersService.update(id, { ...updateUserDto });
+    @Param('id')
+    id: string,
+
+    @Body()
+    updateUserDto: UpdateUserDto,
+  ) {
+    return this.usersService.update(id, updateUserDto);
   }
 
-  @Patch('complete-profile/:id')
-  @UseInterceptors(ClassSerializerInterceptor)
-  @SerializeOptions({ groups: ['Get'] })
-  @UseGuards(AuthGuard)
-  completeProfile(
-    @Param('id') id: string,
-    @Body() completeProfileDto: CompleteProfileDto, 
-  ): Promise<AuthTokenResponse> { 
-    return this.usersService.completeProfile(id, { ...completeProfileDto });
-  }
+  @Patch('complete-profile')
+@UseInterceptors(ClassSerializerInterceptor)
+@SerializeOptions({ groups: ['Get'] })
+@UseGuards(AuthGuard)
+async completeProfile(
+  @Req() req: Request,
+  @Body() completeProfileDto: CompleteProfileDto,
+  @Res({ passthrough: true }) res: Response,
+) {
+  const userId = (req as any).user.id;
+
+  const result = await this.usersService.completeProfile(
+    userId,
+    completeProfileDto,
+  );
+
+  res.cookie('userSession', result.access_token, {
+    httpOnly: true,
+    secure: false,
+    sameSite: 'lax',
+    maxAge: 1000 * 60 * 60,
+  });
+
+  return result;
+}
 
   @Delete(':id')
   @ApiBearerAuth()
   @Roles(Role.Admin, Role.User)
   @UseGuards(AuthGuard, RolesGuard)
-  remove(@Param('id') id: string): Promise<{ message: string }> { 
+  remove(
+    @Param('id')
+    id: string,
+  ) {
     return this.usersService.remove(id);
   }
 }

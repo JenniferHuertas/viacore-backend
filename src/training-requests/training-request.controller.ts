@@ -29,6 +29,8 @@ import {
 
 import { FileInterceptor } from '@nestjs/platform-express';
 
+import { diskStorage } from 'multer';
+
 import { TrainingRequestService } from './training-request.service';
 
 import { FileResourceService } from '../file-resource/file-resource.service';
@@ -66,6 +68,7 @@ import { ChangeStatusDto } from './dto/status-training-request.dto';
 @SerializeOptions({ groups: ['Get'] })
 @Controller('training-requests')
 export class TrainingRequestController {
+
   constructor(
     private readonly trainingRequestService: TrainingRequestService,
 
@@ -91,6 +94,7 @@ export class TrainingRequestController {
     @Req()
     req: RequestWithUsers,
   ): Promise<TrainingRequests> {
+
     const userId = req.user.id;
 
     const requestInput = {
@@ -129,6 +133,7 @@ export class TrainingRequestController {
     @Req()
     req: RequestWithUsers,
   ) {
+
     const userId = req.user.id;
 
     return await this.trainingRequestService.findMyRequests(
@@ -189,6 +194,7 @@ export class TrainingRequestController {
     )
     status?: RequestStatus,
   ): Promise<PaginatedTrainingRequests> {
+
     const pageNumber = page
       ? parseInt(page, 10)
       : 1;
@@ -222,6 +228,7 @@ export class TrainingRequestController {
     @Param('id', ParseUUIDPipe)
     id: string,
   ): Promise<TrainingRequests> {
+
     return await this.trainingRequestService.findOne(
       id,
     );
@@ -247,6 +254,7 @@ export class TrainingRequestController {
     @Req()
     req: RequestWithUsers,
   ): Promise<TrainingRequests> {
+
     const requestInput: IUpdateTrainingRequest =
       {};
 
@@ -254,6 +262,7 @@ export class TrainingRequestController {
       updateTrainingRequestDto.participantsCount !==
       undefined
     ) {
+
       requestInput.participantsCount =
         updateTrainingRequestDto.participantsCount;
     }
@@ -262,6 +271,7 @@ export class TrainingRequestController {
       updateTrainingRequestDto.objectives !==
       undefined
     ) {
+
       requestInput.objectives =
         updateTrainingRequestDto.objectives;
     }
@@ -270,6 +280,7 @@ export class TrainingRequestController {
       updateTrainingRequestDto.context !==
       undefined
     ) {
+
       requestInput.context =
         updateTrainingRequestDto.context;
     }
@@ -278,6 +289,7 @@ export class TrainingRequestController {
       updateTrainingRequestDto.trainingId !==
       undefined
     ) {
+
       requestInput.training = {
         id:
           updateTrainingRequestDto.trainingId,
@@ -315,6 +327,7 @@ export class TrainingRequestController {
     @Body()
     changeStatusDto: ChangeStatusDto,
   ): Promise<TrainingRequests> {
+
     return await this.trainingRequestService.updateStatus(
       id,
       changeStatusDto.status,
@@ -338,6 +351,7 @@ export class TrainingRequestController {
     @Req()
     req: RequestWithUsers,
   ) {
+
     return await this.trainingRequestService.remove(
       id,
       req.user,
@@ -375,6 +389,18 @@ export class TrainingRequestController {
   })
   @UseInterceptors(
     FileInterceptor('file', {
+      storage: diskStorage({
+        destination: './uploads',
+
+        filename: (_, file, cb) => {
+
+          cb(
+            null,
+            `${Date.now()}-${file.originalname}`,
+          );
+        },
+      }),
+
       limits: {
         fileSize: 50 * 1024 * 1024,
       },
@@ -390,47 +416,34 @@ export class TrainingRequestController {
     @Body('title')
     title?: string,
   ) {
+
     const request =
       await this.trainingRequestService.findOne(
         id,
       );
+
+    const finalTitle =
+      (title || file.originalname)
+        .toLowerCase()
+        .endsWith('.pdf')
+        ? (title || file.originalname)
+        : `${title || file.originalname}.pdf`;
 
     const savedFile =
       await this.fileService.uploadForEntity(
         file,
         'trainingRequest',
         id,
-        title ||
-          'Evidencia de Solicitud',
+        finalTitle,
       );
 
     if (request.user?.email) {
-      await this.emailService.sendEmail(
+
+      await this.emailService.sendNewMaterialAvailable(
         request.user.email,
-
-        'Nuevo material disponible',
-
-        `
-        <h2>
-          Se subió nuevo material para tu capacitación
-        </h2>
-
-        <p>
-          Ya podés acceder al siguiente material:
-        </p>
-
-        <p>
-          <strong>
-            ${savedFile.title}
-          </strong>
-        </p>
-
-        <p>
-          <a href="${savedFile.fileUrl}">
-            Descargar material
-          </a>
-        </p>
-        `,
+        request.user.name,
+        finalTitle,
+        savedFile.fileUrl,
       );
     }
 

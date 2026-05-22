@@ -4,7 +4,7 @@ import { TrainingRequests } from '../entities/training-request.entity';
 import { RequestStatus } from '../enums/requests-status.enum';
 import type {
   ICreateTrainingRequest,
-  IUpdateTrainingRequest
+  IUpdateTrainingRequest,
 } from '../interfaces/requests-data.interfaces';
 
 @Injectable()
@@ -14,7 +14,10 @@ export class TrainingRequestRepository extends Repository<TrainingRequests> {
   }
 
   async createRequests(
-    data: ICreateTrainingRequest & { user: { id: string }; estimatedPrice: number }
+    data: ICreateTrainingRequest & {
+      user: { id: string };
+      estimatedPrice: number;
+    },
   ): Promise<TrainingRequests> {
     const newRequest = this.create(data);
     return await this.save(newRequest);
@@ -23,7 +26,7 @@ export class TrainingRequestRepository extends Repository<TrainingRequests> {
   async findAllRequests(
     skip: number,
     take: number,
-    status?: RequestStatus
+    status?: RequestStatus,
   ): Promise<[TrainingRequests[], number]> {
     const whereCondition = status ? { status: status } : {};
     return await this.findAndCount({
@@ -37,9 +40,7 @@ export class TrainingRequestRepository extends Repository<TrainingRequests> {
     });
   }
 
-  async findRequestById(
-    id: string
-  ): Promise<TrainingRequests | null> {
+  async findRequestById(id: string): Promise<TrainingRequests | null> {
     return await this.findOne({
       where: { id },
       relations: ['user', 'training', 'files', 'meetings'],
@@ -49,8 +50,8 @@ export class TrainingRequestRepository extends Repository<TrainingRequests> {
   async findMyRequests(
     userId: string,
     page: number = 1,
-    limit: number = 10
-  ): Promise<[TrainingRequests[], number]> { 
+    limit: number = 10,
+  ): Promise<[TrainingRequests[], number]> {
     const skip = (page - 1) * limit;
 
     return await this.findAndCount({
@@ -68,15 +69,19 @@ export class TrainingRequestRepository extends Repository<TrainingRequests> {
 
   async updateRequest(
     id: string,
-    data: IUpdateTrainingRequest & { estimatedPrice?: number }
+    data: IUpdateTrainingRequest & { estimatedPrice?: number },
   ): Promise<TrainingRequests | null> {
     await this.update(id, data);
     return await this.findRequestById(id);
   }
 
-  async saveRequest(
+async saveRequest(
     request: TrainingRequests
   ): Promise<TrainingRequests> {
     return await this.save(request);
+  }
+
+  async deleteRequest(id: string): Promise<void> {
+    await this.delete(id);
   }
 }
