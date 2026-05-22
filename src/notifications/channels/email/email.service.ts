@@ -182,16 +182,24 @@ export class EmailService {
     await this.sendEmail(email, 'Solicitud cancelada', html);
   }
 
-  async sendNewMaterialAvailable(
-    email: string,
-    fullName: string,
-    materialTitle: string,
-    materialUrl: string,
-  ) {
-    const html = this.compileTemplate('new-material-available', {
-      fullName,
+async sendNewMaterialAvailable(
+  email: string,
+  fullName: string,
+  materialTitle: string,
+  materialUrl: string,
+) {
+  const html = this.compileTemplate('new-material-available', {
+    fullName,
+    materialTitle,
+    materialUrl,
+    platformUrl:
+      process.env.PLATFORM_URL ??
+      'https://estudio-via3-frontend.vercel.app/',
+    year: new Date().getFullYear(),
+  });
 
-      materialTitle,
+  await this.sendEmail(email, 'Nuevo material disponible', html);
+}
 
 async sendTrainingScheduledToCompany(
   email: string,
