@@ -14,7 +14,7 @@ import { FileResourceModule } from 'src/file-resource/file-resource.module';
 
 import { Users } from 'src/users/entities/user.entity';
 
-//import { EmailModule } from 'src/notifications/channels/email/email.module';
+import { EmailModule } from 'src/notifications/channels/email/email.module';
 
 import { NotificationsModule } from 'src/notifications/notifications.module';
 

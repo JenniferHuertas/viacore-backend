@@ -14,7 +14,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { Users } from 'src/users/entities/user.entity';
 
-//import { EmailModule } from 'src/notifications/channels/email/email.module';
+import { EmailModule } from 'src/notifications/channels/email/email.module';
 
 @Module({
   imports: [
@@ -22,7 +22,7 @@ import { Users } from 'src/users/entities/user.entity';
       Users,
     ]),
 
-    //EmailModule,
+    EmailModule,
   ],
 
   controllers: [AuthController],

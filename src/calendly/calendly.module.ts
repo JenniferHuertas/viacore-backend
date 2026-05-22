@@ -1,13 +1,19 @@
 import { Module } from '@nestjs/common';
 
+import { TypeOrmModule } from '@nestjs/typeorm';
+
 import { HttpModule } from '@nestjs/axios';
 
 import { CalendlyService } from './calendly.service';
 
 import { CalendlyController } from './calendly.controller';
+import { Meetings } from 'src/meetings/entities/meeting.entity';
+import { MeetingsModule } from 'src/meetings/meetings.module';
+import { EmailModule } from 'src/notifications/channels/email/email.module';
 
 @Module({
   imports: [
+    TypeOrmModule.forFeature([Meetings]),
     // Configuración global del cliente HTTP
     // para conectarse automáticamente con Calendly.
     HttpModule.register({
@@ -19,6 +25,7 @@ import { CalendlyController } from './calendly.controller';
         'Content-Type': 'application/json',
       },
     }),
+    EmailModule,
   ],
 
   controllers: [

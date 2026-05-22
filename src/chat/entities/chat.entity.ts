@@ -49,15 +49,10 @@ export class ChatMessage {
   createdAt!: Date;
 
   @Expose({ groups: ['get'] })
-<<<<<<< HEAD
- // @ManyToOne(() => Users, (user) => user.messagesSent)
-  sender!: Users;
-=======
   @Column({ type: 'varchar', nullable: true })
   sessionId?: string;
 
   // Relaciones
->>>>>>> d0631e9ad2bd59d1ffbd99bc074d051df26c61ea
 
   @Expose({ groups: ['get'] })
   @ManyToOne(() => Users, (user) => user.messagesSent, { nullable: true })

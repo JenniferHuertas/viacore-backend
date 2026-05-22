@@ -21,7 +21,7 @@ import { JwtService } from '@nestjs/jwt';
 
 import { Role } from 'src/users/enums/roles.enum';
 
-//import { EmailService } from 'src/notifications/channels/email/email.service';
+import { EmailService } from 'src/notifications/channels/email/email.service';
 
 @Injectable()
 export class AuthService {
@@ -31,7 +31,7 @@ export class AuthService {
 
     private readonly jwtService: JwtService,
 
-    //private readonly emailService: EmailService,
+    private readonly emailService: EmailService,
   ) {}
 
   async create(createUserDto: CreateUserDto) {

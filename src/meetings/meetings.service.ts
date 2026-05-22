@@ -51,6 +51,8 @@ export class MeetingsService {
     // antes de continuar con la creación de la reunión.
     await this.validarFechaYHora(createMeetingDto);
 
+    const { targetUserId, ...meetingData } = createMeetingDto
+
     const startDate = new Date(
       `${createMeetingDto.date}T${createMeetingDto.time}:00`,
     );
@@ -79,7 +81,9 @@ export class MeetingsService {
       });
 
     const newMeeting = this.meetingsRepository.create({
-      ...createMeetingDto,
+      ...meetingData,
+
+      user: { id: targetUserId },
 
       // Se almacena únicamente el scheduling URL.
       // No se guarda el objeto completo de Calendly.

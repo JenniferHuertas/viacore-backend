@@ -4,6 +4,8 @@ import {
   Logger,
 } from '@nestjs/common';
 
+import { InjectRepository } from '@nestjs/typeorm';
+
 import { HttpService } from '@nestjs/axios';
 
 import { firstValueFrom } from 'rxjs';
@@ -23,7 +25,10 @@ export interface CreateOneOffEventDto {
 import { Repository } from 'typeorm';
 
 import { Meetings } from '../meetings/entities/meeting.entity';
+
 import { MeetingStatus } from 'src/meetings/entities/meetingStatus.entity';
+
+import { EmailService } from 'src/notifications/channels/email/email.service';
 
 @Injectable()
 export class CalendlyService {
@@ -37,7 +42,9 @@ export class CalendlyService {
 
   constructor(
     private readonly httpService: HttpService,
-    private readonly meetingsRepository: Repository<Meetings>
+    @InjectRepository(Meetings)
+    private readonly meetingsRepository: Repository<Meetings>,
+    private readonly emailService: EmailService
   ) {}
 
   // Obtiene automáticamente el URI
@@ -156,6 +163,8 @@ export class CalendlyService {
     }
 
     await this.meetingsRepository.save(event);
+
+    this.emailService.sendMeetingCreated(event.user.email, event.user.companyName, event.time, event.joinUrl)
   }
 
   async handleInviteeCanceled(payload: any): Promise<void> {
@@ -173,16 +182,16 @@ export class CalendlyService {
     webhookUrl: string,
   ) {
     try {
-      const userUri =
-        await this.getCurrentUserUri();
+      const userUri = process.env.CALENDLY_URI!
+        //await this.getCurrentUserUri();
 
       // Calendly requiere organization URI.
       // Se transforma automáticamente.
-      const organizationUri =
-        userUri.replace(
-          '/users/',
-          '/organizations/',
-        );
+      const organizationUri = process.env.CALENDLY_ORG_URI!
+        // userUri.replace(
+        //   '/users/',
+        //   '/organizations/',
+        // );
 
       const payload = {
         url: webhookUrl,
@@ -195,6 +204,8 @@ export class CalendlyService {
         organization: organizationUri,
 
         scope: 'user',
+
+        user: userUri
       };
 
       const { data } = await firstValueFrom(
