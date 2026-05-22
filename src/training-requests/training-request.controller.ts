@@ -29,7 +29,7 @@ import {
 
 import { FileInterceptor } from '@nestjs/platform-express';
 
-import { diskStorage } from 'multer';
+import { memoryStorage } from 'multer';
 
 import { TrainingRequestService } from './training-request.service';
 
@@ -68,7 +68,6 @@ import { ChangeStatusDto } from './dto/status-training-request.dto';
 @SerializeOptions({ groups: ['Get'] })
 @Controller('training-requests')
 export class TrainingRequestController {
-
   constructor(
     private readonly trainingRequestService: TrainingRequestService,
 
@@ -79,13 +78,11 @@ export class TrainingRequestController {
 
   @Post()
   @ApiOperation({
-    summary:
-      'Crea una nueva solicitud de capacitación',
+    summary: 'Crea una nueva solicitud de capacitación',
   })
   @ApiResponse({
     status: 201,
-    description:
-      'La solicitud ha sido creada con éxito.',
+    description: 'La solicitud ha sido creada con éxito.',
   })
   async create(
     @Body()
@@ -94,90 +91,71 @@ export class TrainingRequestController {
     @Req()
     req: RequestWithUsers,
   ): Promise<TrainingRequests> {
-
     const userId = req.user.id;
 
     const requestInput = {
-      participantsCount:
-        createTrainingRequestDto.participantsCount,
+      participantsCount: createTrainingRequestDto.participantsCount,
 
-      objectives:
-        createTrainingRequestDto.objectives,
+      objectives: createTrainingRequestDto.objectives,
 
-      context:
-        createTrainingRequestDto.context,
+      context: createTrainingRequestDto.context,
 
       training: {
-        id:
-          createTrainingRequestDto.trainingId,
+        id: createTrainingRequestDto.trainingId,
       },
     };
 
-    return await this.trainingRequestService.create(
-      requestInput,
-      userId,
-    );
+    return await this.trainingRequestService.create(requestInput, userId);
   }
 
   @Get('me')
   @ApiOperation({
-    summary:
-      'Obtiene las solicitudes del usuario autenticado',
+    summary: 'Obtiene las solicitudes del usuario autenticado',
   })
   @ApiResponse({
     status: 200,
-    description:
-      'Solicitudes del usuario obtenidas con éxito.',
+    description: 'Solicitudes del usuario obtenidas con éxito.',
   })
   async findMyRequests(
     @Req()
     req: RequestWithUsers,
   ) {
-
     const userId = req.user.id;
 
-    return await this.trainingRequestService.findMyRequests(
-      userId,
-    );
+    return await this.trainingRequestService.findMyRequests(userId);
   }
 
   @Get()
   @Roles(Role.Admin)
   @UseGuards(RolesGuard)
   @ApiOperation({
-    summary:
-      'Obtener todas las solicitudes (Solo Admin)',
+    summary: 'Obtener todas las solicitudes (Solo Admin)',
   })
   @ApiQuery({
     name: 'page',
     required: false,
     type: String,
-    description:
-      'Número de página (ej. 1)',
+    description: 'Número de página (ej. 1)',
   })
   @ApiQuery({
     name: 'limit',
     required: false,
     type: String,
-    description:
-      'Límite por página (ej. 10)',
+    description: 'Límite por página (ej. 10)',
   })
   @ApiQuery({
     name: 'status',
     required: false,
     enum: RequestStatus,
-    description:
-      'Filtrar por estado',
+    description: 'Filtrar por estado',
   })
   @ApiResponse({
     status: 200,
-    description:
-      'Lista de solicitudes obtenida con éxito.',
+    description: 'Lista de solicitudes obtenida con éxito.',
   })
   @ApiResponse({
     status: 403,
-    description:
-      'Prohibido. Se requiere rol de Admin.',
+    description: 'Prohibido. Se requiere rol de Admin.',
   })
   async findAll(
     @Query('page')
@@ -194,14 +172,9 @@ export class TrainingRequestController {
     )
     status?: RequestStatus,
   ): Promise<PaginatedTrainingRequests> {
+    const pageNumber = page ? parseInt(page, 10) : 1;
 
-    const pageNumber = page
-      ? parseInt(page, 10)
-      : 1;
-
-    const limitNumber = limit
-      ? parseInt(limit, 10)
-      : 10;
+    const limitNumber = limit ? parseInt(limit, 10) : 10;
 
     return await this.trainingRequestService.findAll(
       pageNumber,
@@ -212,8 +185,7 @@ export class TrainingRequestController {
 
   @Get(':id')
   @ApiOperation({
-    summary:
-      'Obtiene una solicitud de capacitación por id',
+    summary: 'Obtiene una solicitud de capacitación por id',
   })
   @ApiResponse({
     status: 200,
@@ -221,28 +193,22 @@ export class TrainingRequestController {
   })
   @ApiResponse({
     status: 404,
-    description:
-      'Solicitud no encontrada.',
+    description: 'Solicitud no encontrada.',
   })
   async findOne(
     @Param('id', ParseUUIDPipe)
     id: string,
   ): Promise<TrainingRequests> {
-
-    return await this.trainingRequestService.findOne(
-      id,
-    );
+    return await this.trainingRequestService.findOne(id);
   }
 
   @Patch(':id')
   @ApiOperation({
-    summary:
-      'Actualiza una solicitud de capacitación',
+    summary: 'Actualiza una solicitud de capacitación',
   })
   @ApiResponse({
     status: 200,
-    description:
-      'Solicitud actualizada con éxito.',
+    description: 'Solicitud actualizada con éxito.',
   })
   async update(
     @Param('id', ParseUUIDPipe)
@@ -254,71 +220,43 @@ export class TrainingRequestController {
     @Req()
     req: RequestWithUsers,
   ): Promise<TrainingRequests> {
+    const requestInput: IUpdateTrainingRequest = {};
 
-    const requestInput: IUpdateTrainingRequest =
-      {};
-
-    if (
-      updateTrainingRequestDto.participantsCount !==
-      undefined
-    ) {
-
+    if (updateTrainingRequestDto.participantsCount !== undefined) {
       requestInput.participantsCount =
         updateTrainingRequestDto.participantsCount;
     }
 
-    if (
-      updateTrainingRequestDto.objectives !==
-      undefined
-    ) {
-
-      requestInput.objectives =
-        updateTrainingRequestDto.objectives;
+    if (updateTrainingRequestDto.objectives !== undefined) {
+      requestInput.objectives = updateTrainingRequestDto.objectives;
     }
 
-    if (
-      updateTrainingRequestDto.context !==
-      undefined
-    ) {
-
-      requestInput.context =
-        updateTrainingRequestDto.context;
+    if (updateTrainingRequestDto.context !== undefined) {
+      requestInput.context = updateTrainingRequestDto.context;
     }
 
-    if (
-      updateTrainingRequestDto.trainingId !==
-      undefined
-    ) {
-
+    if (updateTrainingRequestDto.trainingId !== undefined) {
       requestInput.training = {
-        id:
-          updateTrainingRequestDto.trainingId,
+        id: updateTrainingRequestDto.trainingId,
       };
     }
 
-    return await this.trainingRequestService.update(
-      id,
-      requestInput,
-      req.user,
-    );
+    return await this.trainingRequestService.update(id, requestInput, req.user);
   }
 
   @Patch(':id/status')
   @Roles(Role.Admin)
   @UseGuards(RolesGuard)
   @ApiOperation({
-    summary:
-      'Actualizar el estado de una solicitud (Solo Admin)',
+    summary: 'Actualizar el estado de una solicitud (Solo Admin)',
   })
   @ApiResponse({
     status: 200,
-    description:
-      'Estado actualizado correctamente.',
+    description: 'Estado actualizado correctamente.',
   })
   @ApiResponse({
     status: 404,
-    description:
-      'No se encontró la solicitud.',
+    description: 'No se encontró la solicitud.',
   })
   async updateStatus(
     @Param('id', ParseUUIDPipe)
@@ -327,7 +265,6 @@ export class TrainingRequestController {
     @Body()
     changeStatusDto: ChangeStatusDto,
   ): Promise<TrainingRequests> {
-
     return await this.trainingRequestService.updateStatus(
       id,
       changeStatusDto.status,
@@ -336,13 +273,11 @@ export class TrainingRequestController {
 
   @Delete(':id')
   @ApiOperation({
-    summary:
-      'Elimina lógicamente una solicitud (Soft Delete)',
+    summary: 'Elimina lógicamente una solicitud (Soft Delete)',
   })
   @ApiResponse({
     status: 200,
-    description:
-      'Solicitud eliminada con éxito.',
+    description: 'Solicitud eliminada con éxito.',
   })
   async remove(
     @Param('id', ParseUUIDPipe)
@@ -351,22 +286,16 @@ export class TrainingRequestController {
     @Req()
     req: RequestWithUsers,
   ) {
-
-    return await this.trainingRequestService.remove(
-      id,
-      req.user,
-    );
+    return await this.trainingRequestService.remove(id, req.user);
   }
 
   @Post(':id/upload-evidence')
   @ApiOperation({
-    summary:
-      'Sube un archivo (PDF/Excel) y lo adjunta a la solicitud',
+    summary: 'Sube un archivo (PDF/Excel) y lo adjunta a la solicitud',
   })
   @ApiResponse({
     status: 201,
-    description:
-      'Archivo subido y vinculado exitosamente.',
+    description: 'Archivo subido y vinculado exitosamente.',
   })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -381,26 +310,14 @@ export class TrainingRequestController {
 
         title: {
           type: 'string',
-          example:
-            'Comprobante de pago',
+          example: 'Comprobante de pago',
         },
       },
     },
   })
   @UseInterceptors(
     FileInterceptor('file', {
-      storage: diskStorage({
-        destination: './uploads',
-
-        filename: (_, file, cb) => {
-
-          cb(
-            null,
-            `${Date.now()}-${file.originalname}`,
-          );
-        },
-      }),
-
+      storage: memoryStorage(),
       limits: {
         fileSize: 50 * 1024 * 1024,
       },
@@ -416,40 +333,34 @@ export class TrainingRequestController {
     @Body('title')
     title?: string,
   ) {
+    const request = await this.trainingRequestService.findOne(id);
 
-    const request =
-      await this.trainingRequestService.findOne(
-        id,
-      );
+    const decodedName = Buffer.from(file.originalname, 'latin1').toString(
+      'utf8',
+    );
 
-    const finalTitle =
-      (title || file.originalname)
-        .toLowerCase()
-        .endsWith('.pdf')
-        ? (title || file.originalname)
-        : `${title || file.originalname}.pdf`;
+    const finalTitle = (title || decodedName).toLowerCase().endsWith('.pdf')
+      ? title || decodedName
+      : `${title || decodedName}.pdf`;
 
-    const savedFile =
-      await this.fileService.uploadForEntity(
-        file,
-        'trainingRequest',
-        id,
-        finalTitle,
-      );
+    const savedFile = await this.fileService.uploadForEntity(
+      file,
+      'trainingRequest',
+      id,
+      finalTitle,
+    );
 
     if (request.user?.email) {
-
       await this.emailService.sendNewMaterialAvailable(
         request.user.email,
         request.user.name,
         finalTitle,
-        savedFile.fileUrl,
+        savedFile.emailUrl,
       );
     }
 
     return {
-      message:
-        'Archivo vinculado correctamente',
+      message: 'Archivo vinculado correctamente',
 
       file: savedFile,
     };
