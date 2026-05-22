@@ -3,17 +3,19 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+
+import { InjectRepository } from '@nestjs/typeorm';
+
+import { Repository } from 'typeorm';
+
+import { Meetings } from './entities/meeting.entity';
+
 import { CreateMeetingDto } from './dto/create-meeting.dto';
 import { UpdateMeetingDto } from './dto/update-meeting.dto';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Meetings } from './entities/meeting.entity';
-import { Repository } from 'typeorm';
-import { NotFoundError } from 'rxjs';
+
 import { MeetingStatus } from './entities/meetingStatus.entity';
-import { TrainingRequests } from 'src/training-requests/entities/training-request.entity';
-import { RequestStatus } from 'src/training-requests/enums/requests-status.enum';
-import { Users } from '../users/entities/user.entity';
-import { EmailService } from 'src/notifications/channels/email/email.service';
+
+import { CalendlyService } from 'src/calendly/calendly.service';
 
 @Injectable()
 export class MeetingsService {
@@ -21,15 +23,7 @@ export class MeetingsService {
     @InjectRepository(Meetings)
     private readonly meetingsRepository: Repository<Meetings>,
 
-    @InjectRepository(
-      TrainingRequests,
-    )
-    private readonly trainingRequestsRepository: Repository<TrainingRequests>,
-
-    @InjectRepository(Users)
-    private readonly usersRepository: Repository<Users>,
-
-    private readonly emailService: EmailService,
+    private readonly calendlyService: CalendlyService,
   ) {}
 
   horarios = [
@@ -52,116 +46,72 @@ export class MeetingsService {
     '17:00',
   ];
 
-  async create(
-    createMeetingDto: CreateMeetingDto,
-  ) {
-    await this.validarFechaYHora(
-      createMeetingDto,
+  async create(createMeetingDto: CreateMeetingDto) {
+    // Se agrega await para asegurar que la validación termine
+    // antes de continuar con la creación de la reunión.
+    await this.validarFechaYHora(createMeetingDto);
+
+    const { targetUserId, ...meetingData } = createMeetingDto
+
+    const startDate = new Date(
+      `${createMeetingDto.date}T${createMeetingDto.time}:00`,
     );
 
-    const request =
-      await this.trainingRequestsRepository.findOne(
-        {
-          where: {
-            id: createMeetingDto.trainingRequestId,
-          },
-        },
-      );
+    const endDate = new Date(startDate);
 
-    if (!request) {
-      throw new NotFoundException(
-        'Solicitud no encontrada',
-      );
-    }
-    const userExists = await this.meetingsRepository.manager.getRepository(Users).findOne({
-      where: { id: createMeetingDto.targetUserId }
-    });
-    if (!userExists) {
-      throw new NotFoundException(`El usuario con ID ${createMeetingDto.targetUserId} no existe.`);
-    }
+    // Se define una duración fija de 30 minutos
+    // para mantener el flujo simple y estable.
+    endDate.setMinutes(endDate.getMinutes() + 30);
 
-    const newMeetingData = {
-      date: createMeetingDto.date,
+    // Calendly será el proveedor principal de reuniones.
+    // Aquí se genera dinámicamente el scheduling link.
+    const calendlyEvent =
+      await this.calendlyService.createOneOffEvent({
+        name: 'Reunión Empresarial',
 
-      time: createMeetingDto.time,
+        startTime: startDate.toISOString(),
 
-      link:
-        'https://meet.google.com/geq-wgxn-gsz',
+        endTime: endDate.toISOString(),
 
-      user: {
-        id: createMeetingDto.targetUserId,
-      },
+        // Temporalmente se usan datos mock mientras
+        // se conecta el sistema real de usuarios.
+        guestEmail: 'cliente@viacore.com',
 
-      trainingRequest: {
-        id: createMeetingDto.trainingRequestId,
-      },
-    };
-
-    const meeting =
-      await this.meetingsRepository.save(
-        newMeetingData,
-      );
-
-    request.status =
-      RequestStatus.SCHEDULED;
-
-    await this.trainingRequestsRepository.save(
-      request,
-    );
-
-    const user =
-      await this.usersRepository.findOneBy({
-        id: createMeetingDto.targetUserId,
+        guestName: 'Cliente Viacore',
       });
 
-    if (user) {
-      await this.emailService.sendMeetingCreated(
-        user.email,
+    const newMeeting = this.meetingsRepository.create({
+      ...meetingData,
 
-        user.companyName ||
-          user.name,
+      user: { id: targetUserId },
 
-        `${createMeetingDto.date} ${createMeetingDto.time}`,
+      // Se almacena únicamente el scheduling URL.
+      // No se guarda el objeto completo de Calendly.
+      schedulingUrl: calendlyEvent.scheduling_url,
 
-        meeting.link,
-      );
-    }
+      calendlyUri: calendlyEvent.uri,
 
-    return meeting;
+      status: MeetingStatus.PENDING,
+    });
+
+    return await this.meetingsRepository.save(newMeeting);
   }
 
   async findAll() {
-    return await this.meetingsRepository.find(
-      {
-        relations: [
-          'user',
-          'trainingRequest',
-          'trainingRequest.training',
-        ],
-      },
-    );
+    return await this.meetingsRepository.find();
   }
 
   async findOne(id: string) {
     const meetingFound =
-      await this.meetingsRepository.findOne(
-        {
-          where: {
-            id: id,
-          },
+      await this.meetingsRepository.findOneBy({
+        id,
+      });
 
-          relations: [
-            'user',
-            'trainingRequest',
-            'trainingRequest.training',
-          ],
-        },
+    if (!meetingFound) {
+      throw new NotFoundException(
+        `La reunión con id ${id} no existe`,
       );
-
-    if (!meetingFound)
-      throw new NotFoundError(
-        `La reunion con id: ${id} no existe`,
-      );
+    }
 
     return meetingFound;
   }
@@ -170,66 +120,62 @@ export class MeetingsService {
     id: string,
     updateMeetingDto: UpdateMeetingDto,
   ) {
-    return await this.meetingsRepository.update(
-      { id: id },
+    await this.findOne(id);
+
+    await this.meetingsRepository.update(
+      { id },
       updateMeetingDto,
     );
+
+    return await this.findOne(id);
   }
 
   async cancel(id: string) {
-    const meeting: Meetings =
-      await this.findOne(id);
+    const meeting = await this.findOne(id);
 
-    meeting.status =
-      MeetingStatus.Cancelada;
+    meeting.status = MeetingStatus.CANCELLED;
 
-    return await this.meetingsRepository.save(
-      meeting,
-    );
+    await this.meetingsRepository.save(meeting);
+
+    return {
+      message: 'Reunión cancelada correctamente',
+    };
   }
 
   async validarFechaYHora(
     createMeetingDto: CreateMeetingDto,
   ) {
     const meetings =
-      await this.meetingsRepository.findBy(
-        {
-          date: createMeetingDto.date,
-        },
-      );
+      await this.meetingsRepository.findBy({
+        date: createMeetingDto.date,
+      });
 
+    // Se usa throw porque retornar la excepción no detiene
+    // la ejecución del flujo en NestJS.
     if (
       meetings.some(
-        (meeting) =>
-          meeting.time ===
-          createMeetingDto.time,
+        meeting => meeting.time === createMeetingDto.time,
       )
     ) {
       throw new ConflictException(
-        `Ya existe una reunion en este horario`,
+        'Ya existe una reunión en este horario',
       );
     }
   }
 
-  async findDisponibilidad(
-    fecha: Date,
-  ) {
+  async findDisponibilidad(fecha: string) {
     const meetings =
-      await this.meetingsRepository.findBy(
-        {
-          date: fecha,
-        },
-      );
+      await this.meetingsRepository.findBy({
+        date: new Date(fecha),
+      });
 
-    const newHorarios =
-      this.horarios.filter(
-        (meeting) =>
-          !meetings.some(
-            (m) =>
-              m.time == meeting,
-          ),
-      );
+    // Se corrige la lógica de disponibilidad.
+    // Ahora el endpoint devuelve horarios libres
+    // y no los horarios ocupados.
+    const availableHours = this.horarios.filter(
+      hour => !meetings.some(m => m.time === hour),
+    );
 
-    return newHorarios;
+    return availableHours;
   }
 }

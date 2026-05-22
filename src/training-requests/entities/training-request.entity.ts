@@ -74,7 +74,7 @@ export class TrainingRequests {
   files!: FileResource[];
 
   @Expose({ groups: ['Get'] })
-  @OneToMany(() => Meetings, (meeting) => meeting.trainingRequest)
+  //@OneToMany(() => Meetings, (meeting) => meeting.trainingRequest)
   meetings!: Meetings[];
 
   @Expose({ groups: ['Get'] })

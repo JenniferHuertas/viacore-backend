@@ -5,48 +5,57 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
-} from "typeorm";
+} from 'typeorm';
 
-import { MeetingStatus } from "./meetingStatus.entity";
+import { MeetingStatus } from './meetingStatus.entity';
+import { Users } from 'src/users/entities/user.entity';
 
-import { Users } from "src/users/entities/user.entity";
-
-import { TrainingRequests } from "src/training-requests/entities/training-request.entity";
-
-@Entity({ name: "MEETINGS" })
+@Entity({ name: 'MEETINGS' })
 export class Meetings {
-  @PrimaryGeneratedColumn("uuid")
+  @PrimaryGeneratedColumn('uuid')
   id!: string;
 
   @Column({
-    type: "date",
+    type: 'date',
     nullable: false,
   })
   date!: Date;
 
   @Column({
-    type: "varchar",
+    type: 'varchar',
   })
   time!: string;
 
+  // Calendly será el proveedor principal de reuniones.
+  // Aquí se almacena el scheduling link dinámico.
   @Column({
-    type: "varchar",
+    type: 'varchar',
+    nullable: true,
   })
-  link!: string;
+  schedulingUrl!: string;
 
   @Column({
-    type: "enum",
+    type: 'varchar',
+    nullable: true,
+  })
+  calendlyUri!: string;
+
+  @Column({
+    type: 'varchar',
+    nullable: true
+  })
+  joinUrl!: string
+
+  @Column({
+    type: 'enum',
     enum: MeetingStatus,
-    enumName: "MeetingStatus",
-    default: MeetingStatus.Pendiente,
+    enumName: 'MeetingStatus',
+    default: MeetingStatus.PENDING,
   })
   status!: MeetingStatus;
 
   @ManyToOne(() => Users)
   user!: Users;
-
-  @ManyToOne(() => TrainingRequests, (request) => request.meetings)
-  trainingRequest!: TrainingRequests;
 
   @CreateDateColumn()
   createdAt!: Date;

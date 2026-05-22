@@ -74,10 +74,10 @@ export class AuthService {
       );
 
     try {
-      await this.emailService.sendWelcomeEmail(
-        savedUser.email,
-        savedUser.name,
-      );
+      // await this.emailService.sendWelcomeEmail(
+      //   savedUser.email,
+      //   savedUser.name,
+      // );
 
       console.error(
         'WELCOME EMAIL ENVIADO',

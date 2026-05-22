@@ -47,10 +47,8 @@ export class TrainingRequestService {
     const user = await this.usersRepository.findOneBy({ id: userId });
  
     if (user) {
-      await this.emailService.sendTrainingRequestCreated(
-        user.email,
-        user.companyName || user.name,
-      );
+      //await this.emailService.sendTrainingRequestCreated(
+        //////);
     }
  
     return newRequest;

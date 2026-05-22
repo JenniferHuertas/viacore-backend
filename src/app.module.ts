@@ -48,6 +48,10 @@ import { ContactModule } from './contact/contact.module';
 
 import { ProfileModule } from './profile/profile.module';
 
+import { CalendlyService } from './calendly/calendly.service';
+
+import { CalendlyModule } from './calendly/calendly.module';
+
 @Module({
   imports: [
     UsersModule,
@@ -87,6 +91,7 @@ import { ProfileModule } from './profile/profile.module';
 
     TrainingModule,
 
+    
     MeetingsModule,
 
     TrainingRequestModule,
@@ -110,6 +115,8 @@ import { ProfileModule } from './profile/profile.module';
     ChatModule,
 
     ContactModule,
+
+    CalendlyModule
   ],
 
   controllers: [
@@ -127,6 +134,7 @@ export class AppModule
 {
   constructor(
     private readonly trainingService: TrainingService,
+    private readonly calendlyService: CalendlyService
   ) {}
 
   configure(
@@ -145,5 +153,7 @@ export class AppModule
     console.log(
       'Capacitaciones cargadas',
     );
+
+    //this.calendlyService.createWebhookSubscription('https://shy-shopping-trunks.ngrok-free.dev') //aca va el link del deploy
   }
 }
