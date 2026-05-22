@@ -20,4 +20,21 @@ export class ChatMessageRepository extends Repository<ChatMessage> {
     const newMessage = this.create(messageData);
     return await this.save(newMessage);
   }
+
+  async getAdminStatsRaw() {
+    const sessionCount = await this.createQueryBuilder(`cm`)
+      .select(`COUNT(DISTINCT cm.sessionId)`, `count`)
+      .where(`cm.sessionId IS NOT NULL`)
+      .getRawOne();
+    const conversionData = await this.createQueryBuilder(`cm`)
+      .innerJoin(`cm.trainingRequest`, `tr`)
+      .select(`SUM(tr.estimatedPrice)`, `revenue`)
+      .addSelect(`COUNT(DISTINCT tr.id)`, `converted`)
+      .where(`cm.sessionId IS NOT NULL`)
+      .getRawOne();
+    return {
+      sessionCount,
+      conversionData,
+    };
+  }
 }
