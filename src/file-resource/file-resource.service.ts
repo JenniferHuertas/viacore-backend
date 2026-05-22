@@ -1,10 +1,18 @@
-import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
+
 import { InjectRepository } from '@nestjs/typeorm';
+
 import { Repository } from 'typeorm';
+
 import { FileResource } from './entities/file-resource.entity';
+
 import { UploadFileDto } from './dto/upload-file.dto';
+
 import { v2 as cloudinary } from 'cloudinary';
-import { Readable } from 'stream';
 
 @Injectable()
 export class FileResourceService {
@@ -20,24 +28,38 @@ export class FileResourceService {
 */
   ) {}
 
-  // SUBIDA CLOUDINARY (BUFFER → STREAM)
-  private uploadToCloudinary(file: Express.Multer.File): Promise<any> {
-    return new Promise((resolve, reject) => {
-      const uploadStream = cloudinary.uploader.upload_stream(
+  // SUBIDA CLOUDINARY
+  private async uploadToCloudinary(
+    file: Express.Multer.File,
+    resourceType: 'image' | 'raw' = 'raw',
+  ): Promise<{ public_id: string; resource_type: string }> {
+    try {
+      const sanitizedFileName = file.originalname
+        .replace(/\.pdf$/i, '')
+        .replace(/\s+/g, '-')
+        .replace(/[^a-zA-Z0-9-_]/g, '');
+
+      return await cloudinary.uploader.upload(
+        `data:${file.mimetype};base64,${file.buffer.toString('base64')}`,
         {
           folder: 'file-resources',
-          resource_type: 'auto',
-        },
-        (error, result) => {
-          if (error) {
-            return reject(new InternalServerErrorException(`Error en Cloudinary: ${error.message}`));
-          }
-          resolve(result);
+
+          resource_type: resourceType,
+
+          public_id: sanitizedFileName,
+
+          use_filename: false,
+
+          unique_filename: false,
+
+          overwrite: true,
         },
       );
-
-      Readable.from(file.buffer).pipe(uploadStream);
-    });
+    } catch (error: any) {
+      throw new InternalServerErrorException(
+        `Error en Cloudinary: ${error.message}`,
+      );
+    }
   }
 
   async upload(file: Express.Multer.File, dto: UploadFileDto) {
@@ -74,14 +96,27 @@ export class FileResourceService {
       }
     }
 */
+
     // SUBIDA A CLOUDINARY
     const uploadResult = await this.uploadToCloudinary(file);
+
+    // URL FINAL PARA DESCARGA DIRECTA
+    const cleanTitle = (dto.title || 'archivo').replace(/\.pdf$/i, '');
+
+    const downloadUrl = cloudinary.url(uploadResult.public_id, {
+      resource_type: 'raw',
+      secure: true,
+      flags: `attachment:${cleanTitle}.pdf`,
+    });
 
     // GUARDAR EN DB
     const fileResource = this.fileRepository.create({
       title: dto.title,
-      fileUrl: uploadResult.secure_url,
+
+      fileUrl: downloadUrl,
+
       fileType: uploadResult.resource_type,
+
       //      training,
       //      trainingRequest,
     });
@@ -92,8 +127,11 @@ export class FileResourceService {
   //Carga de archivos desde otro modulo
   async uploadForEntity(
     file: Express.Multer.File,
+
     parentType: 'training' | 'trainingRequest',
+
     parentId: string,
+
     title = 'Archivo adjunto',
   ): Promise<FileResource> {
     if (!file) {
@@ -104,19 +142,42 @@ export class FileResourceService {
       throw new BadRequestException('parentType and parentId are required');
     }
 
-    // SUBIDA A CLOUDINARY (MISMO MÉTODO)
-    const uploadResult = await this.uploadToCloudinary(file);
+    // SUBIDA A CLOUDINARY
+    const uploadResult: { public_id: string; resource_type: string } =
+      await this.uploadToCloudinary(
+        file,
+        parentType === 'training' ? 'image' : 'raw',
+      );
+
+    // URL FINAL PARA DESCARGA DIRECTA
+    const cleanTitle = title.replace(/\.pdf$/i, '');
+
+    const downloadUrl =
+      parentType === 'training'
+        ? cloudinary.url(uploadResult.public_id, {
+            resource_type: 'image',
+            secure: true,
+          })
+        : cloudinary.url(uploadResult.public_id, {
+            resource_type: 'raw',
+            secure: true,
+            flags: `attachment:${cleanTitle}.pdf`,
+          });
 
     // CREACIÓN BASE
     const fileResource = this.fileRepository.create({
       title,
-      fileUrl: uploadResult.secure_url,
+
+      fileUrl: downloadUrl,
+
       fileType: uploadResult.resource_type,
     });
 
     // ASOCIACIÓN DINÁMICA (SIN USAR REPOS)
     if (parentType === 'training') {
-      fileResource.training = { id: parentId } as any;
+      fileResource.training = {
+        id: parentId,
+      } as any;
     }
 
     if (parentType === 'trainingRequest') {
@@ -126,18 +187,26 @@ export class FileResourceService {
     return this.fileRepository.save(fileResource);
   }
 
-   //fincion para seeder de training
+  //fincion para seeder de training
   async createFromUrl(params: {
-  url: string;
-  parentType: 'training' | 'trainingRequest';
-  parentId: string;
-  title: string;
+    url: string;
+
+    parentType: 'training' | 'trainingRequest';
+
+    parentId: string;
+
+    title: string;
   }) {
     const fileResource = this.fileRepository.create({
       fileUrl: params.url,
+
       title: params.title,
-      training: { id: params.parentId },
-      fileType: "image"
+
+      training: {
+        id: params.parentId,
+      },
+
+      fileType: 'image',
     });
 
     return this.fileRepository.save(fileResource);

@@ -17,12 +17,14 @@ import { TrainingRequests } from '../../training-requests/entities/training-requ
 import { Role } from '../enums/roles.enum';
 
 import { Notification } from '../../notifications/entities/notification.entity';
+
 import { ChatMessage } from 'src/chat/entities/chat.entity';
 
 @Entity({
   name: 'USERS',
 })
 export class Users {
+
   @Expose({ groups: ['newUser', 'Get'] })
   @PrimaryGeneratedColumn('uuid')
   id!: string;
@@ -99,6 +101,13 @@ export class Users {
 
   @Expose({ groups: ['Get'] })
   @Column({
+    type: 'varchar',
+    nullable: true,
+  })
+  avatarUrl!: string;
+
+  @Expose({ groups: ['Get'] })
+  @Column({
     type: 'boolean',
     default: false,
   })
@@ -144,9 +153,15 @@ export class Users {
   )
   notifications!: Notification[];
 
-  @OneToMany(() => ChatMessage, (message) => message.sender)
+  @OneToMany(
+    () => ChatMessage,
+    (message) => message.sender,
+  )
   messagesSent!: ChatMessage[];
 
-  @OneToMany(() => ChatMessage, (message) => message.receiver)
+  @OneToMany(
+    () => ChatMessage,
+    (message) => message.receiver,
+  )
   messagesReceived!: ChatMessage[];
 }

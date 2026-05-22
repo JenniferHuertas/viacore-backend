@@ -23,6 +23,7 @@
           "
         >
 
+          <!-- Banner -->
           <tr>
             <td>
               <img
@@ -34,7 +35,7 @@
             </td>
           </tr>
 
-         
+          <!-- Contenido -->
           <tr>
             <td style="padding:50px 45px;">
 
@@ -45,7 +46,7 @@
                 font-weight:700;
                 letter-spacing:1px;
               ">
-                Pago aprobado
+                Nuevo material disponible
               </h1>
 
               <p style="
@@ -54,19 +55,7 @@
                 line-height:30px;
                 margin-bottom:25px;
               ">
-                Hola
-                <span style="color:#d4a64f; font-weight:bold;">
-                  {{fullName}}
-                </span>.
-              </p>
-
-              <p style="
-                color:#bcbcbc;
-                font-size:16px;
-                line-height:30px;
-                margin-bottom:25px;
-              ">
-                Confirmamos que tu pago fue aprobado exitosamente y el proceso de capacitación continúa correctamente dentro de la plataforma.
+                Hola {{fullName}}, ya se encuentra disponible nuevo material relacionado con tu capacitación.
               </p>
 
               <div style="
@@ -76,27 +65,39 @@
                 border-radius:10px;
                 margin:35px 0;
               ">
+
+                <p style="
+                  margin:0 0 10px 0;
+                  color:#9f9f9f;
+                  font-size:13px;
+                  text-transform:uppercase;
+                  letter-spacing:1px;
+                ">
+                  Archivo disponible
+                </p>
+
                 <p style="
                   margin:0;
                   color:#ffffff;
-                  font-size:16px;
+                  font-size:18px;
+                  font-weight:bold;
                   line-height:28px;
                 ">
-                  Monto aprobado:
-                  <strong>${{amount}}</strong>
+                  {{materialTitle}}
                 </p>
+
               </div>
 
               <p style="
-                color:#9f9f9f;
-                font-size:15px;
-                line-height:28px;
+                color:#bcbcbc;
+                font-size:16px;
+                line-height:30px;
                 margin-bottom:35px;
               ">
-                Gracias por confiar en ViaCore. Nuestro equipo continuará acompañándote durante cada etapa del proceso de capacitación.
+                Podés descargar el material desde el siguiente botón y revisarlo cuando quieras.
               </p>
 
-              
+              <!-- Botón -->
               <table cellpadding="0" cellspacing="0" border="0">
                 <tr>
                   <td
@@ -105,7 +106,9 @@
                     style="border-radius:8px;"
                   >
                     <a
-                      href="https://estudio-via3-frontend.vercel.app/"
+                      href="{{materialUrl}}"
+                      
+                      rel="noopener noreferrer"
                       style="
                         display:inline-block;
                         padding:15px 35px;
@@ -116,7 +119,7 @@
                         letter-spacing:0.5px;
                       "
                     >
-                      INGRESAR A LA PLATAFORMA
+                      DESCARGAR MATERIAL
                     </a>
                   </td>
                 </tr>

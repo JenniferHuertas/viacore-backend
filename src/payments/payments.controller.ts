@@ -13,8 +13,16 @@ import { PaymentsService } from './payments.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
-import { ApiBearerAuth } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from 'src/auth/guards/auth.guard';
+import { Roles } from 'src/decorator/roles.decorator';
+import { Role } from 'src/auth/roles.enum';
+import {
+  CreatePreferenceResponseDto,
+  PaymentResponseDto,
+  WebhookResponseDto,
+} from './dto/payment-response.dto';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
 
 @Controller('payments')
 export class PaymentsController {
@@ -23,34 +31,70 @@ export class PaymentsController {
     private readonly configService: ConfigService,
   ) {}
 
+  @Get()
+  @ApiBearerAuth('Bearer')
+  @Roles(
+    Role.Admin,
+  )
+  @UseGuards(
+    AuthGuard,
+    RolesGuard,
+  )
+  findAll(
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    if (!startDate || !endDate) {
+      throw new BadRequestException(
+        'startDate y endDate son obligatorios',
+      );
+    }
+
+    return this.paymentsService.findAll(
+      startDate,
+      endDate,
+    );
+  }
+
   @Get('user/:userId')
   @ApiBearerAuth('Bearer')
   @UseGuards(AuthGuard)
-  findByUserId(@Param('userId') userId: string) {
+  @ApiOperation({ summary: 'Obtener pagos por usuario' })
+  @ApiResponse({ status: 200, type: [PaymentResponseDto] })
+  findByUserId(@Param('userId') userId: string): Promise<PaymentResponseDto[]> {
     return this.paymentsService.findByUserId(userId);
   }
 
   @Get(':id')
   @ApiBearerAuth('Bearer')
   @UseGuards(AuthGuard)
-  findById(@Param('id') id: string) {
+  @ApiOperation({ summary: 'Obtener pago por ID' })
+  @ApiResponse({ status: 200, type: PaymentResponseDto })
+  @ApiResponse({ status: 404, description: 'Pago no encontrado' })
+  findById(@Param('id') id: string): Promise<PaymentResponseDto> {
     return this.paymentsService.findById(id);
   }
 
   @Post('create-preference')
   @ApiBearerAuth('Bearer')
   @UseGuards(AuthGuard)
-  createPreference(@Body() dto: CreatePaymentDto) {
+  @ApiOperation({ summary: 'Crear preferencia de pago en MercadoPago' })
+  @ApiResponse({ status: 201, type: CreatePreferenceResponseDto })
+  createPreference(
+    @Body() dto: CreatePaymentDto,
+  ): Promise<CreatePreferenceResponseDto> {
     return this.paymentsService.createPreference(dto);
   }
 
   @Post('webhook')
+  @ApiOperation({ summary: 'Webhook de MercadoPago' })
+  @ApiResponse({ status: 200, type: WebhookResponseDto })
   handleWebhook(
     @Body() body: { type: string; data: { id: string | number } },
     @Headers('x-signature') xSignature: string,
     @Headers('x-request-id') xRequestId: string,
     @Query('data.id') dataId: string,
-  ) {
+  ): Promise<WebhookResponseDto> {
     const secret = this.configService.get<string>('MP_WEBHOOK_SECRET') ?? '';
     const ts = xSignature
       ?.split(',')
