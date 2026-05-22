@@ -1,0 +1,83 @@
+[33m16057e0[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mcalendly[m[33m, [m[1;31morigin/calendly[m[33m, [m[1;32mfeature/meetings[m[33m)[m feat: integrate calendly meetings flow
+[33ma712d8b[m[33m ([m[1;31morigin/develop[m[33m)[m Merge pull request #35 from via3-sketch/feature/payments
+[33m8c6a0b2[m[33m ([m[1;31morigin/feature/payments[m[33m)[m Ajuste cambio de estado en trainingRequest y validación de firma
+[33m0dfbaf2[m Merge pull request #34 from via3-sketch/feat/chat-and-ai
+[33m912e52f[m feat(chat): implementar estructura base del módulo de mensajes
+[33mf1f88d1[m calendly
+[33m436e15d[m ...
+[33m0f19382[m Merge pull request #33 from via3-sketch/feature/payments
+[33m51b2c90[m Implementación endpoint GET. Pruebas del flujo completo del pago
+[33mc311586[m Resolución de conflictos para merge
+[33m852ec88[m feat: implement secure training requests flow, dynamic pricing and meeting integration
+[33m1a6d754[m[33m ([m[1;31morigin/feature/training-request[m[33m)[m Merge branch 'develop' of https://github.com/via3-sketch/estudio-via3-backend into feature/training-request
+[33m5ecec54[m relacion entidad meetings
+[33mafde10b[m Merge branch 'main' of https://github.com/via3-sketch/estudio-via3-backend into feature/training-request
+[33m50780bb[m feat: secure training requests and integrate meeting scheduling flow
+[33m57a2c54[m Merge pull request #31 from via3-sketch/feature/meetings-training-updates
+[33m48f904f[m[33m ([m[1;31morigin/feature/meetings-training-updates[m[33m)[m migrate emails to brevo api
+[33m10105cf[m Update email module configuration and template paths
+[33m142eba5[m Refactor email module template directory structure
+[33me6aafde[m feat(training-requests): integrar cotizacion automatica y relacion con pagos
+[33m7b3ce5a[m Update nest-cli.json with asset configuration
+[33m86e4e40[m Merge pull request #30 from via3-sketch/feature/meetings-training-updates
+[33mf531c9d[m Merge branch 'main' into feature/meetings-training-updates
+[33mc33d205[m npm install para actualizar package lock json
+[33md8e7a9a[m feat(training-requests): integrar carga y lectura de archivos con Cloudinary
+[33m77145b2[m Merge branch 'develop' of https://github.com/via3-sketch/estudio-via3-backend into develop
+[33m378339c[m feat: integrate email notifications for auth meetings and training requests
+[33m23c54e9[m Implementación de handleWebhook en service
+[33mb9796a1[m merge develop into feature branch
+[33mf6f4bda[m Merge branch 'develop' of https://github.com/via3-sketch/estudio-via3-backend into feature/payments
+[33mee85d35[m Merge pull request #29 from via3-sketch/changes
+[33m6b36474[m validates
+[33m1e2e17d[m Update user profileCompleted status for admins
+[33me2ae9b8[m Update admin email from colmenares9093 to colmenares8093
+[33m7d0f3f3[m Update auth.service.ts
+[33m4feaad8[m Configuracion redis online
+[33m3a57361[m fix: resolve bullmodule type errors and redis configuration
+[33mdfa63fd[m lock.json
+[33m3b9661a[m Avances en funcionalidades de payments
+[33md947a52[m fix: resolve merge conflict in app.module
+[33m0d8641d[m Inicialización del módulo Payments, creación de entity
+[33mb6f1c5a[m Parte notificaciones
+[33m786363b[m Merge pull request #28 from via3-sketch/feature/meetings-training-updates
+[33m900a05f[m regenerate package lock
+[33mbe19c9c[m Merge pull request #27 from via3-sketch/feature/meetings-training-updates
+[33mcda1452[m fix auth service and profile flow
+[33md98fce3[m Update auth.service.ts
+[33m3d0eb5b[m Merge pull request #26 from via3-sketch/feature/meetings-training-updates
+[33m7e1e048[m Merge branch 'main' into feature/meetings-training-updates
+[33mce1ccff[m fix auth service build
+[33m2a52abe[m fix auth google and notifications
+[33m48c33fa[m fix auth google and notifications
+[33mb0e24cc[m Update auth.service.ts
+[33mbe75165[m Update redirect URLs to production environment
+[33m1324383[m Update main.ts
+[33m0f756d7[m Update main.ts
+[33m68ba290[m Update main.ts
+[33md5097a4[m Merge branch 'develop' of https://github.com/via3-sketch/estudio-via3-backend into develop
+[33m824493a[m arreglo deploy
+[33m5decb51[m Merge pull request #25 from via3-sketch/feature/training-request
+[33ma00faf3[m feat(training-requests): sync status flow and add business logic validations
+[33m121370b[m Merge pull request #24 from via3-sketch/develop
+[33m3de89ce[m lock.json
+[33m9c6649d[m Merge branch 'develop' of https://github.com/via3-sketch/estudio-via3-backend into feature/training-request
+[33ma6fb2a5[m merge dto
+[33mc7a52d1[m Merge branch 'develop' of https://github.com/via3-sketch/estudio-via3-backend into feature/training-request
+[33m737b715[m nuevo install
+[33m69ad443[m Merge branch 'develop' of https://github.com/via3-sketch/estudio-via3-backend into develop
+[33mcafe87b[m install para el package-lock.json
+[33m8369497[m Configurar Redis, Firebase y sistema de notificaciones
+[33m8837213[m Merge pull request #19 from via3-sketch/feature/meetings-training-updates
+[33m7b82405[m feat: meetings and training requests updates
+[33mb02f5ff[m Merge branch 'develop' of https://github.com/via3-sketch/estudio-via3-backend into feature/training-request
+[33m687797e[m Remove debug log for user in auth service
+[33m6a4d84e[m Merge pull request #18 from via3-sketch/back-cambios-para-trabajar-en-front
+[33m8e4b152[m Merge pull request #17 from via3-sketch/feature/training
+[33m7ba2d9f[m[33m ([m[1;31morigin/back-cambios-para-trabajar-en-front[m[33m)[m validates
+[33mb60fb2b[m[33m ([m[1;31morigin/feature/training[m[33m)[m Ajustes en seederTraining, inclusión de imágenes y pruebas
+[33m9eddea2[m fix: resolve merge conflict in training.repository
+[33mc727fa7[m Merge pull request #15 from via3-sketch/fix/training-image-relation
+[33mfd73146[m Ajustes en helpers para que cuadre con maqueta de front. Ajustes en entity/dto/repository
+[33me6a35e6[m Merge branch 'develop' of https://github.com/via3-sketch/estudio-via3-backend into feature/training-request
+[33mf3be9db[m Merge branch 'develop' of https://github.com/via3-sketch/estudio-via3-backend into feature/training

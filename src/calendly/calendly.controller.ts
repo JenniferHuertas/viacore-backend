@@ -4,12 +4,29 @@ import { CalendlyService } from './calendly.service';
 
 @Controller('calendly')
 export class CalendlyController {
-  constructor(private readonly calendlyService: CalendlyService) {}
+  constructor(
+    private readonly calendlyService: CalendlyService,
+  ) {}
 
-  // Este endpoint recibirá eventos enviados automáticamente
-  // por Calendly cuando una reunión sea creada o cancelada.
+  // Este endpoint recibirá automáticamente eventos
+  // enviados por Calendly cuando una reunión:
+  // - sea creada
+  // - cancelada
+  // - reagendada
   @Post('webhook')
   async webhook(@Body() payload: any) {
     return this.calendlyService.handleWebhook(payload);
+  }
+
+  // Este endpoint registra automáticamente
+  // el webhook dentro de Calendly.
+  //
+  // IMPORTANTE:
+  // Debes reemplazar la URL ngrok por tu URL pública real.
+  @Post('register-webhook')
+  async registerWebhook() {
+    return this.calendlyService.createWebhookSubscription(
+      'https://TU-NGROK.ngrok-free.app/calendly/webhook',
+    );
   }
 }
