@@ -13,15 +13,9 @@ export class CreateChatDto {
     example: 'Hola, me gustaría saber el estado de mi cotización para el taller de liderazgo.',
     description: 'Contenido del mensaje enviado',
   })
-  @IsNotEmpty({
-    message: 'El mensaje no puede estar vacío',
-  })
-  @IsString({
-    message: 'El mensaje debe ser un texto',
-  })
-  @MinLength(1, {
-    message: 'El mensaje debe tener al menos 1 carácter',
-  })
+  @IsNotEmpty({ message: 'El mensaje no puede estar vacío' })
+  @IsString({ message: 'El mensaje debe ser un texto' })
+  @MinLength(1, { message: 'El mensaje debe tener al menos 1 carácter' })
   message!: string;
 
   @ApiPropertyOptional({
@@ -29,9 +23,7 @@ export class CreateChatDto {
     description: 'ID de la solicitud de capacitación vinculada al chat',
   })
   @IsOptional()
-  @IsUUID('4', {
-    message: 'El id de la capacitación no es un UUID válido',
-  })
+  @IsUUID('4', { message: 'El id de la capacitación no es un UUID válido' })
   trainingRequestId!: string;
 
   @ApiPropertyOptional({
@@ -39,8 +31,15 @@ export class CreateChatDto {
     description: 'ID del usuario destinatario (opcional)',
   })
   @IsOptional()
-  @IsUUID('4', {
-    message: 'El id del destinatario no es un UUID válido',
-  })
+  @IsUUID('4', { message: 'El id del destinatario no es un UUID válido' })
   receiverId!: string;
+
+  // --- NUEVA PROPIEDAD PARA PASO DE SESIÓN ANÓNIMA ---
+  @ApiPropertyOptional({
+    example: 'sesion-temporal-front-123',
+    description: 'ID de sesión temporal generado por el frontend para usuarios anónimos',
+  })
+  @IsOptional()
+  @IsString({ message: 'El sessionId debe ser una cadena de texto' })
+  sessionId!: string;
 }
