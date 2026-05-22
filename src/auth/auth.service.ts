@@ -52,9 +52,14 @@ export class AuthService {
         10,
       );
 
+    const {
+      confirmPassword,
+       ...userData
+      } = createUserDto;
+
     const newUser =
       this.usersRepository.create({
-        ...createUserDto,
+        ...userData,
 
         password: hashedPassword,
 
@@ -74,11 +79,11 @@ export class AuthService {
       //   savedUser.name,
       // );
 
-      console.log(
+      console.error(
         'WELCOME EMAIL ENVIADO',
       );
     } catch (error) {
-      console.log(
+      console.error(
         'ERROR MAIL:',
         error,
       );
@@ -91,9 +96,13 @@ export class AuthService {
     credentials: LoginUserDto,
   ) {
     const foundUser =
-      await this.usersRepository.findOneBy({
-        email: credentials.email,
-      });
+  await this.usersRepository
+    .createQueryBuilder('user')
+    .addSelect('user.password')
+    .where('user.email = :email', {
+      email: credentials.email,
+    })
+    .getOne();
 
     if (!foundUser) {
       throw new BadRequestException(
@@ -154,7 +163,6 @@ export class AuthService {
         .toLowerCase()
         .trim();
 
-    // Emails admins permitidos
     const adminEmails = [
       'colmenares8093@gmail.com',
       'admin.viacore@gmail.com',
@@ -195,17 +203,12 @@ export class AuthService {
         );
 
       try {
-        //await this.emailService.sendWelcomeEmail(
-         //////);
-
-        console.log(
-          'WELCOME EMAIL GOOGLE ENVIADO',
+        await this.emailService.sendWelcomeEmail(
+          user.email,
+          user.name,
         );
       } catch (error) {
-        console.log(
-          'ERROR MAIL GOOGLE:',
-          error,
-        );
+          console.error("Error mail Google: ", error)
       }
     } else {
       if (!user.googleId) {
@@ -213,7 +216,6 @@ export class AuthService {
           googleUser.googleId;
       }
 
-      // Si el email está autorizado como admin
       if (isAdmin) {
         user.role = Role.Admin;
 

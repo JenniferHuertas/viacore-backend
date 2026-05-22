@@ -56,6 +56,7 @@ export class Users {
     type: 'varchar',
     length: 100,
     nullable: true,
+    select: false,
   })
   @Exclude()
   password!: string;
