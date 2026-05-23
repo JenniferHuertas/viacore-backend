@@ -8,7 +8,9 @@ import {
 } from 'typeorm';
 
 import { MeetingStatus } from './meetingStatus.entity';
+
 import { Users } from 'src/users/entities/user.entity';
+import { TrainingRequests } from 'src/training-requests/entities/training-request.entity';
 
 @Entity({ name: 'MEETINGS' })
 export class Meetings {
@@ -42,9 +44,9 @@ export class Meetings {
 
   @Column({
     type: 'varchar',
-    nullable: true
+    nullable: true,
   })
-  joinUrl!: string
+  joinUrl!: string;
 
   @Column({
     type: 'enum',
@@ -57,9 +59,26 @@ export class Meetings {
   @ManyToOne(() => Users)
   user!: Users;
 
+  @ManyToOne(() => TrainingRequests, (request) => request.meetings, {
+    nullable: true,
+  })
+  trainingRequest!: TrainingRequests;
+
   @CreateDateColumn()
   createdAt!: Date;
 
   @UpdateDateColumn()
   updatedAt!: Date;
+
+  @Column({
+    type: 'boolean',
+    default: false,
+  })
+  reminder24hSent!: boolean;
+
+  @Column({
+    type: 'boolean',
+    default: false,
+  })
+  reminder2hSent!: boolean;
 }

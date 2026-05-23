@@ -21,7 +21,6 @@ import { Payment } from 'src/payments/entities/payment.entity';
   name: 'TRAINING_REQUESTS',
 })
 export class TrainingRequests {
-
   @Expose({ groups: ['Get'] })
   @PrimaryGeneratedColumn('uuid')
   id!: string;
@@ -74,11 +73,10 @@ export class TrainingRequests {
   files!: FileResource[];
 
   @Expose({ groups: ['Get'] })
-  //@OneToMany(() => Meetings, (meeting) => meeting.trainingRequest)
+  @OneToMany(() => Meetings, (meeting) => meeting.trainingRequest)
   meetings!: Meetings[];
 
   @Expose({ groups: ['Get'] })
   @OneToMany(() => Payment, (payment) => payment.trainingRequest)
   payments!: Payment[];
-
 }
