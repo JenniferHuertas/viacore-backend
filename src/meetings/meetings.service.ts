@@ -11,11 +11,15 @@ import { Repository } from 'typeorm';
 import { Meetings } from './entities/meeting.entity';
 
 import { CreateMeetingDto } from './dto/create-meeting.dto';
+
 import { UpdateMeetingDto } from './dto/update-meeting.dto';
 
 import { MeetingStatus } from './entities/meetingStatus.entity';
 
 import { CalendlyService } from 'src/calendly/calendly.service';
+
+import { TrainingRequests } from 'src/training-requests/entities/training-request.entity';
+import { RequestStatus } from 'src/training-requests/enums/requests-status.enum';
 
 @Injectable()
 export class MeetingsService {
@@ -24,6 +28,9 @@ export class MeetingsService {
     private readonly meetingsRepository: Repository<Meetings>,
 
     private readonly calendlyService: CalendlyService,
+
+    @InjectRepository(TrainingRequests)
+    private readonly trainingRequestsRepository: Repository<TrainingRequests>
   ) {}
 
   horarios = [
@@ -63,6 +70,21 @@ export class MeetingsService {
     // para mantener el flujo simple y estable.
     endDate.setMinutes(endDate.getMinutes() + 31);
 
+    const request =
+      await this.trainingRequestsRepository.findOne(
+        {
+          where: {
+            id: createMeetingDto.trainingRequestId,
+          },
+        },
+      );
+
+    if (!request) {
+      throw new NotFoundException(
+        'Solicitud no encontrada',
+      );
+    }
+
     // Calendly será el proveedor principal de reuniones.
     // Aquí se genera dinámicamente el scheduling link.
     const calendlyEvent =
@@ -79,11 +101,16 @@ export class MeetingsService {
 
         guestName: 'Cliente Viacore',
       });
-console.log(JSON.stringify(calendlyEvent))
+    console.log(JSON.stringify(calendlyEvent))
+
     const newMeeting = this.meetingsRepository.create({
       ...meetingData,
 
       user: { id: targetUserId },
+
+      trainingRequest: {
+        id: createMeetingDto.trainingRequestId,
+      },
 
       // Se almacena únicamente el scheduling URL.
       // No se guarda el objeto completo de Calendly.
@@ -94,8 +121,10 @@ console.log(JSON.stringify(calendlyEvent))
       status: MeetingStatus.PENDING,
     });
 
-    
-    console.log(newMeeting)
+    request.status =
+      RequestStatus.SCHEDULED;
+
+    await this.trainingRequestsRepository.save( request );
 
     return await this.meetingsRepository.save(newMeeting);
   }

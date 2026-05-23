@@ -9,6 +9,7 @@ import {
 
 import { MeetingStatus } from './meetingStatus.entity';
 import { Users } from 'src/users/entities/user.entity';
+import { TrainingRequests } from 'src/training-requests/entities/training-request.entity';
 
 @Entity({ name: 'MEETINGS' })
 export class Meetings {
@@ -56,6 +57,9 @@ export class Meetings {
 
   @ManyToOne(() => Users)
   user!: Users;
+
+  @ManyToOne(() => TrainingRequests)
+  trainingRequest!: TrainingRequests;
 
   @CreateDateColumn()
   createdAt!: Date;
