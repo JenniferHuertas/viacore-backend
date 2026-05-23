@@ -55,10 +55,9 @@ export class FileResourceService {
           overwrite: true,
         },
       );
-    } catch (error: any) {
-      throw new InternalServerErrorException(
-        `Error en Cloudinary: ${error.message}`,
-      );
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new InternalServerErrorException(`Error en Cloudinary: ${message}`);
     }
   }
 
@@ -133,7 +132,7 @@ export class FileResourceService {
     parentId: string,
 
     title = 'Archivo adjunto',
-  ): Promise<FileResource> {
+  ): Promise<FileResource & { emailUrl: string }> {
     if (!file) {
       throw new BadRequestException('File is required');
     }
@@ -150,7 +149,6 @@ export class FileResourceService {
       );
 
     // URL FINAL PARA DESCARGA DIRECTA
-    const cleanTitle = title.replace(/\.pdf$/i, '');
 
     const downloadUrl =
       parentType === 'training'
@@ -161,7 +159,6 @@ export class FileResourceService {
         : cloudinary.url(uploadResult.public_id, {
             resource_type: 'raw',
             secure: true,
-            flags: `attachment:${cleanTitle}.pdf`,
           });
 
     // CREACIÓN BASE
@@ -177,14 +174,25 @@ export class FileResourceService {
     if (parentType === 'training') {
       fileResource.training = {
         id: parentId,
-      } as any;
+      } as unknown as FileResource['training'];
     }
 
     if (parentType === 'trainingRequest') {
       fileResource.trainingRequestId = parentId;
     }
 
-    return this.fileRepository.save(fileResource);
+    const saved = await this.fileRepository.save(fileResource);
+
+    const emailUrl =
+      parentType === 'trainingRequest'
+        ? cloudinary.url(uploadResult.public_id, {
+            resource_type: 'raw',
+            secure: true,
+            flags: 'attachment',
+          })
+        : saved.fileUrl;
+
+    return { ...saved, emailUrl };
   }
 
   //fincion para seeder de training

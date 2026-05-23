@@ -20,6 +20,7 @@ import { CalendlyService } from 'src/calendly/calendly.service';
 
 import { TrainingRequests } from 'src/training-requests/entities/training-request.entity';
 import { RequestStatus } from 'src/training-requests/enums/requests-status.enum';
+import { NotificationsGateway } from 'src/notifications/gateways/notifications.gateway';
 
 @Injectable()
 export class MeetingsService {
@@ -30,7 +31,9 @@ export class MeetingsService {
     private readonly calendlyService: CalendlyService,
 
     @InjectRepository(TrainingRequests)
-    private readonly trainingRequestsRepository: Repository<TrainingRequests>
+    private readonly trainingRequestsRepository: Repository<TrainingRequests>,
+     
+    private readonly notificationsGateway: NotificationsGateway,
   ) {}
 
   horarios = [
@@ -58,7 +61,7 @@ export class MeetingsService {
     // antes de continuar con la creación de la reunión.
     await this.validarFechaYHora(createMeetingDto);
 
-    const { targetUserId, ...meetingData } = createMeetingDto
+    const { targetUserId, ...meetingData } = createMeetingDto;
 
     const startDate = new Date(
       `${createMeetingDto.date}T${createMeetingDto.time}:00`,
@@ -87,17 +90,16 @@ export class MeetingsService {
 
     // Calendly será el proveedor principal de reuniones.
     // Aquí se genera dinámicamente el scheduling link.
-    const calendlyEvent =
-      await this.calendlyService.createOneOffEvent({
-        name: 'Reunión Empresarial',
+    const calendlyEvent = await this.calendlyService.createOneOffEvent({
+      name: 'Reunión Empresarial',
 
-        startTime: startDate.toISOString(), //startDate.toISOString(),
+      startTime: startDate.toISOString(),
 
-        endTime: endDate.toISOString(),
+      endTime: endDate.toISOString(),
 
-        // Temporalmente se usan datos mock mientras
-        // se conecta el sistema real de usuarios.
-        guestEmail: 'cliente@viacore.com',
+      // Temporalmente se usan datos mock mientras
+      // se conecta el sistema real de usuarios.
+      guestEmail: 'cliente@viacore.com',
 
         guestName: 'Cliente Viacore',
       });
@@ -127,6 +129,15 @@ export class MeetingsService {
     await this.trainingRequestsRepository.save( request );
 
     return await this.meetingsRepository.save(newMeeting);
+    const saved = await this.meetingsRepository.save(newMeeting);
+
+    this.notificationsGateway.emitNotificationToAdmin({
+      title: 'Reunión agendada',
+      message: 'Un usuario agendó una reunión',
+      status: 'scheduled',
+    });
+
+    return saved;
   }
 
   async findAll() {
@@ -134,30 +145,21 @@ export class MeetingsService {
   }
 
   async findOne(id: string) {
-    const meetingFound =
-      await this.meetingsRepository.findOneBy({
-        id,
-      });
+    const meetingFound = await this.meetingsRepository.findOneBy({
+      id,
+    });
 
     if (!meetingFound) {
-      throw new NotFoundException(
-        `La reunión con id ${id} no existe`,
-      );
+      throw new NotFoundException(`La reunión con id ${id} no existe`);
     }
 
     return meetingFound;
   }
 
-  async update(
-    id: string,
-    updateMeetingDto: UpdateMeetingDto,
-  ) {
+  async update(id: string, updateMeetingDto: UpdateMeetingDto) {
     await this.findOne(id);
 
-    await this.meetingsRepository.update(
-      { id },
-      updateMeetingDto,
-    );
+    await this.meetingsRepository.update({ id }, updateMeetingDto);
 
     return await this.findOne(id);
   }
@@ -174,38 +176,28 @@ export class MeetingsService {
     };
   }
 
-  async validarFechaYHora(
-    createMeetingDto: CreateMeetingDto,
-  ) {
-    const meetings =
-      await this.meetingsRepository.findBy({
-        date: createMeetingDto.date,
-      });
+  async validarFechaYHora(createMeetingDto: CreateMeetingDto) {
+    const meetings = await this.meetingsRepository.findBy({
+      date: createMeetingDto.date,
+    });
 
     // Se usa throw porque retornar la excepción no detiene
     // la ejecución del flujo en NestJS.
-    if (
-      meetings.some(
-        meeting => meeting.time === createMeetingDto.time,
-      )
-    ) {
-      throw new ConflictException(
-        'Ya existe una reunión en este horario',
-      );
+    if (meetings.some((meeting) => meeting.time === createMeetingDto.time)) {
+      throw new ConflictException('Ya existe una reunión en este horario');
     }
   }
 
   async findDisponibilidad(fecha: string) {
-    const meetings =
-      await this.meetingsRepository.findBy({
-        date: new Date(fecha),
-      });
+    const meetings = await this.meetingsRepository.findBy({
+      date: new Date(fecha),
+    });
 
     // Se corrige la lógica de disponibilidad.
     // Ahora el endpoint devuelve horarios libres
     // y no los horarios ocupados.
     const availableHours = this.horarios.filter(
-      hour => !meetings.some(m => m.time === hour),
+      (hour) => !meetings.some((m) => m.time === hour),
     );
 
     return availableHours;
