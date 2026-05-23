@@ -49,7 +49,7 @@ export class MeetingRemindersService {
             companyName,
             String(meeting.date),
             meeting.time,
-            meeting.link,
+            meeting.joinUrl,
           );
 
           await this.meetingsRepository.update(meeting.id, {
@@ -88,7 +88,7 @@ export class MeetingRemindersService {
             companyName,
             String(meeting.date),
             meeting.time,
-            meeting.link,
+            meeting.joinUrl,
           );
 
           await this.meetingsRepository.update(meeting.id, {

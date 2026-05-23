@@ -10,7 +10,6 @@ import {
 import { MeetingStatus } from './meetingStatus.entity';
 
 import { Users } from 'src/users/entities/user.entity';
-
 import { TrainingRequests } from 'src/training-requests/entities/training-request.entity';
 
 @Entity({ name: 'MEETINGS' })
@@ -29,23 +28,40 @@ export class Meetings {
   })
   time!: string;
 
+  // Calendly será el proveedor principal de reuniones.
+  // Aquí se almacena el scheduling link dinámico.
   @Column({
     type: 'varchar',
+    nullable: true,
   })
-  link!: string;
+  schedulingUrl!: string;
+
+  @Column({
+    type: 'varchar',
+    nullable: true,
+  })
+  calendlyUri!: string;
+
+  @Column({
+    type: 'varchar',
+    nullable: true,
+  })
+  joinUrl!: string;
 
   @Column({
     type: 'enum',
     enum: MeetingStatus,
     enumName: 'MeetingStatus',
-    default: MeetingStatus.Pendiente,
+    default: MeetingStatus.PENDING,
   })
   status!: MeetingStatus;
 
   @ManyToOne(() => Users)
   user!: Users;
 
-  @ManyToOne(() => TrainingRequests, (request) => request.meetings)
+  @ManyToOne(() => TrainingRequests, (request) => request.meetings, {
+    nullable: true,
+  })
   trainingRequest!: TrainingRequests;
 
   @CreateDateColumn()

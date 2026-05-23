@@ -46,6 +46,9 @@ import { ContactModule } from './contact/contact.module';
 import { ProfileModule } from './profile/profile.module';
 
 import { ScheduleModule } from '@nestjs/schedule';
+import { CalendlyService } from './calendly/calendly.service';
+
+import { CalendlyModule } from './calendly/calendly.module';
 
 @Module({
   imports: [
@@ -104,6 +107,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     ContactModule,
 
     ScheduleModule.forRoot(),
+    CalendlyModule,
   ],
 
   controllers: [AppController],
@@ -111,7 +115,10 @@ import { ScheduleModule } from '@nestjs/schedule';
   providers: [AppService],
 })
 export class AppModule implements NestModule, OnApplicationBootstrap {
-  constructor(private readonly trainingService: TrainingService) {}
+  constructor(
+    private readonly trainingService: TrainingService,
+    private readonly calendlyService: CalendlyService,
+  ) {}
 
   configure(consumer: MiddlewareConsumer) {
     consumer.apply(LoggerMiddleware).forRoutes('*');
@@ -121,5 +128,7 @@ export class AppModule implements NestModule, OnApplicationBootstrap {
     await this.trainingService.addTraining();
 
     console.log('Capacitaciones cargadas');
+
+    //this.calendlyService.createWebhookSubscription('https://shy-shopping-trunks.ngrok-free.dev') //aca va el link del deploy
   }
 }

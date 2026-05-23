@@ -22,6 +22,7 @@ import {
   PaymentResponseDto,
   WebhookResponseDto,
 } from './dto/payment-response.dto';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
 
 @Controller('payments')
 export class PaymentsController {
@@ -32,12 +33,27 @@ export class PaymentsController {
 
   @Get()
   @ApiBearerAuth('Bearer')
-  @UseGuards(AuthGuard)
-  @Roles(Role.Admin)
-  @ApiOperation({ summary: 'Obtener todos los pagos (solo admin)' })
-  @ApiResponse({ status: 200, type: [PaymentResponseDto] })
-  findAll(): Promise<PaymentResponseDto[]> {
-    return this.paymentsService.findAll();
+  @Roles(
+    Role.Admin,
+  )
+  @UseGuards(
+    AuthGuard,
+    RolesGuard,
+  )
+  findAll(
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    if (!startDate || !endDate) {
+      throw new BadRequestException(
+        'startDate y endDate son obligatorios',
+      );
+    }
+
+    return this.paymentsService.findAll(
+      startDate,
+      endDate,
+    );
   }
 
   @Get('user/:userId')

@@ -13,30 +13,12 @@ import { NotificationsGateway } from './gateways/notifications.gateway';
 import { EmailService } from './channels/email/email.service';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([
-      Notification,
-    ]),
-  ],
+  imports: [TypeOrmModule.forFeature([Notification])],
 
-  controllers: [
-    NotificationsController,
-  ],
+  controllers: [NotificationsController],
 
-  providers: [
-    NotificationsService,
+  providers: [NotificationsService, NotificationsGateway, EmailService],
 
-    NotificationsGateway,
-
-    EmailService,
-  ],
-
-  exports: [
-    NotificationsService,
-
-    NotificationsGateway,
-
-    EmailService,
-  ],
+  exports: [NotificationsService, NotificationsGateway, EmailService],
 })
 export class NotificationsModule {}

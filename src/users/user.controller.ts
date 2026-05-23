@@ -82,57 +82,30 @@ export class UsersController {
   }
 
   @Patch('complete-profile')
-  @UseInterceptors(ClassSerializerInterceptor)
-  @SerializeOptions({
-    groups: ['Get'],
-  })
-  @UseGuards(AuthGuard)
-  async completeProfile(
-    @Req() req: Request,
+@UseInterceptors(ClassSerializerInterceptor)
+@SerializeOptions({ groups: ['Get'] })
+@UseGuards(AuthGuard)
+async completeProfile(
+  @Req() req: Request,
+  @Body() completeProfileDto: CompleteProfileDto,
+  @Res({ passthrough: true }) res: Response,
+) {
+  const userId = (req as any).user.id;
 
-    @Body()
-    completeProfileDto: CompleteProfileDto,
+  const result = await this.usersService.completeProfile(
+    userId,
+    completeProfileDto,
+  );
 
-    @Res({ passthrough: true })
-    res: Response,
-  ) {
-    const userId = (req as any).user.id;
+  res.cookie('userSession', result.access_token, {
+    httpOnly: true,
+    secure: false,
+    sameSite: 'lax',
+    maxAge: 1000 * 60 * 60,
+  });
 
-    const updatedUser = (await this.usersService.completeProfile(
-      userId,
-      completeProfileDto,
-    )) as any;
-
-    if (!updatedUser) {
-      throw new Error('User not found after profile update');
-    }
-
-    const payload = {
-      id: updatedUser.id,
-
-      email: updatedUser.email,
-
-      role: updatedUser.role,
-
-      profileCompleted: true,
-    };
-
-    const token = this.jwtService.sign(payload, {
-      expiresIn: '1h',
-    });
-
-    res.cookie('userSession', token, {
-      httpOnly: true,
-
-      secure: false,
-
-      sameSite: 'lax',
-
-      maxAge: 1000 * 60 * 60,
-    });
-
-    return updatedUser;
-  }
+  return result;
+}
 
   @Delete(':id')
   @ApiBearerAuth()
