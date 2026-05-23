@@ -1,3 +1,6 @@
+import * as crypto from 'crypto';
+
+import { PasswordResetToken } from './entities/password-reset-token.entity';
 
 import {
   BadRequestException,
@@ -28,6 +31,10 @@ export class AuthService {
   constructor(
     @InjectRepository(Users)
     private readonly usersRepository: Repository<Users>,
+
+    @InjectRepository(PasswordResetToken)
+    private readonly resetRepository:
+    Repository<PasswordResetToken>,
 
     private readonly jwtService: JwtService,
 
@@ -148,6 +155,58 @@ export class AuthService {
       access_token: token,
     };
   }
+
+async forgotPassword(email: string) {
+
+  const foundUser =
+    await this.usersRepository.findOneBy({
+      email,
+    });
+
+  if (!foundUser) {
+    return {
+      message:
+        'Si el email existe, se envió un enlace de recuperación',
+    };
+  }
+
+  const token =
+    crypto.randomUUID();
+
+  const resetToken =
+    new PasswordResetToken();
+
+  resetToken.userId =
+    foundUser.id;
+
+  resetToken.token =
+    token;
+
+  resetToken.expiresAt =
+    new Date(
+      Date.now() + 1000 * 60 * 30,
+    );
+
+  resetToken.used =
+    false;
+
+  await this.resetRepository.save(
+    resetToken,
+  );
+
+  const resetLink =
+    `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
+
+  await this.emailService.sendForgotPasswordEmail(
+    foundUser.email,
+    resetLink,
+  );
+
+  return {
+    message:
+      'Si el email existe, se envió un enlace de recuperación',
+  };
+}
 
   async findOrCreateGoogleUser(
     googleUser: {

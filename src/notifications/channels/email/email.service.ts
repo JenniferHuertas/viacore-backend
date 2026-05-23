@@ -109,6 +109,33 @@ export class EmailService {
     );
   }
 
+  async sendForgotPasswordEmail(
+  email: string,
+  resetLink: string,
+) {
+
+  const html =
+    this.compileTemplate(
+      'forgot-password',
+      {
+        resetLink,
+
+        platformUrl:
+          process.env.PLATFORM_URL ??
+          'https://estudio-via3-frontend.vercel.app/',
+
+        year:
+          new Date().getFullYear(),
+      },
+    );
+
+  await this.sendEmail(
+    email,
+    'Recuperar contraseña',
+    html,
+  );
+}
+
   async sendPaymentApproved(
     email: string,
     fullName: string,

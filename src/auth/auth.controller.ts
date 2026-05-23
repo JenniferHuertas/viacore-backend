@@ -169,6 +169,15 @@ export class AuthController {
     };
   }
 
+  @Post('forgot-password')
+forgotPassword(
+  @Body() body: { email: string },
+) {
+  return this.authService.forgotPassword(
+    body.email,
+  );
+}
+
   @Get('profile')
   @UseGuards(AuthGuard)
   getProfile(
