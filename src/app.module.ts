@@ -4,46 +4,30 @@ import {
   NestModule,
   OnApplicationBootstrap,
 } from '@nestjs/common';
-
 import { AppController } from './app.controller';
-
 import { AppService } from './app.service';
-
 import { UsersModule } from './users/user.module';
-
 import { AuthModule } from './auth/auth.module';
-
 import { LoggerMiddleware } from './middlewares/logger.middleware';
-
-import { ConfigModule, ConfigService } from '@nestjs/config';
-
+import {
+  ConfigModule,
+  ConfigService,
+} from '@nestjs/config';
 import typeorm from './config/typeorm';
-
 import { TypeOrmModule } from '@nestjs/typeorm';
-
 import { JwtModule } from '@nestjs/jwt';
-
 import { FileResourceModule } from './file-resource/file-resource.module';
-
 import { TrainingModule } from './training/training.module';
-
 import { TrainingService } from './training/training.service';
-
 import { MeetingsModule } from './meetings/meetings.module';
-
 import { TrainingRequestModule } from './training-requests/training-request.module';
-
 import { NotificationsModule } from './notifications/notifications.module';
-
 import { PaymentsModule } from './payments/payments.module';
-
 import { ChatModule } from './chat/chat.module';
-
 import { BullModule } from '@nestjs/bull';
-
 import { ContactModule } from './contact/contact.module';
-
 import { ProfileModule } from './profile/profile.module';
+import { GuestSessionMiddleware } from './common/middleware/guest-session.middleware';
 
 import { ScheduleModule } from '@nestjs/schedule';
 
@@ -115,8 +99,16 @@ export class AppModule implements NestModule, OnApplicationBootstrap {
     private readonly trainingService: TrainingService
   ) {}
 
-  configure(consumer: MiddlewareConsumer) {
-    consumer.apply(LoggerMiddleware).forRoutes('*');
+  configure(
+    consumer: MiddlewareConsumer,
+  ) {
+
+    consumer
+      .apply(
+        LoggerMiddleware,
+        GuestSessionMiddleware,
+      )
+      .forRoutes('*');
   }
 
   async onApplicationBootstrap() {
