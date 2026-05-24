@@ -267,13 +267,9 @@ export class AuthService {
         .trim();
 
     const user =
-      await this.usersRepository
-        .createQueryBuilder('user')
-        .addSelect('user.password')
-        .where('user.email = :email', {
-          email: normalizedEmail,
-        })
-        .getOne();
+      await this.usersRepository.findOneBy({
+        email: normalizedEmail,
+      });
 
     if (!user) {
 
@@ -295,11 +291,13 @@ export class AuthService {
         10,
       );
 
-    user.password =
-      hashedPassword;
-
-    await this.usersRepository.save(
-      user,
+    await this.usersRepository.update(
+      {
+        email: normalizedEmail,
+      },
+      {
+        password: hashedPassword,
+      },
     );
 
     return {
