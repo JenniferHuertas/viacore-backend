@@ -47,8 +47,8 @@ export class Meetings {
   @Column({
     type: 'enum',
     enum: MeetingStatus,
-    enumName: 'MeetingStatus',
-    default: MeetingStatus.Pendiente,
+    enumName: 'meeting_status_enum',
+    default: MeetingStatus.PENDING,
   })
   status!: MeetingStatus;
 

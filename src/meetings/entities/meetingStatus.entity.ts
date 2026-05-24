@@ -1,13 +1,8 @@
 export enum MeetingStatus {
-  Confirmada = "Confirmada",
 
-  Cancelada = "Cancelada",
+  CONFIRMED = 'Confirmada',
 
-  Pendiente = "Pendiente",
+  CANCELLED = 'Cancelada',
 
-  CONFIRMED = "Confirmada",
-
-  CANCELLED = "Cancelada",
-
-  PENDING = "Pendiente",
+  PENDING = 'Pendiente',
 }
