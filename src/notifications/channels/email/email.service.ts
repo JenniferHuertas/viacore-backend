@@ -517,4 +517,32 @@ export class EmailService {
 
     await this.sendEmail(email, 'Recordatorio: tu reunión es en 2 horas', html);
   }
+
+  // NUEVO
+  // RECUPERACIÓN DE CONTRASEÑA
+
+  async sendPasswordRecoveryEmail(
+    email: string,
+    fullName: string,
+    resetLink: string,
+  ) {
+
+    const html = this.compileTemplate(
+      'password-recovery',
+      {
+        fullName,
+        resetLink,
+        platformUrl:
+          process.env.PLATFORM_URL ??
+          'https://estudio-via3-frontend.vercel.app/',
+        year: new Date().getFullYear(),
+      },
+    );
+
+    await this.sendEmail(
+      email,
+      'Recuperación de contraseña',
+      html,
+    );
+  }
 }

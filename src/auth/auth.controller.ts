@@ -32,20 +32,14 @@ import { ApiTags } from '@nestjs/swagger';
 const cookieConfig = {
   httpOnly: true,
 
-  secure:
-    process.env.NODE_ENV ===
-    'production',
+  secure: false,
 
-  sameSite:
-    process.env.NODE_ENV ===
-    'production'
-      ? 'none'
-      : 'lax',
+  sameSite: 'lax' as const,
 
   maxAge: 1000 * 60 * 60,
 
   path: '/',
-} as const;
+};
 
 @UseInterceptors(ClassSerializerInterceptor)
 
@@ -54,7 +48,6 @@ const cookieConfig = {
 @Controller('auth')
 
 export class AuthController {
-
   constructor(
     private readonly authService: AuthService,
   ) {}
@@ -79,30 +72,48 @@ export class AuthController {
 
     const frontendUrl =
       process.env.FRONTEND_URL ||
-      `http://localhost:3000`;
+      'http://localhost:3000';
 
-    try {
+    console.log(
+      'GOOGLE CALLBACK USER:',
+      req.user,
+    );
 
-      const token =
-        req.user.access_token;
-
-      res.cookie(
-        `userSession`,
-        token,
-        cookieConfig,
-      );
+    if (!req.user) {
 
       return res.redirect(
-        `${frontendUrl}/autenticacion/autenticacion-google`,
+        `${frontendUrl}/autenticacion/autenticacion-google?error=google_auth_failed`,
       );
-
-    } catch {
-
-      return res.redirect(
-        `${frontendUrl}/autenticacion?error=google`,
-      );
-
     }
+
+    const token =
+      req.user.access_token;
+
+    console.log(
+      'GOOGLE TOKEN:',
+      token,
+    );
+
+    if (!token) {
+
+      return res.redirect(
+        `${frontendUrl}/autenticacion/autenticacion-google?error=google_token_missing`,
+      );
+    }
+
+    res.cookie(
+      'userSession',
+      token,
+      cookieConfig,
+    );
+
+    console.log(
+      'COOKIE SET SUCCESS',
+    );
+
+    return res.redirect(
+      `${frontendUrl}/autenticacion/autenticacion-google`,
+    );
   }
 
   @Post('signup')
@@ -110,7 +121,7 @@ export class AuthController {
   @UseInterceptors(ClassSerializerInterceptor)
 
   @SerializeOptions({
-    groups: [`newUser`],
+    groups: ['newUser'],
   })
 
   register(
@@ -139,10 +150,20 @@ export class AuthController {
         credentials,
       );
 
+    console.log(
+      'SIGNIN RESPONSE:',
+      response,
+    );
+
     res.cookie(
-      `userSession`,
+      'userSession',
       response.access_token,
       cookieConfig,
+    );
+
+    console.log(
+      'SIGNIN COOKIE SET:',
+      response.access_token,
     );
 
     return {
@@ -152,6 +173,38 @@ export class AuthController {
     };
   }
 
+  // RECUPERAR CONTRASEÑA
+
+  @Post('forgot-password')
+
+  async forgotPassword(
+    @Body('email')
+    email: string,
+  ) {
+
+    return await this.authService.forgotPassword(
+      email,
+    );
+  }
+
+  // RESET PASSWORD
+
+  @Post('reset-password')
+
+  async resetPassword(
+    @Body('email')
+    email: string,
+
+    @Body('password')
+    password: string,
+  ) {
+
+    return await this.authService.resetPassword(
+      email,
+      password,
+    );
+  }
+
   @Post('logout')
 
   logout(
@@ -159,8 +212,12 @@ export class AuthController {
     res: Response,
   ) {
 
+    console.log(
+      'CLEAR COOKIE',
+    );
+
     res.clearCookie(
-      `userSession`,
+      'userSession',
       cookieConfig,
     );
 
@@ -196,6 +253,11 @@ async resetPassword(
     @Req()
     req: Request,
   ) {
+
+    console.log(
+      'PROFILE USER:',
+      (req as any).user,
+    );
 
     return (req as any).user;
 

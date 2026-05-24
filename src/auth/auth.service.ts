@@ -1,7 +1,3 @@
-import * as crypto from 'crypto';
-
-import { PasswordResetToken } from './entities/password-reset-token.entity';
-
 import {
   BadRequestException,
   Injectable,
@@ -41,13 +37,29 @@ export class AuthService {
     private readonly emailService: EmailService,
   ) {}
 
-  async create(createUserDto: CreateUserDto) {
+  async create(
+    createUserDto: CreateUserDto,
+  ) {
+
+    const normalizedEmail =
+      createUserDto.email
+        .toLowerCase()
+        .trim();
+
     const foundUser =
       await this.usersRepository.findOneBy({
-        email: createUserDto.email,
+        email: normalizedEmail,
       });
 
+    if (foundUser?.googleId) {
+
+      throw new BadRequestException(
+        'Este correo ya fue registrado mediante Google. Continúa con Google.',
+      );
+    }
+
     if (foundUser) {
+
       throw new BadRequestException(
         'Este correo ya está registrado. Por favor, inicia sesión.',
       );
@@ -61,12 +73,14 @@ export class AuthService {
 
     const {
       confirmPassword,
-       ...userData
-      } = createUserDto;
+      ...userData
+    } = createUserDto;
 
     const newUser =
       this.usersRepository.create({
         ...userData,
+
+        email: normalizedEmail,
 
         password: hashedPassword,
 
@@ -81,19 +95,23 @@ export class AuthService {
       );
 
     try {
+
       // await this.emailService.sendWelcomeEmail(
       //   savedUser.email,
       //   savedUser.name,
       // );
 
-      console.error(
+      console.log(
         'WELCOME EMAIL ENVIADO',
       );
+
     } catch (error) {
+
       console.error(
         'ERROR MAIL:',
         error,
       );
+
     }
 
     return savedUser;
@@ -102,20 +120,32 @@ export class AuthService {
   async signIn(
     credentials: LoginUserDto,
   ) {
-    
+
+    const normalizedEmail =
+      credentials.email
+        .toLowerCase()
+        .trim();
+
     const foundUser =
-  await this.usersRepository
-    .createQueryBuilder('user')
-    .addSelect('user.password')
-    .where('user.email = :email', {
-      email: credentials.email,
-    })
-    .getOne();
+      await this.usersRepository
+        .createQueryBuilder('user')
+        .addSelect('user.password')
+        .where('user.email = :email', {
+          email: normalizedEmail,
+        })
+        .getOne();
 
     if (!foundUser) {
-      console.log("❌ USER NOT FOUND");
+
       throw new BadRequestException(
         'Credenciales inválidas',
+      );
+    }
+
+    if (foundUser.googleId) {
+
+      throw new BadRequestException(
+        'Esta cuenta fue registrada mediante Google. Continúa con Google.',
       );
     }
 
@@ -126,6 +156,7 @@ export class AuthService {
       );
 
     if (!matchingPassword) {
+
       throw new BadRequestException(
         'Credenciales inválidas',
       );
@@ -158,100 +189,138 @@ export class AuthService {
     };
   }
 
-async forgotPassword(email: string) {
+  // RECUPERAR CONTRASEÑA
 
-  const foundUser =
-    await this.usersRepository.findOneBy({
-      email,
-    });
+  async forgotPassword(
+    email: string,
+  ) {
 
-  if (!foundUser) {
+    const normalizedEmail =
+      email
+        .toLowerCase()
+        .trim();
+
+    const user =
+      await this.usersRepository.findOneBy({
+        email: normalizedEmail,
+      });
+
+    // NO REVELAR SI EXISTE
+
+    if (!user) {
+
+      return {
+        success: true,
+        message:
+          'Si el correo existe, enviaremos instrucciones.',
+      };
+    }
+
+    // CUENTA GOOGLE
+
+    if (user.googleId) {
+
+      throw new BadRequestException(
+        'Esta cuenta fue registrada con Google. Continúa con Google.',
+      );
+    }
+
+    // LINK SIMPLE
+    // SIN TOKEN
+
+    const resetLink =
+      `${
+        process.env.FRONTEND_URL ||
+        'http://localhost:3000'
+      }/reset-password?email=${user.email}`;
+
+    try {
+
+      await this.emailService.sendPasswordRecoveryEmail(
+        user.email,
+        user.name,
+        resetLink,
+      );
+
+      console.log(
+        'RESET PASSWORD EMAIL ENVIADO:',
+        user.email,
+      );
+
+    } catch (error) {
+
+      console.error(
+        'ERROR RESET PASSWORD EMAIL:',
+        error,
+      );
+
+      throw new BadRequestException(
+        'No pudimos enviar el correo de recuperación.',
+      );
+    }
+
     return {
+      success: true,
       message:
-        'Si el email existe, se envió un enlace de recuperación',
+        'Correo de recuperación enviado.',
     };
   }
 
-  const token =
-    crypto.randomUUID();
+  // NUEVO
+  // RESET PASSWORD
 
-  const resetToken =
-    new PasswordResetToken();
+  async resetPassword(
+    email: string,
+    password: string,
+  ) {
 
-  resetToken.userId =
-    foundUser.id;
+    const normalizedEmail =
+      email
+        .toLowerCase()
+        .trim();
 
-  resetToken.token =
-    token;
+    const user =
+      await this.usersRepository
+        .createQueryBuilder('user')
+        .addSelect('user.password')
+        .where('user.email = :email', {
+          email: normalizedEmail,
+        })
+        .getOne();
 
-  resetToken.expiresAt =
-    new Date(
-      Date.now() + 1000 * 60 * 30,
+    if (!user) {
+
+      throw new BadRequestException(
+        'Usuario no encontrado.',
+      );
+    }
+
+    if (user.googleId) {
+
+      throw new BadRequestException(
+        'Esta cuenta fue registrada con Google.',
+      );
+    }
+
+    const hashedPassword =
+      await bcrypt.hash(
+        password,
+        10,
+      );
+
+    user.password =
+      hashedPassword;
+
+    await this.usersRepository.save(
+      user,
     );
 
-  resetToken.used =
-    false;
-
-  await this.resetRepository.save(
-    resetToken,
-  );
-
-  const resetLink =
-    `${process.env.FRONTEND_URL}/reseteo-contrasenia?token=${token}`;
-
-  await this.emailService.sendForgotPasswordEmail(
-    foundUser.email,
-    resetLink,
-  );
-
-  return {
-    message:
-      'Si el email existe, se envió un enlace de recuperación',
-  };
-}
-
-async resetPassword(token: string, password: string) {
-  const resetToken = await this.resetRepository.findOne({
-    where: { token },
-  });
-
-  if (!resetToken) {
-    throw new BadRequestException("Token inválido");
+    return {
+      success: true,
+      message:
+        'Contraseña actualizada correctamente.',
+    };
   }
-
-  if (resetToken.expiresAt < new Date()) {
-    throw new BadRequestException("Token expirado");
-  }
-
-  if (resetToken.used) {
-    throw new BadRequestException("Token ya utilizado");
-  }
-
-  const user = await this.usersRepository.findOneBy({
-    id: resetToken.userId,
-  });
-
-  if (!user) {
-    throw new BadRequestException("Usuario no encontrado");
-  }
-
-  const hashedPassword = await bcrypt.hash(password, 10);
-
-await this.usersRepository.update(
-  { id: user.id },
-  { password: hashedPassword },
-);
-
-await this.resetRepository.update(
-  { id: resetToken.id },
-  { used: true },
-);
-
-  return {
-    message: "Contraseña actualizada correctamente",
-  };
-  
-}
 
   async findOrCreateGoogleUser(
     googleUser: {
@@ -261,7 +330,12 @@ await this.resetRepository.update(
 
       googleId: string;
     },
+
+    mode:
+      | 'signin'
+      | 'signup',
   ) {
+
     const normalizedEmail =
       googleUser.email
         .toLowerCase()
@@ -282,54 +356,98 @@ await this.resetRepository.update(
         email: normalizedEmail,
       });
 
-    if (!user) {
-      user = this.usersRepository.create({
-        email: normalizedEmail,
+    // USUARIO EXISTE
 
-        name: googleUser.name,
+    if (user) {
 
-        googleId:
-          googleUser.googleId,
+      // CUENTA MANUAL
 
-        role: isAdmin
-          ? Role.Admin
-          : Role.User,
+      if (!user.googleId) {
 
-        profileCompleted:
-          isAdmin
-            ? true
-            : false,
-      });
+        throw new BadRequestException(
+          'Este correo ya está registrado con email y contraseña.',
+        );
+      }
+
+      // GOOGLE ID DISTINTO
+
+      if (
+        user.googleId !==
+        googleUser.googleId
+      ) {
+
+        throw new BadRequestException(
+          'Este correo ya está vinculado a otra cuenta Google.',
+        );
+      }
+
+      // SIGNUP SOBRE CUENTA EXISTENTE
+
+      if (mode === 'signup') {
+
+        throw new BadRequestException(
+          'Esta cuenta Google ya existe. Inicia sesión.',
+        );
+      }
+
+    } else {
+
+      // SIGNIN SIN CUENTA
+
+      if (mode === 'signin') {
+
+        throw new BadRequestException(
+          'No existe una cuenta registrada con Google para este correo.',
+        );
+      }
+
+      // CREAR SOLO SI NO EXISTE
+
+      user =
+        this.usersRepository.create({
+          email: normalizedEmail,
+
+          name:
+            googleUser.name,
+
+          googleId:
+            googleUser.googleId,
+
+          role:
+            isAdmin
+              ? Role.Admin
+              : Role.User,
+
+          profileCompleted:
+            isAdmin
+              ? true
+              : false,
+        });
 
       user =
         await this.usersRepository.save(
           user,
         );
+    }
 
-      try {
-        await this.emailService.sendWelcomeEmail(
-          user.email,
-          user.name,
-        );
-      } catch (error) {
-          console.error("Error mail Google: ", error)
-      }
-    } else {
-      if (!user.googleId) {
-        user.googleId =
-          googleUser.googleId;
-      }
+    if (!user) {
 
-      if (isAdmin) {
-        user.role = Role.Admin;
-
-        user.profileCompleted =
-          true;
-      }
-
-      await this.usersRepository.save(
-        user,
+      throw new BadRequestException(
+        'No se pudo autenticar el usuario Google.',
       );
+    }
+
+    if (isAdmin) {
+
+      user.role = Role.Admin;
+
+      user.profileCompleted =
+        true;
+
+      user =
+        await this.usersRepository.save(
+          user,
+        );
     }
 
     const payload = {
