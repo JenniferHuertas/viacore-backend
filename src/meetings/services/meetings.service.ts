@@ -30,6 +30,9 @@ export class MeetingsService {
     @InjectRepository(Meetings)
     private readonly meetingRepository: Repository<Meetings>,
 
+    @InjectRepository(TrainingRequests)
+    private readonly trainingRequestRepository: Repository<TrainingRequests>,
+
     private readonly googleMeetService: GoogleMeetService,
 
     @InjectRepository(Users)
@@ -40,6 +43,24 @@ export class MeetingsService {
   ) {}
 
   async create(dto: CreateMeetingDto) {
+    const trainingRequest =
+      await this.trainingRequestRepository.findOne({
+        where: {
+          id: dto.trainingRequestId,
+        },
+
+        relations: [
+          'user',
+          'training',
+        ],
+      });
+
+    if (!trainingRequest) {
+      throw new NotFoundException(
+        'Training request not found',
+      );
+    }
+
     const start = new Date(
       `${dto.date}T${dto.time}:00`,
     );
@@ -48,7 +69,7 @@ export class MeetingsService {
 
     const request =
       await this.trainingRequestsRepository.findOne(
-        { where: {id: dto.trainingRequestId} },
+        { where: {id: dto.trainingRequestId}, relations: ['user'] },
       );
     if (!request) {
       throw new NotFoundException(
@@ -58,7 +79,7 @@ export class MeetingsService {
 
     const user =
       await this.usersRepository.findOne(
-        { where: {id: dto.userId} },
+        { where: {id: request.user.id} },
       );
     if (!user) {
       throw new NotFoundException(
@@ -133,19 +154,25 @@ export class MeetingsService {
         {
           start,
           end,
-          email: user.email,
-          name: user.name,
+
+          email:
+            trainingRequest.user.email,
+
+          name:
+            trainingRequest.user.name,
         },
       );
 
     const meeting =
       this.meetingRepository.create({
-        user: {id: dto.userId},
+        user: {id: request.user.id},
 
         trainingRequest: {id: dto.trainingRequestId},
 
         topic:
           dto.topic ||
+          trainingRequest.training
+            ?.title ||
           'Scheduled Meeting',
 
         startTime: start,
@@ -175,6 +202,11 @@ export class MeetingsService {
 
   async findAll() {
     return this.meetingRepository.find({
+      relations: [
+        'user',
+        'trainingRequest',
+      ],
+
       order: {
         startTime: 'ASC',
       },
@@ -185,6 +217,11 @@ export class MeetingsService {
     const meeting =
       await this.meetingRepository.findOne({
         where: { id },
+
+        relations: [
+          'user',
+          'trainingRequest',
+        ],
       });
 
     if (!meeting) {
@@ -200,6 +237,11 @@ export class MeetingsService {
     const meeting =
       await this.meetingRepository.findOne({
         where: { id },
+
+        relations: [
+          'user',
+          'trainingRequest',
+        ],
       });
 
     if (!meeting) {
@@ -230,7 +272,11 @@ export class MeetingsService {
     const meeting =
       await this.meetingRepository.findOne({
         where: { id },
-        relations: ['user']
+
+        relations: [
+          'user',
+          'trainingRequest',
+        ],
       });
 
     if (!meeting) {
@@ -298,6 +344,7 @@ export class MeetingsService {
       await this.meetingRepository.findOne({
         where: {
           startTime: newStart,
+
           status:
             Not(MeetingStatus.CANCELLED),
           id: Not(id),
@@ -328,8 +375,10 @@ export class MeetingsService {
         {
           start: newStart,
           end: newEnd,
+
           email:
             meeting.user.email,
+
           name:
             meeting.user.name,
         },

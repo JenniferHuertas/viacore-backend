@@ -7,13 +7,8 @@ import {
 } from 'class-validator';
 
 export class CreateMeetingDto {
-  @IsNotEmpty()
   @IsUUID()
-  @ApiProperty()
-  userId!: string;
-
   @IsNotEmpty()
-  @ApiProperty()
   trainingRequestId!: string;
 
   @IsOptional()

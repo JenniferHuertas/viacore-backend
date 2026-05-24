@@ -1,7 +1,7 @@
 import {
   Body,
   Controller,
-  Delete,
+ Delete,
   Get,
   Param,
   Patch,
@@ -26,7 +26,9 @@ export class MeetingsController {
   ) {}
 
   @Get('availability')
-  async availability(@Query('date') date: string) {
+  async availability(
+    @Query('date') date: string,
+  ) {
     return this.availabilityService.getAvailability(
       date,
     );
@@ -36,7 +38,9 @@ export class MeetingsController {
   async create(
     @Body() dto: CreateMeetingDto,
   ) {
-    return this.meetingsService.create(dto);
+    return this.meetingsService.create(
+      dto,
+    );
   }
 
   @Get()
@@ -44,16 +48,30 @@ export class MeetingsController {
     return this.meetingsService.findAll();
   }
 
+  @Get(':id')
+  async findOne(
+    @Param('id') id: string,
+  ) {
+    return this.meetingsService.findOne(
+      id,
+    );
+  }
+
   @Delete(':id')
-  async cancel(@Param('id') id: string) {
-    return this.meetingsService.cancel(id);
+  async cancel(
+    @Param('id') id: string,
+  ) {
+    return this.meetingsService.cancel(
+      id,
+    );
   }
 
   @Patch(':id/reschedule')
   async reschedule(
     @Param('id') id: string,
 
-    @Body() dto: RescheduleMeetingDto,
+    @Body()
+    dto: RescheduleMeetingDto,
   ) {
     return this.meetingsService.reschedule(
       id,

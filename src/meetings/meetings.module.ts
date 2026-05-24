@@ -30,7 +30,9 @@ import { TrainingRequests } from 'src/training-requests/entities/training-reques
     ScheduleModule.forRoot(),
   ],
 
-  controllers: [MeetingsController],
+  controllers: [
+    MeetingsController,
+  ],
 
   providers: [
     MeetingsService,
@@ -41,6 +43,8 @@ import { TrainingRequests } from 'src/training-requests/entities/training-reques
     ReminderCron,
   ],
 
-  exports: [MeetingsService],
+  exports: [
+    MeetingsService,
+  ],
 })
 export class MeetingsModule {}

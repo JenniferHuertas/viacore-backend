@@ -1,21 +1,23 @@
 import { TrainingRequests } from 'src/training-requests/entities/training-request.entity';
+
 import {
   Column,
+  JoinColumn,
   CreateDateColumn,
   Entity,
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+
 import { MeetingStatus } from './meetingStatus.entity';
+
 import { Users } from 'src/users/entities/user.entity';
 
-@Entity('MEETINGS2')
+
+@Entity('meetings')
 export class Meetings {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
-
-  @ManyToOne(() => Users)
-  user!: Users;
 
   @Column({
     default: 'Scheduled Meeting',
@@ -55,11 +57,33 @@ export class Meetings {
   })
   reminderSent!: boolean;
 
-  @ManyToOne(() => TrainingRequests, (request) => request.meetings, {
-    nullable: true,
-  })
-  trainingRequest!: TrainingRequests;
-
   @CreateDateColumn()
   createdAt!: Date;
+
+  @ManyToOne(
+  () => Users,
+  (user) => user.meetings,
+  {
+    nullable: false,
+    onDelete: 'CASCADE',
+  },
+)
+@JoinColumn({
+  name: 'userId',
+})
+user!: Users;
+
+@ManyToOne(
+  () => TrainingRequests,
+  (trainingRequest) => trainingRequest.meetings,
+  {
+    nullable: false,
+    onDelete: 'CASCADE',
+  },
+)
+@JoinColumn({
+  name: 'trainingRequestId',
+})
+trainingRequest!: TrainingRequests;
+
 }
