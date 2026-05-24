@@ -174,7 +174,7 @@ export class MeetingsService {
           startTime: start,
 
           status:
-            Not(MeetingStatus.Cancelada),
+            Not(MeetingStatus.CANCELLED),
         },
       });
 
@@ -230,7 +230,7 @@ export class MeetingsService {
           googleData.googleEventId,
 
         status:
-          MeetingStatus.Confirmada,
+          MeetingStatus.CONFIRMED,
 
         reminderSent: false,
       });
@@ -314,7 +314,7 @@ export class MeetingsService {
     }
 
     meeting.status =
-      MeetingStatus.Cancelada;
+      MeetingStatus.CANCELLED;
 
     return await this.meetingRepository.save(
       meeting,
@@ -413,7 +413,7 @@ export class MeetingsService {
           startTime: newStart,
 
           status:
-            Not(MeetingStatus.Cancelada),
+            Not(MeetingStatus.CANCELLED),
 
           id: Not(id),
         },
@@ -469,7 +469,7 @@ export class MeetingsService {
       googleData.googleEventId;
 
     meeting.status =
-      MeetingStatus.Confirmada;
+      MeetingStatus.CONFIRMED;
 
     return await this.meetingRepository.save(
       meeting,
