@@ -24,7 +24,9 @@ export class GoogleMeetService {
           'GOOGLE_MEET_CLIENT_SECRET',
         ),
 
-        'http://localhost',
+        this.configService.get<string>(
+          'GOOGLE_MEET_REDIRECT_URI',
+        ),
       );
 
     this.oauth2Client.setCredentials({
