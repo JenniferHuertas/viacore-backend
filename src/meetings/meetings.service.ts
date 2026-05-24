@@ -32,7 +32,7 @@ export class MeetingsService {
 
     @InjectRepository(TrainingRequests)
     private readonly trainingRequestsRepository: Repository<TrainingRequests>,
-     
+
     private readonly notificationsGateway: NotificationsGateway,
   ) {}
 
@@ -73,19 +73,14 @@ export class MeetingsService {
     // para mantener el flujo simple y estable.
     endDate.setMinutes(endDate.getMinutes() + 31);
 
-    const request =
-      await this.trainingRequestsRepository.findOne(
-        {
-          where: {
-            id: createMeetingDto.trainingRequestId,
-          },
-        },
-      );
+    const request = await this.trainingRequestsRepository.findOne({
+      where: {
+        id: createMeetingDto.trainingRequestId,
+      },
+    });
 
     if (!request) {
-      throw new NotFoundException(
-        'Solicitud no encontrada',
-      );
+      throw new NotFoundException('Solicitud no encontrada');
     }
 
     // Calendly será el proveedor principal de reuniones.
@@ -101,9 +96,9 @@ export class MeetingsService {
       // se conecta el sistema real de usuarios.
       guestEmail: 'cliente@viacore.com',
 
-        guestName: 'Cliente Viacore',
-      });
-    console.log(JSON.stringify(calendlyEvent))
+      guestName: 'Cliente Viacore',
+    });
+    console.log(JSON.stringify(calendlyEvent));
 
     const newMeeting = this.meetingsRepository.create({
       ...meetingData,
@@ -123,12 +118,10 @@ export class MeetingsService {
       status: MeetingStatus.PENDING,
     });
 
-    request.status =
-      RequestStatus.SCHEDULED;
+    request.status = RequestStatus.SCHEDULED;
 
-    await this.trainingRequestsRepository.save( request );
+    await this.trainingRequestsRepository.save(request);
 
-    return await this.meetingsRepository.save(newMeeting);
     const saved = await this.meetingsRepository.save(newMeeting);
 
     this.notificationsGateway.emitNotificationToAdmin({

@@ -103,8 +103,9 @@ export class MeetingRemindersService {
 
   private getMeetingDateTime(meeting: Meetings): Date {
     const [hours, minutes] = meeting.time.split(':').map(Number);
-    const date = new Date(meeting.date);
-    date.setHours(hours, minutes, 0, 0);
+    const dateStr = String(meeting.date); // "2026-05-23"
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const date = new Date(year, month - 1, day, hours, minutes, 0, 0);
     return date;
   }
 }
