@@ -14,7 +14,7 @@ import { MeetingStatus } from './meetingStatus.entity';
 import { Users } from 'src/users/entities/user.entity';
 
 
-@Entity('meetings')
+@Entity('MEETINGS')
 export class Meetings {
   @PrimaryGeneratedColumn('uuid')
   id!: string;

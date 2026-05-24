@@ -14,7 +14,6 @@ import { MeetingsService } from '../services/meetings.service';
 import { AvailabilityService } from '../services/availability.service';
 
 import { CreateMeetingDto } from '../dto/create-meeting.dto';
-
 import { RescheduleMeetingDto } from '../dto/reschedule-meeting.dto';
 
 @Controller('meetings')

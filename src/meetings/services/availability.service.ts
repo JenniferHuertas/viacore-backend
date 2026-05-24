@@ -7,6 +7,7 @@ import { Meetings } from '../entities/meeting.entity';
 import { WORKING_DAYS } from '../utils/meeting.constants';
 
 import { generateDaySlots } from '../utils/slot.utils';
+
 import { MeetingStatus } from '../entities/meetingStatus.entity';
 
 @Injectable()

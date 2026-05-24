@@ -12,7 +12,7 @@ import {
   Expose,
 } from 'class-transformer';
 
-import { Meeting } from '../../meetings/entities/meeting.entity';
+import { Meetings } from '../../meetings/entities/meeting.entity';
 
 import { TrainingRequests } from '../../training-requests/entities/training-request.entity';
 
@@ -171,8 +171,8 @@ export class Users {
 
 
 @OneToMany(
-  () => Meeting,
+  () => Meetings,
   (meeting) => meeting.user,
 )
-meetings!: Meeting[];
+meetings!: Meetings[];
 }
