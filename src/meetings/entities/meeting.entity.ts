@@ -68,22 +68,34 @@ export class Meetings {
     onDelete: 'CASCADE',
   },
 )
-@JoinColumn({
-  name: 'userId',
-})
-user!: Users;
+  @JoinColumn({
+    name: 'userId',
+  })
+  user!: Users;
 
-@ManyToOne(
-  () => TrainingRequests,
-  (trainingRequest) => trainingRequest.meetings,
-  {
-    nullable: false,
-    onDelete: 'CASCADE',
-  },
-)
-@JoinColumn({
-  name: 'trainingRequestId',
-})
-trainingRequest!: TrainingRequests;
+  @ManyToOne(
+    () => TrainingRequests,
+    (trainingRequest) => trainingRequest.meetings,
+    {
+      nullable: false,
+      onDelete: 'CASCADE',
+    },
+  )
+  @JoinColumn({
+    name: 'trainingRequestId',
+  })
+  trainingRequest!: TrainingRequests;
+
+  @Column({
+    type: 'boolean',
+    default: false,
+  })
+  reminder24hSent!: boolean;
+
+  @Column({
+    type: 'boolean',
+    default: false,
+  })
+  reminder2hSent!: boolean;
 
 }

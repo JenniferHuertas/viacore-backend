@@ -18,7 +18,7 @@ import { ReminderService } from './services/reminder.service';
 
 import { CalendarService } from './services/calendar.service';
 
-import { ReminderCron } from './cron/reminder.cron';
+import { MeetingRemindersService } from './cron/reminder.cron';
 
 import { Users } from 'src/users/entities/user.entity';
 
@@ -40,7 +40,7 @@ import { TrainingRequests } from 'src/training-requests/entities/training-reques
     GoogleMeetService,
     ReminderService,
     CalendarService,
-    ReminderCron,
+    MeetingRemindersService,
   ],
 
   exports: [
