@@ -22,10 +22,17 @@ import { AuthGuard } from './guards/auth.guard';
 
 import { AuthService } from './auth.service';
 
+import { ForgotPasswordService } from './forgot-password/forgot-password.service';
+
 import {
   CreateUserDto,
   LoginUserDto,
 } from 'src/users/dto/create-user.dto';
+
+import {
+  ForgotPasswordDto,
+  ResetPasswordDto,
+} from './forgot-password/forgot-password.dto';
 
 import { ApiTags } from '@nestjs/swagger';
 
@@ -61,6 +68,9 @@ export class AuthController {
 
   constructor(
     private readonly authService: AuthService,
+
+    private readonly forgotPasswordService:
+      ForgotPasswordService,
   ) {}
 
   @Get('google')
@@ -190,12 +200,12 @@ export class AuthController {
   @Post('forgot-password')
 
   async forgotPassword(
-    @Body('email')
-    email: string,
+    @Body()
+    dto: ForgotPasswordDto,
   ) {
 
-    return await this.authService.forgotPassword(
-      email,
+    return await this.forgotPasswordService.forgotPassword(
+      dto.email,
     );
   }
 
@@ -204,16 +214,13 @@ export class AuthController {
   @Post('reset-password')
 
   async resetPassword(
-    @Body('email')
-    email: string,
-
-    @Body('password')
-    password: string,
+    @Body()
+    dto: ResetPasswordDto,
   ) {
 
-    return await this.authService.resetPassword(
-      email,
-      password,
+    return await this.forgotPasswordService.resetPassword(
+      dto.token,
+      dto.password,
     );
   }
 
