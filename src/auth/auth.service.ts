@@ -102,6 +102,7 @@ export class AuthService {
   async signIn(
     credentials: LoginUserDto,
   ) {
+    
     const foundUser =
   await this.usersRepository
     .createQueryBuilder('user')
@@ -112,6 +113,7 @@ export class AuthService {
     .getOne();
 
     if (!foundUser) {
+      console.log("❌ USER NOT FOUND");
       throw new BadRequestException(
         'Credenciales inválidas',
       );
@@ -195,7 +197,7 @@ async forgotPassword(email: string) {
   );
 
   const resetLink =
-    `${process.env.FRONTEND_URL}/reseteo-contraseña?token=${token}`;
+    `${process.env.FRONTEND_URL}/reseteo-contrasenia?token=${token}`;
 
   await this.emailService.sendForgotPasswordEmail(
     foundUser.email,
@@ -206,6 +208,49 @@ async forgotPassword(email: string) {
     message:
       'Si el email existe, se envió un enlace de recuperación',
   };
+}
+
+async resetPassword(token: string, password: string) {
+  const resetToken = await this.resetRepository.findOne({
+    where: { token },
+  });
+
+  if (!resetToken) {
+    throw new BadRequestException("Token inválido");
+  }
+
+  if (resetToken.expiresAt < new Date()) {
+    throw new BadRequestException("Token expirado");
+  }
+
+  if (resetToken.used) {
+    throw new BadRequestException("Token ya utilizado");
+  }
+
+  const user = await this.usersRepository.findOneBy({
+    id: resetToken.userId,
+  });
+
+  if (!user) {
+    throw new BadRequestException("Usuario no encontrado");
+  }
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+await this.usersRepository.update(
+  { id: user.id },
+  { password: hashedPassword },
+);
+
+await this.resetRepository.update(
+  { id: resetToken.id },
+  { used: true },
+);
+
+  return {
+    message: "Contraseña actualizada correctamente",
+  };
+  
 }
 
   async findOrCreateGoogleUser(

@@ -9,7 +9,7 @@ import { Users } from "../../users/entities/user.entity";
 
 @Entity()
 export class PasswordResetToken {
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn("uuid")
   id!: string;
 
   @Column()

@@ -78,7 +78,7 @@ export class EmailService {
         'ERROR ENVIANDO EMAIL',
         error.response?.data ||
           error.message,
-      );
+      ); throw error
     }
   }
 
