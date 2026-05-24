@@ -1,20 +1,21 @@
+import { TrainingRequests } from 'src/training-requests/entities/training-request.entity';
 import {
   Column,
   CreateDateColumn,
   Entity,
+  ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { MeetingStatus } from './meetingStatus.entity';
+import { Users } from 'src/users/entities/user.entity';
 
-@Entity('meetings')
-export class Meeting {
+@Entity('MEETINGS2')
+export class Meetings {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column()
-  userName!: string;
-
-  @Column()
-  userEmail!: string;
+  @ManyToOne(() => Users)
+  user!: Users;
 
   @Column({
     default: 'Scheduled Meeting',
@@ -42,14 +43,22 @@ export class Meeting {
   googleEventId!: string;
 
   @Column({
-    default: 'CONFIRMED',
+    type: 'enum',
+    enum: MeetingStatus,
+    enumName: 'MeetingStatus',
+    default: MeetingStatus.PENDING,
   })
-  status!: string;
+  status!: MeetingStatus;
 
   @Column({
     default: false,
   })
   reminderSent!: boolean;
+
+  @ManyToOne(() => TrainingRequests, (request) => request.meetings, {
+    nullable: true,
+  })
+  trainingRequest!: TrainingRequests;
 
   @CreateDateColumn()
   createdAt!: Date;

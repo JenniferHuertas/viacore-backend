@@ -4,7 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { ScheduleModule } from '@nestjs/schedule';
 
-import { Meeting } from './entities/meeting.entity';
+import { Meetings } from './entities/meeting.entity';
 
 import { MeetingsController } from './controllers/meetings.controller';
 
@@ -20,9 +20,13 @@ import { CalendarService } from './services/calendar.service';
 
 import { ReminderCron } from './cron/reminder.cron';
 
+import { Users } from 'src/users/entities/user.entity';
+
+import { TrainingRequests } from 'src/training-requests/entities/training-request.entity';
+
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Meeting]),
+    TypeOrmModule.forFeature([Meetings, Users, TrainingRequests]),
     ScheduleModule.forRoot(),
   ],
 

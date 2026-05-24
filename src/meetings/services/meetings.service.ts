@@ -11,7 +11,7 @@ import {
   Repository,
 } from 'typeorm';
 
-import { Meeting } from '../entities/meeting.entity';
+import { Meetings } from '../entities/meeting.entity';
 
 import { CreateMeetingDto } from '../dto/create-meeting.dto';
 
@@ -19,13 +19,24 @@ import { RescheduleMeetingDto } from '../dto/reschedule-meeting.dto';
 
 import { GoogleMeetService } from './google-meet.service';
 
+import { MeetingStatus } from '../entities/meetingStatus.entity';
+import { Users } from 'src/users/entities/user.entity';
+import { TrainingRequests } from 'src/training-requests/entities/training-request.entity';
+import { RequestStatus } from 'src/training-requests/enums/requests-status.enum';
+
 @Injectable()
 export class MeetingsService {
   constructor(
-    @InjectRepository(Meeting)
-    private readonly meetingRepository: Repository<Meeting>,
+    @InjectRepository(Meetings)
+    private readonly meetingRepository: Repository<Meetings>,
 
     private readonly googleMeetService: GoogleMeetService,
+
+    @InjectRepository(Users)
+    private readonly usersRepository: Repository<Users>,
+
+    @InjectRepository(TrainingRequests)
+    private readonly trainingRequestsRepository: Repository<TrainingRequests>
   ) {}
 
   async create(dto: CreateMeetingDto) {
@@ -34,6 +45,26 @@ export class MeetingsService {
     );
 
     const now = new Date();
+
+    const request =
+      await this.trainingRequestsRepository.findOne(
+        { where: {id: dto.trainingRequestId} },
+      );
+    if (!request) {
+      throw new NotFoundException(
+        'Solicitud no encontrada',
+      );
+    }
+
+    const user =
+      await this.usersRepository.findOne(
+        { where: {id: dto.userId} },
+      );
+    if (!user) {
+      throw new NotFoundException(
+        'Usuario no encontrado',
+      );
+    }
 
     const minAllowedDate = new Date(
       now.getTime() + 30 * 60000,
@@ -83,7 +114,7 @@ export class MeetingsService {
       await this.meetingRepository.findOne({
         where: {
           startTime: start,
-          status: Not('CANCELLED'),
+          status: Not(MeetingStatus.CANCELLED),
         },
       });
 
@@ -102,16 +133,16 @@ export class MeetingsService {
         {
           start,
           end,
-          email: dto.userEmail,
-          name: dto.userName,
+          email: user.email,
+          name: user.name,
         },
       );
 
     const meeting =
       this.meetingRepository.create({
-        userName: dto.userName,
+        user: {id: dto.userId},
 
-        userEmail: dto.userEmail,
+        trainingRequest: {id: dto.trainingRequestId},
 
         topic:
           dto.topic ||
@@ -127,10 +158,15 @@ export class MeetingsService {
         googleEventId:
           googleData.googleEventId,
 
-        status: 'CONFIRMED',
+        status: MeetingStatus.CONFIRMED,
 
         reminderSent: false,
       });
+
+      request.status =
+      RequestStatus.SCHEDULED;
+
+    await this.trainingRequestsRepository.save( request );
 
     return await this.meetingRepository.save(
       meeting,
@@ -180,7 +216,7 @@ export class MeetingsService {
       );
     }
 
-    meeting.status = 'CANCELLED';
+    meeting.status = MeetingStatus.CANCELLED;
 
     return await this.meetingRepository.save(
       meeting,
@@ -194,6 +230,7 @@ export class MeetingsService {
     const meeting =
       await this.meetingRepository.findOne({
         where: { id },
+        relations: ['user']
       });
 
     if (!meeting) {
@@ -262,7 +299,7 @@ export class MeetingsService {
         where: {
           startTime: newStart,
           status:
-            Not('CANCELLED'),
+            Not(MeetingStatus.CANCELLED),
           id: Not(id),
         },
       });
@@ -292,9 +329,9 @@ export class MeetingsService {
           start: newStart,
           end: newEnd,
           email:
-            meeting.userEmail,
+            meeting.user.email,
           name:
-            meeting.userName,
+            meeting.user.name,
         },
       );
 
@@ -311,7 +348,7 @@ export class MeetingsService {
       googleData.googleEventId;
 
     meeting.status =
-      'CONFIRMED';
+      MeetingStatus.CONFIRMED;
 
     return await this.meetingRepository.save(
       meeting,

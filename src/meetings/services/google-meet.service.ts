@@ -11,11 +11,11 @@ export class GoogleMeetService {
   ) {
     this.oauth2Client = new google.auth.OAuth2(
       this.configService.get<string>(
-        'GOOGLE_CLIENT_ID',
+        'GOOGLE_MEET_CLIENT_ID',
       ),
 
       this.configService.get<string>(
-        'GOOGLE_CLIENT_SECRET',
+        'GOOGLE_MEET_CLIENT_SECRET',
       ),
 
       'http://localhost',
@@ -24,7 +24,7 @@ export class GoogleMeetService {
     this.oauth2Client.setCredentials({
       refresh_token:
         this.configService.get<string>(
-          'GOOGLE_REFRESH_TOKEN',
+          'GOOGLE_MEET_REFRESH_TOKEN',
         ),
     });
   }

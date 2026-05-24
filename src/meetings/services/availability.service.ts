@@ -2,17 +2,18 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Not } from 'typeorm';
 
-import { Meeting } from '../entities/meeting.entity';
+import { Meetings } from '../entities/meeting.entity';
 
 import { WORKING_DAYS } from '../utils/meeting.constants';
 
 import { generateDaySlots } from '../utils/slot.utils';
+import { MeetingStatus } from '../entities/meetingStatus.entity';
 
 @Injectable()
 export class AvailabilityService {
   constructor(
-    @InjectRepository(Meeting)
-    private readonly meetingRepository: Repository<Meeting>,
+    @InjectRepository(Meetings)
+    private readonly meetingRepository: Repository<Meetings>,
   ) {}
 
   async getAvailability(date: string) {
@@ -28,7 +29,7 @@ export class AvailabilityService {
 
     const meetings = await this.meetingRepository.find({
       where: {
-        status: Not('CANCELLED'),
+        status: Not(MeetingStatus.CANCELLED),
       },
     });
 
