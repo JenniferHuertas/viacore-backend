@@ -1,17 +1,14 @@
 import {
-  IsEmail,
   IsNotEmpty,
   IsOptional,
   IsString,
+  IsUUID,
 } from 'class-validator';
 
 export class CreateMeetingDto {
-  @IsString()
+  @IsUUID()
   @IsNotEmpty()
-  userName!: string;
-
-  @IsEmail()
-  userEmail!: string;
+  trainingRequestId!: string;
 
   @IsOptional()
   @IsString()

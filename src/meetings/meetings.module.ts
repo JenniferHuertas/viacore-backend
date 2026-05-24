@@ -20,13 +20,21 @@ import { CalendarService } from './services/calendar.service';
 
 import { ReminderCron } from './cron/reminder.cron';
 
+import { TrainingRequests } from '../training-request/entities/training-request.entity';
+
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Meeting]),
+    TypeOrmModule.forFeature([
+      Meeting,
+      TrainingRequests,
+    ]),
+
     ScheduleModule.forRoot(),
   ],
 
-  controllers: [MeetingsController],
+  controllers: [
+    MeetingsController,
+  ],
 
   providers: [
     MeetingsService,
@@ -37,6 +45,8 @@ import { ReminderCron } from './cron/reminder.cron';
     ReminderCron,
   ],
 
-  exports: [MeetingsService],
+  exports: [
+    MeetingsService,
+  ],
 })
 export class MeetingsModule {}

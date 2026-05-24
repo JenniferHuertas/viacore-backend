@@ -19,16 +19,39 @@ import { RescheduleMeetingDto } from '../dto/reschedule-meeting.dto';
 
 import { GoogleMeetService } from './google-meet.service';
 
+import { TrainingRequests } from '../../training-request/entities/training-request.entity';
+
 @Injectable()
 export class MeetingsService {
   constructor(
     @InjectRepository(Meeting)
     private readonly meetingRepository: Repository<Meeting>,
 
+    @InjectRepository(TrainingRequests)
+    private readonly trainingRequestRepository: Repository<TrainingRequests>,
+
     private readonly googleMeetService: GoogleMeetService,
   ) {}
 
   async create(dto: CreateMeetingDto) {
+    const trainingRequest =
+      await this.trainingRequestRepository.findOne({
+        where: {
+          id: dto.trainingRequestId,
+        },
+
+        relations: [
+          'user',
+          'training',
+        ],
+      });
+
+    if (!trainingRequest) {
+      throw new NotFoundException(
+        'Training request not found',
+      );
+    }
+
     const start = new Date(
       `${dto.date}T${dto.time}:00`,
     );
@@ -102,19 +125,21 @@ export class MeetingsService {
         {
           start,
           end,
-          email: dto.userEmail,
-          name: dto.userName,
+
+          email:
+            trainingRequest.user.email,
+
+          name:
+            trainingRequest.user.name,
         },
       );
 
     const meeting =
       this.meetingRepository.create({
-        userName: dto.userName,
-
-        userEmail: dto.userEmail,
-
         topic:
           dto.topic ||
+          trainingRequest.training
+            ?.title ||
           'Scheduled Meeting',
 
         startTime: start,
@@ -130,6 +155,11 @@ export class MeetingsService {
         status: 'CONFIRMED',
 
         reminderSent: false,
+
+        user:
+          trainingRequest.user,
+
+        trainingRequest,
       });
 
     return await this.meetingRepository.save(
@@ -139,6 +169,11 @@ export class MeetingsService {
 
   async findAll() {
     return this.meetingRepository.find({
+      relations: [
+        'user',
+        'trainingRequest',
+      ],
+
       order: {
         startTime: 'ASC',
       },
@@ -149,6 +184,11 @@ export class MeetingsService {
     const meeting =
       await this.meetingRepository.findOne({
         where: { id },
+
+        relations: [
+          'user',
+          'trainingRequest',
+        ],
       });
 
     if (!meeting) {
@@ -164,6 +204,11 @@ export class MeetingsService {
     const meeting =
       await this.meetingRepository.findOne({
         where: { id },
+
+        relations: [
+          'user',
+          'trainingRequest',
+        ],
       });
 
     if (!meeting) {
@@ -180,7 +225,8 @@ export class MeetingsService {
       );
     }
 
-    meeting.status = 'CANCELLED';
+    meeting.status =
+      'CANCELLED';
 
     return await this.meetingRepository.save(
       meeting,
@@ -194,6 +240,11 @@ export class MeetingsService {
     const meeting =
       await this.meetingRepository.findOne({
         where: { id },
+
+        relations: [
+          'user',
+          'trainingRequest',
+        ],
       });
 
     if (!meeting) {
@@ -261,8 +312,10 @@ export class MeetingsService {
       await this.meetingRepository.findOne({
         where: {
           startTime: newStart,
+
           status:
             Not('CANCELLED'),
+
           id: Not(id),
         },
       });
@@ -291,10 +344,12 @@ export class MeetingsService {
         {
           start: newStart,
           end: newEnd,
+
           email:
-            meeting.userEmail,
+            meeting.user.email,
+
           name:
-            meeting.userName,
+            meeting.user.name,
         },
       );
 
