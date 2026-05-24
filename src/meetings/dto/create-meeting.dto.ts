@@ -1,19 +1,32 @@
+import { ApiProperty } from '@nestjs/swagger';
 import {
-  IsDateString,
+  IsNotEmpty,
+  IsOptional,
   IsString,
   IsUUID,
 } from 'class-validator';
 
 export class CreateMeetingDto {
-  @IsDateString()
-  date!: Date;
+  @IsUUID()
+  @IsNotEmpty()
+  trainingRequestId!: string;
+
+  @IsOptional()
+  @IsString()
+  @ApiProperty()
+  topic?: string;
 
   @IsString()
+  @IsNotEmpty()
+  @ApiProperty({
+      example: '2026-05-29',
+  })
+  date!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @ApiProperty({
+      example: '12:00',
+  })
   time!: string;
-
-  @IsUUID()
-  targetUserId!: string;
-
-  @IsUUID()
-  trainingRequestId!: string;
 }

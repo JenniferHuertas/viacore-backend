@@ -28,6 +28,10 @@ export class AuthService {
     @InjectRepository(Users)
     private readonly usersRepository: Repository<Users>,
 
+    @InjectRepository(PasswordResetToken)
+    private readonly resetRepository:
+    Repository<PasswordResetToken>,
+
     private readonly jwtService: JwtService,
 
     private readonly emailService: EmailService,

@@ -47,9 +47,9 @@ export class MeetingRemindersService {
           await this.emailService.sendMeetingReminder24h(
             email,
             companyName,
-            String(meeting.date),
-            meeting.time,
-            meeting.joinUrl,
+            String(meeting.startTime),
+            meeting.startTime.toISOString().split('T')[1],
+            meeting.meetLink,
           );
 
           await this.meetingsRepository.update(meeting.id, {
@@ -86,9 +86,9 @@ export class MeetingRemindersService {
           await this.emailService.sendMeetingReminder2h(
             email,
             companyName,
-            String(meeting.date),
-            meeting.time,
-            meeting.joinUrl,
+            String(meeting.startTime),
+            meeting.startTime.toISOString().split('T')[1],
+            meeting.meetLink,
           );
 
           await this.meetingsRepository.update(meeting.id, {
@@ -102,10 +102,15 @@ export class MeetingRemindersService {
   }
 
   private getMeetingDateTime(meeting: Meetings): Date {
-    const [hours, minutes] = meeting.time.split(':').map(Number);
-    const dateStr = String(meeting.date); // "2026-05-23"
+    const [hours, minutes] = meeting.startTime.toISOString().split('T')[1].split(':').map(Number);
+    const dateStr = String(meeting.startTime.toISOString().split('T')[0]); // "2026-05-23"
     const [year, month, day] = dateStr.split('-').map(Number);
     const date = new Date(year, month - 1, day, hours, minutes, 0, 0);
     return date;
+  }
+
+  @Cron('*/5 * * * *')
+  async handleCron() {
+    console.log('Checking reminders...');
   }
 }

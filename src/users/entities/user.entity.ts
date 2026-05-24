@@ -12,6 +12,8 @@ import {
   Expose,
 } from 'class-transformer';
 
+import { Meetings } from '../../meetings/entities/meeting.entity';
+
 import { TrainingRequests } from '../../training-requests/entities/training-request.entity';
 
 import { Role } from '../enums/roles.enum';
@@ -165,4 +167,12 @@ export class Users {
     (message) => message.receiver,
   )
   messagesReceived!: ChatMessage[];
+
+
+
+@OneToMany(
+  () => Meetings,
+  (meeting) => meeting.user,
+)
+meetings!: Meetings[];
 }

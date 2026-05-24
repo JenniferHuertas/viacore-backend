@@ -1,52 +1,48 @@
+import { TrainingRequests } from 'src/training-requests/entities/training-request.entity';
+
 import {
   Column,
+  JoinColumn,
   CreateDateColumn,
   Entity,
   ManyToOne,
   PrimaryGeneratedColumn,
-  UpdateDateColumn,
 } from 'typeorm';
 
 import { MeetingStatus } from './meetingStatus.entity';
 
 import { Users } from 'src/users/entities/user.entity';
-import { TrainingRequests } from 'src/training-requests/entities/training-request.entity';
 
-@Entity({ name: 'MEETINGS' })
+
+@Entity('MEETINGS')
 export class Meetings {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
   @Column({
-    type: 'date',
-    nullable: false,
+    default: 'Scheduled Meeting',
   })
-  date!: Date;
+  topic!: string;
 
   @Column({
-    type: 'varchar',
+    type: 'timestamp',
   })
-  time!: string;
+  startTime!: Date;
 
-  // Calendly será el proveedor principal de reuniones.
-  // Aquí se almacena el scheduling link dinámico.
   @Column({
-    type: 'varchar',
+    type: 'timestamp',
+  })
+  endTime!: Date;
+
+  @Column({
     nullable: true,
   })
-  schedulingUrl!: string;
+  meetLink!: string;
 
   @Column({
-    type: 'varchar',
     nullable: true,
   })
-  calendlyUri!: string;
-
-  @Column({
-    type: 'varchar',
-    nullable: true,
-  })
-  joinUrl!: string;
+  googleEventId!: string;
 
   @Column({
     type: 'enum',
@@ -56,19 +52,39 @@ export class Meetings {
   })
   status!: MeetingStatus;
 
-  @ManyToOne(() => Users)
-  user!: Users;
-
-  @ManyToOne(() => TrainingRequests, (request) => request.meetings, {
-    nullable: true,
+  @Column({
+    default: false,
   })
-  trainingRequest!: TrainingRequests;
+  reminderSent!: boolean;
 
   @CreateDateColumn()
   createdAt!: Date;
 
-  @UpdateDateColumn()
-  updatedAt!: Date;
+  @ManyToOne(
+  () => Users,
+  (user) => user.meetings,
+  {
+    nullable: false,
+    onDelete: 'CASCADE',
+  },
+)
+  @JoinColumn({
+    name: 'userId',
+  })
+  user!: Users;
+
+  @ManyToOne(
+    () => TrainingRequests,
+    (trainingRequest) => trainingRequest.meetings,
+    {
+      nullable: false,
+      onDelete: 'CASCADE',
+    },
+  )
+  @JoinColumn({
+    name: 'trainingRequestId',
+  })
+  trainingRequest!: TrainingRequests;
 
   @Column({
     type: 'boolean',
@@ -81,4 +97,5 @@ export class Meetings {
     default: false,
   })
   reminder2hSent!: boolean;
+
 }

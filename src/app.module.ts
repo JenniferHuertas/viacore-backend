@@ -46,9 +46,6 @@ import { ContactModule } from './contact/contact.module';
 import { ProfileModule } from './profile/profile.module';
 
 import { ScheduleModule } from '@nestjs/schedule';
-import { CalendlyService } from './calendly/calendly.service';
-
-import { CalendlyModule } from './calendly/calendly.module';
 
 @Module({
   imports: [
@@ -107,7 +104,6 @@ import { CalendlyModule } from './calendly/calendly.module';
     ContactModule,
 
     ScheduleModule.forRoot(),
-    CalendlyModule,
   ],
 
   controllers: [AppController],
@@ -116,8 +112,7 @@ import { CalendlyModule } from './calendly/calendly.module';
 })
 export class AppModule implements NestModule, OnApplicationBootstrap {
   constructor(
-    private readonly trainingService: TrainingService,
-    private readonly calendlyService: CalendlyService,
+    private readonly trainingService: TrainingService
   ) {}
 
   configure(consumer: MiddlewareConsumer) {
