@@ -10,33 +10,65 @@ import {
   SerializeOptions,
   UseGuards,
 } from '@nestjs/common';
+
 import type {
   Request,
   Response,
 } from 'express';
+
 import { GoogleAuthGuard } from './guards/google-auth.guard';
+
 import { AuthGuard } from './guards/auth.guard';
+
 import { AuthService } from './auth.service';
+
 import {
   CreateUserDto,
   LoginUserDto,
 } from 'src/users/dto/create-user.dto';
+
 import { ApiTags } from '@nestjs/swagger';
 
+const cookieConfig = {
+  httpOnly: true,
+
+  secure:
+    process.env.NODE_ENV ===
+    'production',
+
+  sameSite:
+    process.env.NODE_ENV ===
+    'production'
+      ? 'none'
+      : 'lax',
+
+  maxAge: 1000 * 60 * 60,
+
+  path: '/',
+} as const;
+
 @UseInterceptors(ClassSerializerInterceptor)
+
 @ApiTags('Auth')
+
 @Controller('auth')
+
 export class AuthController {
+
   constructor(
     private readonly authService: AuthService,
   ) {}
 
   @Get('google')
+
   @UseGuards(GoogleAuthGuard)
+
   googleLogin() {}
 
   @Get('google/callback')
+
   @UseGuards(GoogleAuthGuard)
+
   googleCallback(
     @Req()
     req: any,
@@ -44,45 +76,56 @@ export class AuthController {
     @Res()
     res: Response,
   ) {
+
     const frontendUrl =
-      process.env.FRONTEND_URL || `http://localhost:3000`;
+      process.env.FRONTEND_URL ||
+      `http://localhost:3000`;
 
     try {
-      const token = req.user.access_token;
+
+      const token =
+        req.user.access_token;
+
       res.cookie(
         `userSession`,
         token,
-        {
-          httpOnly: true,
-          secure: true,
-          sameSite: `none`,
-          maxAge: 1000 * 60 * 60,
-          path: `/`,
-        },
+        cookieConfig,
       );
+
       return res.redirect(
         `${frontendUrl}/autenticacion/autenticacion-google`,
       );
+
     } catch {
+
       return res.redirect(
         `${frontendUrl}/autenticacion?error=google`,
       );
+
     }
   }
 
   @Post('signup')
+
   @UseInterceptors(ClassSerializerInterceptor)
+
   @SerializeOptions({
     groups: [`newUser`],
   })
+
   register(
     @Body()
     createUserDto: CreateUserDto,
   ) {
-    return this.authService.create(createUserDto);
+
+    return this.authService.create(
+      createUserDto,
+    );
+
   }
 
   @Post('signin')
+
   async signin(
     @Body()
     credentials: LoginUserDto,
@@ -90,18 +133,16 @@ export class AuthController {
     @Res({ passthrough: true })
     res: Response,
   ) {
-    const response = await this.authService.signIn(credentials);
+
+    const response =
+      await this.authService.signIn(
+        credentials,
+      );
 
     res.cookie(
       `userSession`,
       response.access_token,
-      {
-        httpOnly: true,
-        secure: true,
-        sameSite: `none`,
-        maxAge: 1000 * 60 * 60,
-        path: `/`,
-      },
+      cookieConfig,
     );
 
     return {
@@ -112,18 +153,15 @@ export class AuthController {
   }
 
   @Post('logout')
+
   logout(
     @Res({ passthrough: true })
     res: Response,
   ) {
+
     res.clearCookie(
       `userSession`,
-      {
-        httpOnly: true,
-        secure: true,
-        sameSite: `none`,
-        path: `/`,
-      },
+      cookieConfig,
     );
 
     return {
@@ -132,11 +170,15 @@ export class AuthController {
   }
 
   @Get('profile')
+
   @UseGuards(AuthGuard)
+
   getProfile(
     @Req()
     req: Request,
   ) {
+
     return (req as any).user;
+
   }
 }
