@@ -1,7 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-} from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 
 import { Repository } from 'typeorm';
 
@@ -9,10 +6,7 @@ import { Users } from 'src/users/entities/user.entity';
 
 import { InjectRepository } from '@nestjs/typeorm';
 
-import {
-  CreateUserDto,
-  LoginUserDto,
-} from 'src/users/dto/create-user.dto';
+import { CreateUserDto, LoginUserDto } from 'src/users/dto/create-user.dto';
 
 import * as bcrypt from 'bcrypt';
 
@@ -22,6 +16,8 @@ import { Role } from 'src/users/enums/roles.enum';
 
 import { EmailService } from 'src/notifications/channels/email/email.service';
 
+import { PasswordResetToken } from './entities/password-reset-token.entity';
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -29,137 +25,92 @@ export class AuthService {
     private readonly usersRepository: Repository<Users>,
 
     @InjectRepository(PasswordResetToken)
-    private readonly resetRepository:
-    Repository<PasswordResetToken>,
+    private readonly resetRepository: Repository<PasswordResetToken>,
 
     private readonly jwtService: JwtService,
 
     private readonly emailService: EmailService,
   ) {}
 
-  async create(
-    createUserDto: CreateUserDto,
-  ) {
+  async create(createUserDto: CreateUserDto) {
+    const normalizedEmail = createUserDto.email.toLowerCase().trim();
 
-    const normalizedEmail =
-      createUserDto.email
-        .toLowerCase()
-        .trim();
-
-    const foundUser =
-      await this.usersRepository.findOneBy({
-        email: normalizedEmail,
-      });
+    const foundUser = await this.usersRepository.findOneBy({
+      email: normalizedEmail,
+    });
 
     if (foundUser?.googleId) {
-
       throw new BadRequestException(
         'Este correo ya fue registrado mediante Google. Continúa con Google.',
       );
     }
 
     if (foundUser) {
-
       throw new BadRequestException(
         'Este correo ya está registrado. Por favor, inicia sesión.',
       );
     }
 
-    const hashedPassword =
-      await bcrypt.hash(
-        createUserDto.password,
-        10,
-      );
+    const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
 
-    const {
-      confirmPassword,
-      ...userData
-    } = createUserDto;
+    const { confirmPassword, ...userData } = createUserDto;
 
-    const newUser =
-      this.usersRepository.create({
-        ...userData,
+    const newUser = this.usersRepository.create({
+      ...userData,
 
-        email: normalizedEmail,
+      email: normalizedEmail,
 
-        password: hashedPassword,
+      password: hashedPassword,
 
-        role: Role.User,
+      role: Role.User,
 
-        profileCompleted: true,
-      });
+      profileCompleted: true,
+    });
 
-    const savedUser =
-      await this.usersRepository.save(
-        newUser,
-      );
+    const savedUser = await this.usersRepository.save(newUser);
 
     try {
-
       // await this.emailService.sendWelcomeEmail(
       //   savedUser.email,
       //   savedUser.name,
       // );
 
-      console.log(
-        'WELCOME EMAIL ENVIADO',
-      );
-
+      console.log('WELCOME EMAIL ENVIADO');
     } catch (error) {
-
-      console.error(
-        'ERROR MAIL:',
-        error,
-      );
-
+      console.error('ERROR MAIL:', error);
     }
 
     return savedUser;
   }
 
-  async signIn(
-    credentials: LoginUserDto,
-  ) {
+  async signIn(credentials: LoginUserDto) {
+    const normalizedEmail = credentials.email.toLowerCase().trim();
 
-    const normalizedEmail =
-      credentials.email
-        .toLowerCase()
-        .trim();
-
-    const foundUser =
-      await this.usersRepository
-        .createQueryBuilder('user')
-        .addSelect('user.password')
-        .where('user.email = :email', {
-          email: normalizedEmail,
-        })
-        .getOne();
+    const foundUser = await this.usersRepository
+      .createQueryBuilder('user')
+      .addSelect('user.password')
+      .where('user.email = :email', {
+        email: normalizedEmail,
+      })
+      .getOne();
 
     if (!foundUser) {
-
-      throw new BadRequestException(
-        'Credenciales inválidas',
-      );
+      throw new BadRequestException('Credenciales inválidas');
     }
 
     if (foundUser.googleId) {
-
       throw new BadRequestException(
         'Esta cuenta fue registrada mediante Google. Continúa con Google.',
       );
     }
 
-    const matchingPassword =
-      await bcrypt.compare(
-        credentials.password,
-        foundUser.password,
-      );
+    const matchingPassword = await bcrypt.compare(
+      credentials.password,
+      foundUser.password,
+    );
 
     if (!matchingPassword) {
-
-      throw new BadRequestException(
-        'Credenciales inválidas',
-      );
+      throw new BadRequestException('Credenciales inválidas');
     }
 
     const payload = {
@@ -169,14 +120,12 @@ export class AuthService {
 
       role: foundUser.role,
 
-      profileCompleted:
-        foundUser.profileCompleted,
+      profileCompleted: foundUser.profileCompleted,
     };
 
-    const token =
-      this.jwtService.sign(payload, {
-        expiresIn: '1h',
-      });
+    const token = this.jwtService.sign(payload, {
+      expiresIn: '1h',
+    });
 
     return {
       id: foundUser.id,
@@ -191,35 +140,25 @@ export class AuthService {
 
   // RECUPERAR CONTRASEÑA
 
-  async forgotPassword(
-    email: string,
-  ) {
+  async forgotPassword(email: string) {
+    const normalizedEmail = email.toLowerCase().trim();
 
-    const normalizedEmail =
-      email
-        .toLowerCase()
-        .trim();
-
-    const user =
-      await this.usersRepository.findOneBy({
-        email: normalizedEmail,
-      });
+    const user = await this.usersRepository.findOneBy({
+      email: normalizedEmail,
+    });
 
     // NO REVELAR SI EXISTE
 
     if (!user) {
-
       return {
         success: true,
-        message:
-          'Si el correo existe, enviaremos instrucciones.',
+        message: 'Si el correo existe, enviaremos instrucciones.',
       };
     }
 
     // CUENTA GOOGLE
 
     if (user.googleId) {
-
       throw new BadRequestException(
         'Esta cuenta fue registrada con Google. Continúa con Google.',
       );
@@ -228,31 +167,20 @@ export class AuthService {
     // LINK SIMPLE
     // SIN TOKEN
 
-    const resetLink =
-      `${
-        process.env.FRONTEND_URL ||
-        'http://localhost:3000'
-      }/reset-password?email=${user.email}`;
+    const resetLink = `${
+      process.env.FRONTEND_URL || 'http://localhost:3000'
+    }/reset-password?email=${user.email}`;
 
     try {
-
       await this.emailService.sendPasswordRecoveryEmail(
         user.email,
         user.name,
         resetLink,
       );
 
-      console.log(
-        'RESET PASSWORD EMAIL ENVIADO:',
-        user.email,
-      );
-
+      console.log('RESET PASSWORD EMAIL ENVIADO:', user.email);
     } catch (error) {
-
-      console.error(
-        'ERROR RESET PASSWORD EMAIL:',
-        error,
-      );
+      console.error('ERROR RESET PASSWORD EMAIL:', error);
 
       throw new BadRequestException(
         'No pudimos enviar el correo de recuperación.',
@@ -261,64 +189,41 @@ export class AuthService {
 
     return {
       success: true,
-      message:
-        'Correo de recuperación enviado.',
+      message: 'Correo de recuperación enviado.',
     };
   }
 
   // NUEVO
   // RESET PASSWORD
 
-  async resetPassword(
-    email: string,
-    password: string,
-  ) {
+  async resetPassword(email: string, password: string) {
+    const normalizedEmail = email.toLowerCase().trim();
 
-    const normalizedEmail =
-      email
-        .toLowerCase()
-        .trim();
-
-    const user =
-      await this.usersRepository
-        .createQueryBuilder('user')
-        .addSelect('user.password')
-        .where('user.email = :email', {
-          email: normalizedEmail,
-        })
-        .getOne();
+    const user = await this.usersRepository
+      .createQueryBuilder('user')
+      .addSelect('user.password')
+      .where('user.email = :email', {
+        email: normalizedEmail,
+      })
+      .getOne();
 
     if (!user) {
-
-      throw new BadRequestException(
-        'Usuario no encontrado.',
-      );
+      throw new BadRequestException('Usuario no encontrado.');
     }
 
     if (user.googleId) {
-
-      throw new BadRequestException(
-        'Esta cuenta fue registrada con Google.',
-      );
+      throw new BadRequestException('Esta cuenta fue registrada con Google.');
     }
 
-    const hashedPassword =
-      await bcrypt.hash(
-        password,
-        10,
-      );
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    user.password =
-      hashedPassword;
+    user.password = hashedPassword;
 
-    await this.usersRepository.save(
-      user,
-    );
+    await this.usersRepository.save(user);
 
     return {
       success: true,
-      message:
-        'Contraseña actualizada correctamente.',
+      message: 'Contraseña actualizada correctamente.',
     };
   }
 
@@ -331,39 +236,24 @@ export class AuthService {
       googleId: string;
     },
 
-    mode:
-      | 'signin'
-      | 'signup',
+    mode: 'signin' | 'signup',
   ) {
+    const normalizedEmail = googleUser.email.toLowerCase().trim();
 
-    const normalizedEmail =
-      googleUser.email
-        .toLowerCase()
-        .trim();
+    const adminEmails = ['colmenares8093@gmail.com', 'admin.viacore@gmail.com'];
 
-    const adminEmails = [
-      'colmenares8093@gmail.com',
-      'admin.viacore@gmail.com',
-    ];
+    const isAdmin = adminEmails.includes(normalizedEmail);
 
-    const isAdmin =
-      adminEmails.includes(
-        normalizedEmail,
-      );
-
-    let user =
-      await this.usersRepository.findOneBy({
-        email: normalizedEmail,
-      });
+    let user = await this.usersRepository.findOneBy({
+      email: normalizedEmail,
+    });
 
     // USUARIO EXISTE
 
     if (user) {
-
       // CUENTA MANUAL
 
       if (!user.googleId) {
-
         throw new BadRequestException(
           'Este correo ya está registrado con email y contraseña.',
         );
@@ -371,11 +261,7 @@ export class AuthService {
 
       // GOOGLE ID DISTINTO
 
-      if (
-        user.googleId !==
-        googleUser.googleId
-      ) {
-
+      if (user.googleId !== googleUser.googleId) {
         throw new BadRequestException(
           'Este correo ya está vinculado a otra cuenta Google.',
         );
@@ -384,18 +270,14 @@ export class AuthService {
       // SIGNUP SOBRE CUENTA EXISTENTE
 
       if (mode === 'signup') {
-
         throw new BadRequestException(
           'Esta cuenta Google ya existe. Inicia sesión.',
         );
       }
-
     } else {
-
       // SIGNIN SIN CUENTA
 
       if (mode === 'signin') {
-
         throw new BadRequestException(
           'No existe una cuenta registrada con Google para este correo.',
         );
@@ -403,51 +285,31 @@ export class AuthService {
 
       // CREAR SOLO SI NO EXISTE
 
-      user =
-        this.usersRepository.create({
-          email: normalizedEmail,
+      user = this.usersRepository.create({
+        email: normalizedEmail,
 
-          name:
-            googleUser.name,
+        name: googleUser.name,
 
-          googleId:
-            googleUser.googleId,
+        googleId: googleUser.googleId,
 
-          role:
-            isAdmin
-              ? Role.Admin
-              : Role.User,
+        role: isAdmin ? Role.Admin : Role.User,
 
-          profileCompleted:
-            isAdmin
-              ? true
-              : false,
-        });
+        profileCompleted: isAdmin ? true : false,
+      });
 
-      user =
-        await this.usersRepository.save(
-          user,
-        );
+      user = await this.usersRepository.save(user);
     }
 
     if (!user) {
-
-      throw new BadRequestException(
-        'No se pudo autenticar el usuario Google.',
-      );
+      throw new BadRequestException('No se pudo autenticar el usuario Google.');
     }
 
     if (isAdmin) {
-
       user.role = Role.Admin;
 
-      user.profileCompleted =
-        true;
+      user.profileCompleted = true;
 
-      user =
-        await this.usersRepository.save(
-          user,
-        );
+      user = await this.usersRepository.save(user);
     }
 
     const payload = {
@@ -457,14 +319,12 @@ export class AuthService {
 
       role: user.role,
 
-      profileCompleted:
-        user.profileCompleted,
+      profileCompleted: user.profileCompleted,
     };
 
-    const token =
-      this.jwtService.sign(payload, {
-        expiresIn: '1h',
-      });
+    const token = this.jwtService.sign(payload, {
+      expiresIn: '1h',
+    });
 
     return {
       id: user.id,

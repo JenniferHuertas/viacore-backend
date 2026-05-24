@@ -11,10 +11,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 
-import type {
-  Request,
-  Response,
-} from 'express';
+import type { Request, Response } from 'express';
 
 import { GoogleAuthGuard } from './guards/google-auth.guard';
 
@@ -22,10 +19,7 @@ import { AuthGuard } from './guards/auth.guard';
 
 import { AuthService } from './auth.service';
 
-import {
-  CreateUserDto,
-  LoginUserDto,
-} from 'src/users/dto/create-user.dto';
+import { CreateUserDto, LoginUserDto } from 'src/users/dto/create-user.dto';
 
 import { ApiTags } from '@nestjs/swagger';
 
@@ -42,26 +36,17 @@ const cookieConfig = {
 };
 
 @UseInterceptors(ClassSerializerInterceptor)
-
 @ApiTags('Auth')
-
 @Controller('auth')
-
 export class AuthController {
-  constructor(
-    private readonly authService: AuthService,
-  ) {}
+  constructor(private readonly authService: AuthService) {}
 
   @Get('google')
-
   @UseGuards(GoogleAuthGuard)
-
   googleLogin() {}
 
   @Get('google/callback')
-
   @UseGuards(GoogleAuthGuard)
-
   googleCallback(
     @Req()
     req: any,
@@ -69,74 +54,46 @@ export class AuthController {
     @Res()
     res: Response,
   ) {
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
 
-    const frontendUrl =
-      process.env.FRONTEND_URL ||
-      'http://localhost:3000';
-
-    console.log(
-      'GOOGLE CALLBACK USER:',
-      req.user,
-    );
+    console.log('GOOGLE CALLBACK USER:', req.user);
 
     if (!req.user) {
-
       return res.redirect(
         `${frontendUrl}/autenticacion/autenticacion-google?error=google_auth_failed`,
       );
     }
 
-    const token =
-      req.user.access_token;
+    const token = req.user.access_token;
 
-    console.log(
-      'GOOGLE TOKEN:',
-      token,
-    );
+    console.log('GOOGLE TOKEN:', token);
 
     if (!token) {
-
       return res.redirect(
         `${frontendUrl}/autenticacion/autenticacion-google?error=google_token_missing`,
       );
     }
 
-    res.cookie(
-      'userSession',
-      token,
-      cookieConfig,
-    );
+    res.cookie('userSession', token, cookieConfig);
 
-    console.log(
-      'COOKIE SET SUCCESS',
-    );
+    console.log('COOKIE SET SUCCESS');
 
-    return res.redirect(
-      `${frontendUrl}/autenticacion/autenticacion-google`,
-    );
+    return res.redirect(`${frontendUrl}/autenticacion/autenticacion-google`);
   }
 
   @Post('signup')
-
   @UseInterceptors(ClassSerializerInterceptor)
-
   @SerializeOptions({
     groups: ['newUser'],
   })
-
   register(
     @Body()
     createUserDto: CreateUserDto,
   ) {
-
-    return this.authService.create(
-      createUserDto,
-    );
-
+    return this.authService.create(createUserDto);
   }
 
   @Post('signin')
-
   async signin(
     @Body()
     credentials: LoginUserDto,
@@ -144,27 +101,13 @@ export class AuthController {
     @Res({ passthrough: true })
     res: Response,
   ) {
+    const response = await this.authService.signIn(credentials);
 
-    const response =
-      await this.authService.signIn(
-        credentials,
-      );
+    console.log('SIGNIN RESPONSE:', response);
 
-    console.log(
-      'SIGNIN RESPONSE:',
-      response,
-    );
+    res.cookie('userSession', response.access_token, cookieConfig);
 
-    res.cookie(
-      'userSession',
-      response.access_token,
-      cookieConfig,
-    );
-
-    console.log(
-      'SIGNIN COOKIE SET:',
-      response.access_token,
-    );
+    console.log('SIGNIN COOKIE SET:', response.access_token);
 
     return {
       login: true,
@@ -173,53 +116,14 @@ export class AuthController {
     };
   }
 
-  // RECUPERAR CONTRASEÑA
-
-  @Post('forgot-password')
-
-  async forgotPassword(
-    @Body('email')
-    email: string,
-  ) {
-
-    return await this.authService.forgotPassword(
-      email,
-    );
-  }
-
-  // RESET PASSWORD
-
-  @Post('reset-password')
-
-  async resetPassword(
-    @Body('email')
-    email: string,
-
-    @Body('password')
-    password: string,
-  ) {
-
-    return await this.authService.resetPassword(
-      email,
-      password,
-    );
-  }
-
   @Post('logout')
-
   logout(
     @Res({ passthrough: true })
     res: Response,
   ) {
+    console.log('CLEAR COOKIE');
 
-    console.log(
-      'CLEAR COOKIE',
-    );
-
-    res.clearCookie(
-      'userSession',
-      cookieConfig,
-    );
+    res.clearCookie('userSession', cookieConfig);
 
     return {
       logout: true,
@@ -227,39 +131,23 @@ export class AuthController {
   }
 
   @Post('forgot-password')
-forgotPassword(
-  @Body() body: { email: string },
-) {
-  return this.authService.forgotPassword(
-    body.email,
-  );
-}
+  forgotPassword(@Body() body: { email: string }) {
+    return this.authService.forgotPassword(body.email);
+  }
 
-@Post("reset-password")
-async resetPassword(
-  @Body() body: { token: string; password: string }
-) {
-  return this.authService.resetPassword(
-    body.token,
-    body.password,
-  );
-}
+  @Post('reset-password')
+  resetPassword(@Body() body: { email: string; password: string }) {
+    return this.authService.resetPassword(body.email, body.password);
+  }
 
   @Get('profile')
-
   @UseGuards(AuthGuard)
-
   getProfile(
     @Req()
     req: Request,
   ) {
-
-    console.log(
-      'PROFILE USER:',
-      (req as any).user,
-    );
+    console.log('PROFILE USER:', (req as any).user);
 
     return (req as any).user;
-
   }
 }
