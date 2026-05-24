@@ -13,7 +13,6 @@ import { MeetingStatus } from './meetingStatus.entity';
 
 import { Users } from 'src/users/entities/user.entity';
 
-
 @Entity('MEETINGS')
 export class Meetings {
   @PrimaryGeneratedColumn('uuid')
@@ -60,14 +59,10 @@ export class Meetings {
   @CreateDateColumn()
   createdAt!: Date;
 
-  @ManyToOne(
-  () => Users,
-  (user) => user.meetings,
-  {
+  @ManyToOne(() => Users, {
     nullable: false,
     onDelete: 'CASCADE',
-  },
-)
+  })
   @JoinColumn({
     name: 'userId',
   })
@@ -97,5 +92,4 @@ export class Meetings {
     default: false,
   })
   reminder2hSent!: boolean;
-
 }
