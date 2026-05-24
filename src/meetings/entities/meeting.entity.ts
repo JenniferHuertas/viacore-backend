@@ -43,10 +43,10 @@ export class Meetings {
   calendlyUri!: string;
 
   @Column({
-    type: 'varchar',
+    type: "varchar",
     nullable: true,
   })
-  joinUrl!: string;
+  link?: string;
 
   @Column({
     type: 'enum',

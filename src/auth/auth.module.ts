@@ -16,10 +16,13 @@ import { Users } from 'src/users/entities/user.entity';
 
 import { EmailModule } from 'src/notifications/channels/email/email.module';
 
+import { PasswordResetToken } from './entities/password-reset-token.entity';
+
 @Module({
   imports: [
     TypeOrmModule.forFeature([
       Users,
+      PasswordResetToken,
     ]),
 
     EmailModule,
@@ -35,3 +38,4 @@ import { EmailModule } from 'src/notifications/channels/email/email.module';
   ],
 })
 export class AuthModule {}
+
