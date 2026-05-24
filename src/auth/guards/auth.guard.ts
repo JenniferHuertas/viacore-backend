@@ -1,5 +1,3 @@
-
-
 import {
   CanActivate,
   ExecutionContext,
@@ -9,24 +7,17 @@ import {
 
 import { JwtService } from '@nestjs/jwt';
 
-import { Observable } from 'rxjs';
-
-import { Role } from '../roles.enum';
-
 @Injectable()
 export class AuthGuard
-  implements CanActivate
-{
+  implements CanActivate {
+
   constructor(
     private readonly jwtService: JwtService,
   ) {}
 
-  canActivate(
+  async canActivate(
     context: ExecutionContext,
-  ):
-    | boolean
-    | Promise<boolean>
-    | Observable<boolean> {
+  ): Promise<boolean> {
 
     const request =
       context
@@ -36,34 +27,32 @@ export class AuthGuard
     const token =
       request.cookies?.userSession;
 
+    console.log(
+      'COOKIE TOKEN:',
+      token,
+    );
+
     if (!token) {
       throw new UnauthorizedException(
         'Token not provided',
       );
     }
 
-    const secret =
-      process.env.JWT_SECRET;
-
     try {
-      const payload =
-        this.jwtService.verify(
-          token,
-          { secret },
-        );
 
-      payload.roles =
-        payload.role
-          ? [payload.role]
-          : [Role.User];
+      const payload =
+        await this.jwtService.verifyAsync(
+          token,
+        );
 
       request.user = payload;
 
       return true;
 
     } catch {
+
       throw new UnauthorizedException(
-        'Invalid or expired token',
+        'Invalid token',
       );
     }
   }
