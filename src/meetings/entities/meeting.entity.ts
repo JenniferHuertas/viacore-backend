@@ -13,9 +13,9 @@ import { MeetingStatus } from './meetingStatus.entity';
 
 import { Users } from 'src/users/entities/user.entity';
 
-
 @Entity('MEETINGS')
 export class Meetings {
+
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
@@ -48,7 +48,7 @@ export class Meetings {
     type: 'enum',
     enum: MeetingStatus,
     enumName: 'MeetingStatus',
-    default: MeetingStatus.PENDING,
+    default: MeetingStatus.Pendiente,
   })
   status!: MeetingStatus;
 
@@ -61,13 +61,13 @@ export class Meetings {
   createdAt!: Date;
 
   @ManyToOne(
-  () => Users,
-  (user) => user.meetings,
-  {
-    nullable: false,
-    onDelete: 'CASCADE',
-  },
-)
+    () => Users,
+    (user) => user.meetings,
+    {
+      nullable: false,
+      onDelete: 'CASCADE',
+    },
+  )
   @JoinColumn({
     name: 'userId',
   })
@@ -97,5 +97,4 @@ export class Meetings {
     default: false,
   })
   reminder2hSent!: boolean;
-
 }
