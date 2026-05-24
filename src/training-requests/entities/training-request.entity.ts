@@ -22,7 +22,7 @@ import { Training } from '../../training/entities/training.entity';
 
 import { FileResource } from '../../file-resource/entities/file-resource.entity';
 
-import { Meeting } from '../../meetings/entities/meeting.entity';
+import { Meetings } from '../../meetings/entities/meeting.entity';
 
 import { Payment } from 'src/payments/entities/payment.entity';
 
@@ -118,10 +118,10 @@ export class TrainingRequests {
   @Expose({ groups: ['Get'] })
 
   @OneToMany(
-    () => Meeting,
+    () => Meetings,
     (meeting) => meeting.trainingRequest,
   )
-  meetings!: Meeting[];
+  meetings!: Meetings[];
 
   @Expose({ groups: ['Get'] })
 
