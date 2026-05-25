@@ -119,11 +119,11 @@ export class AppModule implements NestModule, OnApplicationBootstrap {
     consumer.apply(LoggerMiddleware).forRoutes('*');
   }
 
-/* async onApplicationBootstrap() {
-  await this.trainingService.addTraining();
+async onApplicationBootstrap() {
+  //await this.trainingService.addTraining();
 
-  console.log('Capacitaciones cargadas');
-} */
+  //console.log('Capacitaciones cargadas');
+}
     //this.calendlyService.createWebhookSubscription('https://shy-shopping-trunks.ngrok-free.dev') //aca va el link del deploy
   }
 }
