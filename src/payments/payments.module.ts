@@ -16,25 +16,19 @@ import { EmailModule } from 'src/notifications/channels/email/email.module';
 
 import { NotificationsModule } from 'src/notifications/notifications.module';
 
+import { NotificationsGateway } from 'src/notifications/gateways/notifications.gateway';
+
 @Module({
   imports: [
-    TypeOrmModule.forFeature([
-      Payment,
-      TrainingRequests,
-    ]),
+    TypeOrmModule.forFeature([Payment, TrainingRequests]),
 
     EmailModule,
 
     NotificationsModule,
   ],
 
-  controllers: [
-    PaymentsController,
-  ],
+  controllers: [PaymentsController],
 
-  providers: [
-    PaymentsService,
-    PaymentsRepository,
-  ],
+  providers: [PaymentsService, PaymentsRepository, NotificationsGateway],
 })
 export class PaymentsModule {}
