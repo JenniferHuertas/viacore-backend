@@ -31,7 +31,7 @@ export class CreateUserDto {
   @IsNotEmpty()
   @IsString()
   @MinLength(2)
-  @MaxLength(50)
+  @MaxLength(500)
   name!: string;
 
   @ApiProperty({
@@ -73,7 +73,7 @@ phone?: string;
   @IsOptional()
   @IsString()
   @MinLength(2)
-  @MaxLength(120)
+  @MaxLength(500)
   country?: string;
 
   @ApiProperty({
@@ -82,7 +82,7 @@ phone?: string;
   @IsOptional()
   @IsString()
   @MinLength(2)
-  @MaxLength(120)
+  @MaxLength(500)
   companyName?: string;
 
   @ApiProperty({
@@ -92,7 +92,7 @@ phone?: string;
   @IsOptional()
   @IsString()
   @MinLength(2)
-  @MaxLength(120)
+  @MaxLength(500)
   city?: string;
 
   @ApiProperty({
@@ -102,7 +102,7 @@ phone?: string;
   @IsOptional()
   @IsString()
   @MinLength(2)
-  @MaxLength(120)
+  @MaxLength(500)
   address?: string;
 
   @Exclude()

@@ -15,7 +15,10 @@ import { GoogleAuthGuard } from './guards/google-auth.guard';
 import { AuthGuard } from './guards/auth.guard';
 import { AuthService } from './auth.service';
 import { ForgotPasswordService } from './forgot-password/forgot-password.service';
-import { CreateUserDto, LoginUserDto } from 'src/users/dto/create-user.dto';
+import {
+  CreateUserDto,
+  LoginUserDto,
+} from 'src/users/dto/create-user.dto';
 import {
   ForgotPasswordDto,
   ResetPasswordDto,
@@ -42,7 +45,7 @@ export class AuthController {
   ) {}
 
   // =========================
-  // GOOGLE LOGIN START
+  // GOOGLE START
   // =========================
 
   @Get('google/signin')
@@ -54,7 +57,7 @@ export class AuthController {
   googleSignup() {}
 
   // =========================
-  // GOOGLE CALLBACK (FIXED)
+  // GOOGLE CALLBACK (CLEAN)
   // =========================
 
   @Get('google/callback')
@@ -66,68 +69,24 @@ export class AuthController {
       const googleError = req.googleAuthError;
       const user = req.user;
 
-      // =========================
-      // ERROR HANDLING
-      // =========================
       if (googleError) {
-        console.log('GOOGLE CALLBACK ERROR:', googleError);
-
-        if (googleError.includes('No existe una cuenta registrada')) {
-          return res.redirect(
-            `${frontendUrl}/autenticacion?tab=signup&error=no_account_google`,
-          );
-        }
-
-        if (googleError.includes('ya existe')) {
-          return res.redirect(
-            `${frontendUrl}/autenticacion?tab=signin&error=account_exists`,
-          );
-        }
-
+        console.log('GOOGLE ERROR:', googleError);
         return res.redirect(
           `${frontendUrl}/autenticacion?error=google_auth_failed`,
         );
       }
 
-      // =========================
-      // LOGIN OK
-      // =========================
       const token = user.access_token;
 
+      // set cookie session
       res.cookie('userSession', token, cookieConfig);
 
-      // =========================
-      // FIX: RETURN PATH SAFE FLOW
-      // =========================
-      let returnTo = '/';
-
-      try {
-        const state = req.query.state;
-
-        if (state) {
-          const parsed = JSON.parse(decodeURIComponent(state));
-          returnTo = parsed?.returnTo || '/';
-        }
-      } catch (e) {
-        console.log('STATE PARSE ERROR:', e);
-      }
-
-      console.log('RETURN TO FINAL:', returnTo);
-
-      // =========================
-      // REDIRECT FRONTEND
-      // =========================
+      // 🔥 SIEMPRE mismo destino (SIN state, SIN returnTo)
       return res.redirect(
-        `${frontendUrl}/autenticacion/autenticacion-google?returnTo=${encodeURIComponent(
-          returnTo,
-        )}`,
+        `${frontendUrl}/autenticacion/autenticacion-google`,
       );
     } catch (error: any) {
-      console.log(
-        'GOOGLE CALLBACK ERROR:',
-        error?.response?.message || error?.message,
-      );
-
+      console.log('GOOGLE CALLBACK ERROR:', error?.message);
       return res.redirect(
         `${frontendUrl}/autenticacion?error=google_auth_failed`,
       );
@@ -139,7 +98,6 @@ export class AuthController {
   // =========================
 
   @Post('signup')
-  @UseInterceptors(ClassSerializerInterceptor)
   @SerializeOptions({ groups: ['newUser'] })
   register(@Body() createUserDto: CreateUserDto) {
     return this.authService.create(createUserDto);
@@ -162,17 +120,17 @@ export class AuthController {
   }
 
   // =========================
-  // PASSWORD RECOVERY
+  // PASSWORD
   // =========================
 
   @Post('forgot-password')
   async forgotPassword(@Body() dto: ForgotPasswordDto) {
-    return await this.forgotPasswordService.forgotPassword(dto.email);
+    return this.forgotPasswordService.forgotPassword(dto.email);
   }
 
   @Post('reset-password')
   async resetPassword(@Body() dto: ResetPasswordDto) {
-    return await this.forgotPasswordService.resetPassword(
+    return this.forgotPasswordService.resetPassword(
       dto.token,
       dto.password,
     );
@@ -184,9 +142,7 @@ export class AuthController {
 
   @Post('logout')
   logout(@Res({ passthrough: true }) res: Response) {
-    console.log('CLEAR COOKIE');
     res.clearCookie('userSession', cookieConfig);
-
     return { logout: true };
   }
 
@@ -197,7 +153,6 @@ export class AuthController {
   @Get('profile')
   @UseGuards(AuthGuard)
   getProfile(@Req() req: Request) {
-    console.log('PROFILE USER:', (req as any).user);
     return (req as any).user;
   }
 }
