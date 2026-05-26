@@ -138,9 +138,10 @@ export class TrainingController {
   @UseInterceptors(FileInterceptor('file'))
   updateTraining(
     @Param('id', ParseUUIDPipe) id: string,
+    @UploadedFile() file: Express.Multer.File,
     @Body() dataTraining: UpdateTrainingDto,
   ): Promise<Training | null> {
-    return this.trainingService.updateTraining(id, dataTraining);
+    return this.trainingService.updateTraining(id, dataTraining, file);
   }
 
   @Delete(':id')
