@@ -17,6 +17,7 @@ import { TrainingRequests } from 'src/training-requests/entities/training-reques
 import { RequestStatus } from 'src/training-requests/enums/requests-status.enum';
 
 import { NotificationsGateway } from 'src/notifications/gateways/notifications.gateway';
+import { log } from 'console';
 
 @Injectable()
 export class MeetingsService {
@@ -47,7 +48,7 @@ export class MeetingsService {
       throw new NotFoundException('Solicitud no encontrada');
     }
 
-    const start = new Date(`${dto.date}T${dto.time}:00-05:00`);
+    const start = new Date(`${dto.date}T${dto.time}:00-03:00`);
 
     const now = new Date();
 
