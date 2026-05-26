@@ -73,7 +73,7 @@ phone?: string;
   @IsOptional()
   @IsString()
   @MinLength(2)
-  @MaxLength(50)
+  @MaxLength(120)
   country?: string;
 
   @ApiProperty({
@@ -82,7 +82,7 @@ phone?: string;
   @IsOptional()
   @IsString()
   @MinLength(2)
-  @MaxLength(50)
+  @MaxLength(120)
   companyName?: string;
 
   @ApiProperty({
@@ -92,7 +92,7 @@ phone?: string;
   @IsOptional()
   @IsString()
   @MinLength(2)
-  @MaxLength(50)
+  @MaxLength(120)
   city?: string;
 
   @ApiProperty({
@@ -102,7 +102,7 @@ phone?: string;
   @IsOptional()
   @IsString()
   @MinLength(2)
-  @MaxLength(50)
+  @MaxLength(120)
   address?: string;
 
   @Exclude()
