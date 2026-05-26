@@ -1,58 +1,21 @@
-import {
-  ExecutionContext,
-  Injectable,
-} from '@nestjs/common';
-
+import { ExecutionContext, Injectable } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 
 @Injectable()
-export class GoogleAuthGuard
-  extends AuthGuard('google') {
-
-  getAuthenticateOptions(
-    context: ExecutionContext,
-  ) {
-
-    const req =
-      context
-        .switchToHttp()
-        .getRequest();
-
-    const mode =
-      req.query.mode === 'signup'
-        ? 'signup'
-        : 'signin';
-
+export class GoogleAuthGuard extends AuthGuard('google') {
+  getAuthenticateOptions(context: ExecutionContext) {
+    const req = context.switchToHttp().getRequest();
+    const isSignup = req.path.includes('/signup');
     return {
       session: false,
-      state: mode,
+      state: isSignup ? 'signup' : 'signin',
     };
   }
 
-  handleRequest(
-    err: any,
-    user: any,
-    info: any,
-  ) {
-
-    // LOGIN OK
-
-    if (user) {
-
-      return user;
+  handleRequest(err: any, user: any) {
+    if (err) {
+      throw err;
     }
-
-    // IMPORTANTE:
-    // NO HACER REDIRECT ACÁ
-    // EL CONTROLLER MANEJA LOS REDIRECTS
-
-    console.log(
-      'GOOGLE AUTH ERROR:',
-      err?.response?.message ||
-      err?.message ||
-      info?.message,
-    );
-
-    return null;
+    return user;
   }
 }
