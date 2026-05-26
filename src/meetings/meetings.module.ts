@@ -28,6 +28,8 @@ import { ReminderService } from './services/reminder.service';
 
 import { CalendarService } from './services/calendar.service';
 
+import { NotificationsGateway } from 'src/notifications/gateways/notifications.gateway';
+
 @Module({
   imports: [
     TypeOrmModule.forFeature([Meetings, Users, TrainingRequests]),
@@ -37,9 +39,7 @@ import { CalendarService } from './services/calendar.service';
     TrainingRequestModule,
   ],
 
-  controllers: [
-    MeetingsController,
-  ],
+  controllers: [MeetingsController],
 
   providers: [
     MeetingsService,
@@ -48,10 +48,9 @@ import { CalendarService } from './services/calendar.service';
     ReminderService,
     CalendarService,
     MeetingRemindersService,
+    NotificationsGateway,
   ],
 
-  exports: [
-    MeetingsService,
-  ],
+  exports: [MeetingsService],
 })
 export class MeetingsModule {}
