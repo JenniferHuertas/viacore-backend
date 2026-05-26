@@ -35,6 +35,11 @@ const cookieConfig = {
   path: '/',
 };
 
+if (!isProduction) {
+  cookieConfig.sameSite = "lax";
+  cookieConfig.secure = false;
+}
+
 @UseInterceptors(ClassSerializerInterceptor)
 @ApiTags('Auth')
 @Controller('auth')
@@ -42,7 +47,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly forgotPasswordService: ForgotPasswordService,
-  ) {}
+  ) { }
 
   // =========================
   // GOOGLE START
@@ -50,11 +55,11 @@ export class AuthController {
 
   @Get('google/signin')
   @UseGuards(GoogleAuthGuard)
-  googleSignin() {}
+  googleSignin() { }
 
   @Get('google/signup')
   @UseGuards(GoogleAuthGuard)
-  googleSignup() {}
+  googleSignup() { }
 
   // =========================
   // GOOGLE CALLBACK (CLEAN)
