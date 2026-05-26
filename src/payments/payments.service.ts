@@ -131,9 +131,9 @@ export class PaymentsService {
         back_urls: {
           success: `${this.configService.get('FRONTEND_URL')}/pago/${payment.id}/confirmacion`,
 
-          failure: `${this.configService.get('FRONTEND_URL')}/payments/failure`,
+          failure: `${this.configService.get('FRONTEND_URL')}/pago/failure`,
 
-          pending: `${this.configService.get('FRONTEND_URL')}/payments/pending`,
+          pending: `${this.configService.get('FRONTEND_URL')}/pago/pending`,
         },
 
         notification_url: `${this.configService.get(
