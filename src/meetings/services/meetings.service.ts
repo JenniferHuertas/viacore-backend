@@ -18,6 +18,47 @@ import { RequestStatus } from 'src/training-requests/enums/requests-status.enum'
 
 import { NotificationsGateway } from 'src/notifications/gateways/notifications.gateway';
 
+// Convierte una fecha y hora local a UTC usando el timezone del servidor
+function localToUTC(date: string, time: string): Date {
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+  // Construimos un string ISO con el timezone del servidor
+  const localDateTimeString = `${date}T${time}:00`;
+
+  // Usamos Intl para interpretar esa fecha como si fuera del timezone del servidor
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: timezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  }).formatToParts(new Date(localDateTimeString));
+
+  const get = (type: string) =>
+    parts.find((p) => p.type === type)?.value ?? '00';
+
+  // Reconstruimos la fecha en UTC a partir de las partes locales
+  const utcDate = new Date(
+    Date.UTC(
+      parseInt(get('year')),
+      parseInt(get('month')) - 1,
+      parseInt(get('day')),
+      parseInt(get('hour')),
+      parseInt(get('minute')),
+      parseInt(get('second')),
+    ),
+  );
+
+  // Calculamos el offset real entre local y UTC
+  const localDate = new Date(localDateTimeString);
+  const offsetMs = localDate.getTime() - utcDate.getTime();
+
+  return new Date(localDate.getTime() - offsetMs);
+}
+
 @Injectable()
 export class MeetingsService {
   constructor(
@@ -47,9 +88,8 @@ export class MeetingsService {
       throw new NotFoundException('Solicitud no encontrada');
     }
 
-    const [startHours, startMinutes] = dto.time.split(':').map(Number);
-    const start = new Date(`${dto.date}T00:00:00Z`);
-    start.setUTCHours(startHours + 3, startMinutes, 0, 0);
+    // Usamos la función dinámica en vez del offset hardcodeado
+    const start = localToUTC(dto.date, dto.time);
 
     const now = new Date();
 
