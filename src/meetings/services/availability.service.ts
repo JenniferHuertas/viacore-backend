@@ -15,7 +15,7 @@ export class AvailabilityService {
   ) {}
 
   async getAvailability(date: string) {
-    const targetDate = new Date(`${date}T00:00:00-05:00`);
+    const targetDate = new Date(`${date}T00:00:00`);
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -43,9 +43,7 @@ export class AvailabilityService {
 
     const now = new Date();
 
-    const minAvailableTime = new Date(
-      now.getTime() + 30 * 60000,
-    );
+    const minAvailableTime = new Date(now.getTime() + 30 * 60000);
 
     return slots.filter((slot) => {
       if (slot.start <= minAvailableTime) {
@@ -54,8 +52,7 @@ export class AvailabilityService {
 
       const occupied = meetings.some(
         (meeting) =>
-          new Date(meeting.startTime).getTime() ===
-          slot.start.getTime(),
+          new Date(meeting.startTime).getTime() === slot.start.getTime(),
       );
 
       return !occupied;

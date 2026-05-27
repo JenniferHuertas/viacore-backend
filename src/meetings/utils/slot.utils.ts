@@ -8,40 +8,24 @@ import {
   START_HOUR,
 } from './meeting.constants';
 
-import {
-  addMinutesToDate,
-  formatHour,
-} from './date.utils';
+import { addMinutesToDate, formatHour } from './date.utils';
 
-export const generateDaySlots = (
-  date: Date,
-): MeetingSlot[] => {
+export const generateDaySlots = (date: Date): MeetingSlot[] => {
   const slots: MeetingSlot[] = [];
 
   const current = new Date(date);
 
-  current.setHours(
-    START_HOUR,
-    0,
-    0,
-    0,
-  );
+  current.setHours(START_HOUR, 0, 0, 0);
 
   while (true) {
     const start = new Date(current);
 
-    const end = addMinutesToDate(
-      start,
-      MEETING_DURATION,
-    );
+    const end = addMinutesToDate(start, MEETING_DURATION);
 
     if (
-      start.getHours() >
-        LAST_AVAILABLE_HOUR ||
-      (start.getHours() ===
-        LAST_AVAILABLE_HOUR &&
-        start.getMinutes() >
-          LAST_AVAILABLE_MINUTE)
+      start.getHours() > LAST_AVAILABLE_HOUR ||
+      (start.getHours() === LAST_AVAILABLE_HOUR &&
+        start.getMinutes() > LAST_AVAILABLE_MINUTE)
     ) {
       break;
     }
@@ -56,10 +40,7 @@ export const generateDaySlots = (
       formatted: formatHour(start),
     });
 
-    current.setMinutes(
-      current.getMinutes() +
-        MEETING_DURATION,
-    );
+    current.setMinutes(current.getMinutes() + MEETING_DURATION);
   }
 
   return slots;

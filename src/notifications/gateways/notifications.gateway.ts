@@ -11,7 +11,9 @@ import { Server, Socket } from 'socket.io';
 @WebSocketGateway({
   cors: {
     origin: '*',
+    credentials: true,
   },
+  transports: ['websocket', 'polling'],
 })
 export class NotificationsGateway
   implements OnGatewayConnection, OnGatewayDisconnect
