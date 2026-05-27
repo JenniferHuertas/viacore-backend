@@ -66,9 +66,8 @@ export class ChatController {
       sessionId: createChatDto.sessionId,
     };
     let userId: string | undefined = undefined;
-    const authHeader = req.headers.authorization;
-    if (authHeader && authHeader.startsWith(`Bearer `)) {
-      const token = authHeader.split(` `)[1];
+    const token = req.cookies?.userSession;
+    if (token) {
       try {
         const decoded =
           this.jwtService.decode(token) as { id: string };

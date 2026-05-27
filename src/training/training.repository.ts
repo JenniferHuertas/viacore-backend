@@ -129,16 +129,40 @@ export class TrainingRepository {
   async updateTraining(
     id: string,
     dataTraining: UpdateTrainingDto,
+    file?: Express.Multer.File,
   ): Promise<Training | null> {
     const training = await this.trainingOrmRepository.findOne({
       where: { id, isActive: true },
+      relations: { fileResource: true },
     });
     if (!training) {
       throw new NotFoundException(`Capacitación con id ${id} no encontrada`);
     }
 
     await this.trainingOrmRepository.update(id, dataTraining);
-    return this.trainingOrmRepository.findOne({ where: { id } });
+
+    if (file) {
+      if (training.fileResource) {
+        const newUrl =
+          await this.fileResourceService.uploadImageAndGetUrl(file);
+        await this.fileResourceOrmRepository.update(training.fileResource.id, {
+          fileUrl: newUrl,
+          title: `${dataTraining.title || training.title} - image`,
+        });
+      } else {
+        await this.fileResourceService.uploadForEntity(
+          file,
+          'training',
+          id,
+          `${dataTraining.title || training.title} - image`,
+        );
+      }
+    }
+
+    return this.trainingOrmRepository.findOne({
+      where: { id },
+      relations: { fileResource: true },
+    });
   }
 
   async deleteTraining(id: string): Promise<{ message: string }> {

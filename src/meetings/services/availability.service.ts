@@ -3,11 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Not } from 'typeorm';
 
 import { Meetings } from '../entities/meeting.entity';
-
 import { WORKING_DAYS } from '../utils/meeting.constants';
-
 import { generateDaySlots } from '../utils/slot.utils';
-
 import { MeetingStatus } from '../entities/meetingStatus.entity';
 
 @Injectable()
@@ -18,7 +15,17 @@ export class AvailabilityService {
   ) {}
 
   async getAvailability(date: string) {
-    const targetDate = new Date(date);
+    const targetDate = new Date(`${date}T00:00:00-05:00`);
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const selectedDate = new Date(targetDate);
+    selectedDate.setHours(0, 0, 0, 0);
+
+    if (selectedDate < today) {
+      return [];
+    }
 
     const day = targetDate.getDay();
 
