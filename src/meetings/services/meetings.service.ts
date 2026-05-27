@@ -18,6 +18,71 @@ import { RequestStatus } from 'src/training-requests/enums/requests-status.enum'
 
 import { NotificationsGateway } from 'src/notifications/gateways/notifications.gateway';
 
+// Convierte una fecha y hora local (en el timezone dado) a UTC
+function localToUTC(date: string, time: string, timezone: string): Date {
+  const localString = `${date}T${time}:00`;
+  const naiveDate = new Date(localString);
+
+  const tzFormatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: timezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  });
+
+  const parts = tzFormatter.formatToParts(naiveDate);
+  const get = (type: string) =>
+    parseInt(parts.find((p) => p.type === type)?.value ?? '0');
+
+  const utcEquivalent = Date.UTC(
+    get('year'),
+    get('month') - 1,
+    get('day'),
+    get('hour'),
+    get('minute'),
+    get('second'),
+  );
+
+  const offsetMs = naiveDate.getTime() - utcEquivalent;
+
+  return new Date(naiveDate.getTime() + offsetMs);
+}
+
+// Obtiene hora y minutos locales en el timezone dado
+function getLocalHour(
+  date: Date,
+  timezone: string,
+): { hour: number; minutes: number } {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: timezone,
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).formatToParts(date);
+
+  return {
+    hour: parseInt(parts.find((p) => p.type === 'hour')?.value ?? '0'),
+    minutes: parseInt(parts.find((p) => p.type === 'minute')?.value ?? '0'),
+  };
+}
+
+// Obtiene el día de la semana local en el timezone dado (0=domingo, 6=sábado)
+function getLocalDay(date: Date, timezone: string): number {
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: timezone,
+    weekday: 'short',
+  });
+  const weekday = formatter.format(date);
+  const days: Record<string, number> = {
+    Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6,
+  };
+  return days[weekday] ?? date.getDay();
+}
+
 @Injectable()
 export class MeetingsService {
   constructor(
@@ -36,10 +101,10 @@ export class MeetingsService {
   ) {}
 
   async create(dto: CreateMeetingDto) {
+    const timezone = dto.timezone ?? 'America/Bogota';
+
     const trainingRequest = await this.trainingRequestRepository.findOne({
-      where: {
-        id: dto.trainingRequestId,
-      },
+      where: { id: dto.trainingRequestId },
       relations: ['user', 'training'],
     });
 
@@ -47,10 +112,7 @@ export class MeetingsService {
       throw new NotFoundException('Solicitud no encontrada');
     }
 
-    const [startHours, startMinutes] = dto.time.split(':').map(Number);
-    const start = new Date(`${dto.date}T00:00:00Z`);
-    start.setUTCHours(startHours + 3, startMinutes, 0, 0);
-
+    const start = localToUTC(dto.date, dto.time, timezone);
     const now = new Date();
 
     const selectedDate = new Date(start);
@@ -66,9 +128,7 @@ export class MeetingsService {
     }
 
     const request = await this.trainingRequestRepository.findOne({
-      where: {
-        id: dto.trainingRequestId,
-      },
+      where: { id: dto.trainingRequestId },
       relations: ['user'],
     });
 
@@ -77,9 +137,7 @@ export class MeetingsService {
     }
 
     const user = await this.usersRepository.findOne({
-      where: {
-        id: request.user.id,
-      },
+      where: { id: request.user.id },
     });
 
     if (!user) {
@@ -94,7 +152,7 @@ export class MeetingsService {
       );
     }
 
-    const day = start.getDay();
+    const day = getLocalDay(start, timezone);
 
     if (day === 0 || day === 6) {
       throw new BadRequestException(
@@ -102,14 +160,13 @@ export class MeetingsService {
       );
     }
 
-    const hour = start.getHours();
-    const minutes = start.getMinutes();
+    const { hour, minutes } = getLocalHour(start, timezone);
 
     const invalidHour = hour < 9 || hour > 16 || (hour === 16 && minutes > 30);
 
     if (invalidHour) {
       throw new BadRequestException(
-        'La reunión está fuera del horario laboral',
+        'La reunión está fuera del horario laboral (9:00 - 16:30)',
       );
     }
 
@@ -142,29 +199,18 @@ export class MeetingsService {
     });
 
     const meeting = this.meetingRepository.create({
-      user: {
-        id: request.user.id,
-      },
-
-      trainingRequest: {
-        id: dto.trainingRequestId,
-      },
-
-      topic:
-        dto.topic || trainingRequest.training?.title || 'Reunión programada',
-
+      user: { id: request.user.id },
+      trainingRequest: { id: dto.trainingRequestId },
+      topic: dto.topic || trainingRequest.training?.title || 'Reunión programada',
       startTime: start,
       endTime: end,
-
       meetLink: googleData.meetLink,
       googleEventId: googleData.googleEventId,
-
       status: MeetingStatus.CONFIRMED,
       reminderSent: false,
     });
 
     request.status = RequestStatus.SCHEDULED;
-
     await this.trainingRequestRepository.save(request);
 
     this.notificationsGateway.emitNotificationToAdmin({
@@ -181,9 +227,7 @@ export class MeetingsService {
   async findAll() {
     return this.meetingRepository.find({
       relations: ['user', 'trainingRequest'],
-      order: {
-        startTime: 'ASC',
-      },
+      order: { startTime: 'ASC' },
     });
   }
 
@@ -223,6 +267,8 @@ export class MeetingsService {
   }
 
   async reschedule(id: string, dto: RescheduleMeetingDto) {
+    const timezone = dto.timezone ?? 'America/Bogota';
+
     const meeting = await this.meetingRepository.findOne({
       where: { id },
       relations: ['user', 'trainingRequest'],
@@ -232,8 +278,7 @@ export class MeetingsService {
       throw new NotFoundException('Reunión no encontrada');
     }
 
-    const newStart = new Date(dto.newStartTime);
-
+    const newStart = localToUTC(dto.date, dto.time, timezone);
     const now = new Date();
 
     const selectedDate = new Date(newStart);
@@ -256,7 +301,7 @@ export class MeetingsService {
       );
     }
 
-    const day = newStart.getDay();
+    const day = getLocalDay(newStart, timezone);
 
     if (day === 0 || day === 6) {
       throw new BadRequestException(
@@ -264,14 +309,13 @@ export class MeetingsService {
       );
     }
 
-    const hour = newStart.getHours();
-    const minutes = newStart.getMinutes();
+    const { hour, minutes } = getLocalHour(newStart, timezone);
 
     const invalidHour = hour < 9 || hour > 16 || (hour === 16 && minutes > 30);
 
     if (invalidHour) {
       throw new BadRequestException(
-        'La reunión está fuera del horario laboral',
+        'La reunión está fuera del horario laboral (9:00 - 16:30)',
       );
     }
 

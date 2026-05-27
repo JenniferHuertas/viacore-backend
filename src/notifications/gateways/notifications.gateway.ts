@@ -30,7 +30,7 @@ export class NotificationsGateway
   }
 
   emitNotificationToUser(userId: string, notification: unknown) {
-    console.log(`Enviando notificación a user-${userId}`);
+    console.log(`Enviando notificaciÃ³n a user-${userId}`);
 
     this.server.to(`user-${userId}`).emit('notification:new', notification);
   }
