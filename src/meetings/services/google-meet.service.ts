@@ -1,325 +1,128 @@
 import { Injectable } from '@nestjs/common';
-
 import { ConfigService } from '@nestjs/config';
-
 import { google } from 'googleapis';
 
 @Injectable()
 export class GoogleMeetService {
-
   private oauth2Client;
 
-  constructor(
-    private readonly configService:
-      ConfigService,
-  ) {
+  constructor(private readonly configService: ConfigService) {
+    this.oauth2Client = new google.auth.OAuth2(
+      this.configService.get<string>('GOOGLE_MEET_CLIENT_ID'),
 
-    console.log(
-      'GOOGLE_MEET_CLIENT_ID:',
-      this.configService.get<string>(
-        'GOOGLE_MEET_CLIENT_ID',
-      ),
+      this.configService.get<string>('GOOGLE_MEET_CLIENT_SECRET'),
+
+      'https://developers.google.com/oauthplayground',
     );
-
-    console.log(
-      'GOOGLE_MEET_CLIENT_SECRET:',
-      this.configService.get<string>(
-        'GOOGLE_MEET_CLIENT_SECRET',
-      )
-        ? 'CARGADO'
-        : 'NO CARGADO',
-    );
-
-    console.log(
-      'GOOGLE_MEET_REFRESH_TOKEN:',
-      this.configService.get<string>(
-        'GOOGLE_MEET_REFRESH_TOKEN',
-      ),
-    );
-
-    this.oauth2Client =
-      new google.auth.OAuth2(
-        this.configService.get<string>(
-          'GOOGLE_MEET_CLIENT_ID',
-        ),
-
-        this.configService.get<string>(
-          'GOOGLE_MEET_CLIENT_SECRET',
-        ),
-
-        'https://developers.google.com/oauthplayground',
-      );
 
     this.oauth2Client.setCredentials({
-      refresh_token:
-        this.configService.get<string>(
-          'GOOGLE_MEET_REFRESH_TOKEN',
-        ),
+      refresh_token: this.configService.get<string>(
+        'GOOGLE_MEET_REFRESH_TOKEN',
+      ),
     });
-
-    console.log(
-      'GOOGLE OAUTH CLIENT CONFIGURADO',
-    );
   }
 
-  async createEvent(
-    data: {
-      start: Date;
-      end: Date;
-      email: string;
-      name: string;
-    },
-  ) {
+  async createEvent(data: {
+    start: Date;
+    end: Date;
+    email: string;
+    name: string;
+  }) {
+    const calendar = google.calendar({
+      version: 'v3',
+      auth: this.oauth2Client,
+    });
 
-    console.log(
-      '==============================',
-    );
+    const response = await calendar.events.insert({
+      calendarId: 'primary',
+      conferenceDataVersion: 1,
+      sendUpdates: 'all',
 
-    console.log(
-      'INICIANDO CREACION GOOGLE MEET',
-    );
+      requestBody: {
+        summary: 'Reunión ViaCore',
 
-    console.log(
-      'DATA RECIBIDA:',
-      data,
-    );
+        description: 'Reunión agendada automáticamente desde ViaCore.',
 
-    const calendar =
-      google.calendar({
-        version: 'v3',
+        start: {
+          dateTime: data.start.toISOString(),
+          timeZone: 'America/Argentina/Buenos_Aires',
+        },
 
-        auth:
-          this.oauth2Client,
-      });
+        end: {
+          dateTime: data.end.toISOString(),
+          timeZone: 'America/Argentina/Buenos_Aires',
+        },
 
-    console.log(
-      'CLIENTE CALENDAR CREADO',
-    );
+        attendees: [
+          {
+            email: data.email,
+            displayName: data.name,
+          },
+        ],
 
-    try {
+        conferenceData: {
+          createRequest: {
+            requestId: `meet-${Date.now()}`,
 
-      console.log(
-        'ENVIANDO REQUEST A GOOGLE...',
-      );
-
-      const response =
-        await calendar.events.insert({
-          calendarId:
-            'primary',
-
-          conferenceDataVersion: 1,
-
-          sendUpdates: 'all',
-
-          requestBody: {
-            summary:
-              'Reunión ViaCore',
-
-            description:
-              'Reunión agendada automáticamente desde ViaCore.',
-
-            start: {
-              dateTime:
-                data.start.toISOString(),
-
-              timeZone:
-                'America/Argentina/Buenos_Aires',
-            },
-
-            end: {
-              dateTime:
-                data.end.toISOString(),
-
-              timeZone:
-                'America/Argentina/Buenos_Aires',
-            },
-
-            attendees: [
-              {
-                email:
-                  data.email,
-
-                displayName:
-                  data.name,
-              },
-            ],
-
-            conferenceData: {
-              createRequest: {
-                requestId:
-                  `meet-${Date.now()}`,
-
-                conferenceSolutionKey: {
-                  type:
-                    'hangoutsMeet',
-                },
-              },
+            conferenceSolutionKey: {
+              type: 'hangoutsMeet',
             },
           },
-        });
-
-      console.log(
-        'EVENTO GOOGLE CREADO EXITOSAMENTE',
-      );
-
-      console.log(
-        'RESPONSE:',
-        response.data,
-      );
-
-      const meetLink =
-        response.data
-          .conferenceData
-          ?.entryPoints
-          ?.find(
-            (entry) =>
-              entry.entryPointType ===
-              'video',
-          )?.uri || '';
-
-      console.log(
-        'MEET LINK:',
-        meetLink,
-      );
-
-      console.log(
-        'GOOGLE EVENT ID:',
-        response.data.id,
-      );
-
-      return {
-        meetLink,
-
-        googleEventId:
-          response.data.id || '',
-      };
-
-    } catch (error) {
-
-      console.log(
-        '==============================',
-      );
-
-      console.log(
-        'ERROR CREANDO GOOGLE MEET',
-      );
-
-      console.log(
-        'ERROR COMPLETO:',
-        error,
-      );
-
-      console.log(
-        'ERROR RESPONSE:',
-        error?.response?.data,
-      );
-
-      console.log(
-        'ERROR MESSAGE:',
-        error?.message,
-      );
-
-      console.log(
-        'ERROR STACK:',
-        error?.stack,
-      );
-
-      console.log(
-        '==============================',
-      );
-
-      throw error;
-    }
-  }
-
-  async deleteEvent(
-    eventId: string,
-  ) {
-
-    console.log(
-      'ELIMINANDO EVENTO:',
-      eventId,
-    );
-
-    const calendar =
-      google.calendar({
-        version: 'v3',
-
-        auth:
-          this.oauth2Client,
-      });
-
-    await calendar.events.delete({
-      calendarId:
-        'primary',
-
-      eventId,
-
-      sendUpdates:
-        'all',
+        },
+      },
     });
 
-    console.log(
-      'EVENTO ELIMINADO',
-    );
+    const meetLink =
+      response.data.conferenceData?.entryPoints?.find(
+        (entry) => entry.entryPointType === 'video',
+      )?.uri || '';
+
+    return {
+      meetLink,
+      googleEventId: response.data.id || '',
+    };
+  }
+
+  async deleteEvent(eventId: string) {
+    const calendar = google.calendar({
+      version: 'v3',
+      auth: this.oauth2Client,
+    });
+
+    await calendar.events.delete({
+      calendarId: 'primary',
+      eventId,
+      sendUpdates: 'all',
+    });
 
     return {
       deleted: true,
     };
   }
 
-  async updateEvent(
-    eventId: string,
-
-    start: Date,
-
-    end: Date,
-  ) {
-
-    console.log(
-      'ACTUALIZANDO EVENTO:',
-      eventId,
-    );
-
-    const calendar =
-      google.calendar({
-        version: 'v3',
-
-        auth:
-          this.oauth2Client,
-      });
+  async updateEvent(eventId: string, start: Date, end: Date) {
+    const calendar = google.calendar({
+      version: 'v3',
+      auth: this.oauth2Client,
+    });
 
     await calendar.events.patch({
-      calendarId:
-        'primary',
-
+      calendarId: 'primary',
       eventId,
-
-      sendUpdates:
-        'all',
+      sendUpdates: 'all',
 
       requestBody: {
         start: {
-          dateTime:
-            start.toISOString(),
-
-          timeZone:
-            'America/Argentina/Buenos_Aires',
+          dateTime: start.toISOString(),
+          timeZone: 'America/Argentina/Buenos_Aires',
         },
 
         end: {
-          dateTime:
-            end.toISOString(),
-
-          timeZone:
-            'America/Argentina/Buenos_Aires',
+          dateTime: end.toISOString(),
+          timeZone: 'America/Argentina/Buenos_Aires',
         },
       },
     });
-
-    console.log(
-      'EVENTO ACTUALIZADO',
-    );
 
     return {
       updated: true,
