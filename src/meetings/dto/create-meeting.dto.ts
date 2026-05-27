@@ -10,6 +10,10 @@ import {
 
 export class CreateMeetingDto {
 
+@IsString()
+@IsOptional()
+timezone?: string; // ej. "America/Bogota"
+
   @ApiProperty({
     description:
       'ID de la solicitud de entrenamiento asociada a la reunión',
