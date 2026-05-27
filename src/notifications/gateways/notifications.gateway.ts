@@ -53,3 +53,4 @@ export class NotificationsGateway
     client.join('admin');
     console.log(`Admin ${client.id} unido a sala admin`);
   }
+}
