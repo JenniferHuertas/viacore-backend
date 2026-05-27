@@ -11,7 +11,9 @@ import { Server, Socket } from 'socket.io';
 @WebSocketGateway({
   cors: {
     origin: '*',
+    credentials: true,
   },
+  transports: ['websocket', 'polling'],
 })
 export class NotificationsGateway
   implements OnGatewayConnection, OnGatewayDisconnect
@@ -28,7 +30,7 @@ export class NotificationsGateway
   }
 
   emitNotificationToUser(userId: string, notification: unknown) {
-    console.log(`Enviando notificación a user-${userId}`);
+    console.log(`Enviando notificaciÃ³n a user-${userId}`);
 
     this.server.to(`user-${userId}`).emit('notification:new', notification);
   }
@@ -51,4 +53,3 @@ export class NotificationsGateway
     client.join('admin');
     console.log(`Admin ${client.id} unido a sala admin`);
   }
-}
