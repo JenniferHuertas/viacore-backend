@@ -16,13 +16,11 @@ export class AvailabilityService {
   async getAvailability(date: string, timezone: string) {
     const targetDate = new Date(`${date}T00:00:00`);
 
-    // Fecha de hoy en el timezone del usuario
     const todayInTz = new Date(
       new Date().toLocaleString('en-CA', { timeZone: timezone }),
     );
     todayInTz.setHours(0, 0, 0, 0);
 
-    // Fecha seleccionada en el timezone del usuario
     const selectedInTz = new Date(
       new Date(`${date}T00:00:00`).toLocaleString('en-CA', { timeZone: timezone }),
     );
@@ -32,7 +30,6 @@ export class AvailabilityService {
       return [];
     }
 
-    // Día de la semana en el timezone del usuario
     const dayFormatter = new Intl.DateTimeFormat('en-CA', {
       timeZone: timezone,
       weekday: 'short',
@@ -46,37 +43,24 @@ export class AvailabilityService {
       return [];
     }
 
-    const slots = generateDaySlots(targetDate);
+    // Pasamos el timezone para generar slots en hora local
+    const slots = generateDaySlots(targetDate, timezone);
 
     const meetings = await this.meetingRepository.find({
-      where: {
-        status: Not(MeetingStatus.CANCELLED),
-      },
+      where: { status: Not(MeetingStatus.CANCELLED) },
     });
 
     const now = new Date();
     const minAvailableTime = new Date(now.getTime() + 30 * 60000);
 
-    return slots
-      .filter((slot) => {
-        if (slot.start <= minAvailableTime) {
-          return false;
-        }
-        const occupied = meetings.some(
-          (meeting) =>
-            new Date(meeting.startTime).getTime() === slot.start.getTime(),
-        );
-        return !occupied;
-      })
-      .map((slot) => ({
-        ...slot,
-        // Hora formateada en el timezone del usuario
-        formatted: new Intl.DateTimeFormat('en-CA', {
-          timeZone: timezone,
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false,
-        }).format(slot.start),
-      }));
+    return slots.filter((slot) => {
+      if (slot.start <= minAvailableTime) {
+        return false;
+      }
+      return !meetings.some(
+        (meeting) =>
+          new Date(meeting.startTime).getTime() === slot.start.getTime(),
+      );
+    });
   }
 }
