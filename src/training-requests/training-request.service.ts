@@ -22,6 +22,7 @@ import { EmailService } from 'src/notifications/channels/email/email.service';
 import { NotificationsService } from 'src/notifications/notifications.service';
 import { NotificationType } from 'src/notifications/enums/notification-type.enum';
 import { NotificationsGateway } from 'src/notifications/gateways/notifications.gateway';
+import { Training } from '../training/entities/training.entity';
 
 @Injectable()
 export class TrainingRequestService {
@@ -32,12 +33,24 @@ export class TrainingRequestService {
     private readonly emailService: EmailService,
     private readonly notificationsService: NotificationsService,
     private readonly notificationsGateway: NotificationsGateway,
+    @InjectRepository(Training)
+    private readonly trainingRepository: Repository<Training>,
   ) {}
 
   async create(
     data: ICreateTrainingRequest,
     userId: string,
   ): Promise<TrainingRequests> {
+    const training = await this.trainingRepository.findOne({
+      where: { id: data.trainingId, isActive: true },
+    });
+
+    if (!training) {
+      throw new BadRequestException(
+        'El servicio solicitado ya no está disponible.',
+      );
+    }
+
     const price = this.calculateEstimatedPrice(data.participantsCount);
 
     const newRequest = await this.repository.createRequests({
@@ -50,8 +63,15 @@ export class TrainingRequestService {
 
     if (user) {
       //await this.emailService.sendTrainingRequestCreated(
-        //////);
+      //////);
     }
+
+    this.notificationsGateway.emitNotificationToAdmin({
+      type: 'new_request',
+      title: 'Nueva solicitud',
+      message: 'Un usuario creó una nueva solicitud de capacitación.',
+      requestId: newRequest.id,
+    });
 
     return newRequest;
   }

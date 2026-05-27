@@ -13,6 +13,10 @@ import { FileResourceService } from 'src/file-resource/file-resource.service';
 import { FileResource } from 'src/file-resource/entities/file-resource.entity';
 import { TrainingCardResponseDto } from './dto/training-card-response.dto';
 import { TrainingDetailResponseDto } from './dto/training-detail-response.dto';
+import { TrainingRequests } from '../training-requests/entities/training-request.entity';
+import { Not } from 'typeorm';
+import { RequestStatus } from 'src/training-requests/enums/requests-status.enum';
+import { NotificationsGateway } from '../notifications/gateways/notifications.gateway';
 
 @Injectable()
 export class TrainingRepository {
@@ -22,6 +26,9 @@ export class TrainingRepository {
     private readonly trainingOrmRepository: Repository<Training>,
     @InjectRepository(FileResource)
     private readonly fileResourceOrmRepository: Repository<FileResource>,
+    @InjectRepository(TrainingRequests)
+    private readonly trainingRequestsOrmRepository: Repository<TrainingRequests>,
+    private readonly notificationsGateway: NotificationsGateway,
   ) {}
 
   async getAllTraining(): Promise<TrainingCardResponseDto[]> {
@@ -178,6 +185,34 @@ export class TrainingRepository {
       throw new BadRequestException(
         'La capacitación ya se encuentra desactivada',
       );
+    }
+
+    await this.trainingRequestsOrmRepository.update(
+      {
+        training: { id },
+        status: Not(RequestStatus.CANCELLED),
+      },
+      {
+        status: RequestStatus.CANCELLED,
+        cancellationReason: 'service_deleted',
+      },
+    );
+
+    const cancelledRequests = await this.trainingRequestsOrmRepository.find({
+      where: {
+        training: { id },
+        cancellationReason: 'service_deleted',
+      },
+      relations: { user: true },
+    });
+
+    for (const request of cancelledRequests) {
+      if (request.user?.id) {
+        this.notificationsGateway.emitNotificationToUser(request.user.id, {
+          type: 'request_cancelled',
+          requestId: request.id,
+        });
+      }
     }
 
     training.isActive = false;
