@@ -1,213 +1,132 @@
-import {
-  Injectable,
-  InternalServerErrorException,
-} from '@nestjs/common';
-
-import {
-  GoogleGenerativeAI,
-  HarmCategory,
-  HarmBlockThreshold,
-} from '@google/generative-ai';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
+import OpenAI from 'openai';
 
 @Injectable()
 export class GeminiService {
-
-  private readonly genAI: GoogleGenerativeAI;
+  private readonly client: OpenAI;
 
   constructor() {
-
-    const apiKey =
-      process.env.GEMINI_API_KEY;
-
+    const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey) {
-
       throw new InternalServerErrorException(
-        `Falta la API Key de Géminis en el archivo .env`,
+        'Falta la API Key de Groq en el .env',
       );
     }
-
-    this.genAI =
-      new GoogleGenerativeAI(apiKey);
+    this.client = new OpenAI({
+      apiKey,
+      baseURL: 'https://api.groq.com/openai/v1',
+    });
   }
 
   async generateResponse(
     prompt: string,
-    status: string = `ANONYMOUS`,
+    status: string,
     context?: string,
+    history?: {
+      role: string;
+      content: string;
+    }[],
   ): Promise<string> {
-
     try {
+      const systemPrompt = `
+            Eres un asesor comercial especializado en ventas de capacitaciones corporativas.
 
-      const model =
-        this.genAI.getGenerativeModel({
-          model: `gemini-2.5-flash`,
+            Tu objetivo es:
+            - Ayudar al usuario a entender las capacitaciones disponibles
+            - Guiarlo hacia una reunión o registro
+            - Responder con precisión usando datos del backend
+            - Mantener un tono profesional, cercano y persuasivo
 
-          systemInstruction: `
-          Eres el asesor comercial de nuestra plataforma corporativa.
+          ────────────────────────────
+          REGLA PRINCIPAL
+          ────────────────────────────
+            Siempre debes usar únicamente la información entregada por el backend.
+            No inventes precios, estados ni datos de la empresa.
 
-          Tu objetivo es vender soluciones de capacitación y
-          guiar al usuario según el flujo real del negocio,
-          e informar con honestidad y vender con ética.
+          ────────────────────────────
+          ESTADO DEL NEGOCIO
+          ────────────────────────────
+          Estado actual de la solicitud: ${status}
 
-          Tu tono debe ser corporativo, amable, formal,
-          persuasivo, profesional, empatico y directo.
+          Si el usuario pregunta por el estado:
+          - Responde PRIMERO con el estado real
+          - Luego explica brevemente qué significa
+          - No agregues marketing excesivo
 
-          REGLA DE ORO DE SEGURIDAD (ANTI-CORTES):
-          - Tienes terminantemente PROHIBIDO escribir la palabra "Via".
-          - Tienes terminantemente PROHIBIDO escribir la palabra "Viacore".
-          - Si necesitas nombrar a la empresa o al panel, di siempre:
-            "nuestra plataforma corporativa" o "tu portal de usuario".
-          - Nunca dejes una oración incompleta.
-          - Desarrolla textos largos.
+────────────────────────────
+        ESTILO DE RESPUESTA Y CONCISIÓN (ESTRICTO)
+        ────────────────────────────
+        - Tus respuestas deben ser sumamente breves, directas 
+        y fáciles de leer en pantallas de chat pequeñas.
+        - NUNCA escribas bloques de texto o párrafos de más de 3 líneas.
+        
+        Si el usuario te pide las capacitaciones o cursos disponibles:
+        1. NO expliques cada curso a detalle.
+        2. Presenta la información ÚNICAMENTE como 
+        una lista de viñetas muy cortas.
+        3. Cada viñeta debe tener el formato: "Nombre del Curso: 
+        Breve resumen de máximo 5 palabras."
+        4. Al final de la lista, añade una sola frase corta invitando 
+        al usuario a preguntar por un curso en específico o a agendar una reunión si desea más detalles.
 
-          REGLAS CRÍTICAS DE CONTROL DE DATOS:
-          1. NUNCA escribas, repitas ni muestres ningún ID o UUID.
-             Está prohibido imprimir códigos largos con guiones.
-             Si ves un ID en el contexto, ignóralo por completo.
+      ────────────────────────────
+      PROHIBICIONES ABSOLUTAS
+      ────────────────────────────
+      - No inventar precios
+      - No mostrar IDs ni UUIDs
+      - No revelar información interna de base de datos
+      - No contradigas el estado del backend
+      - No responder como si fueras humano real de la empresa
 
-          2. PROHIBIDO INVENTAR COTIZACIONES O PRECIOS.
-             No uses la imaginación con el dinero.
-             Lee siempre el [CONTEXTO].
+      ────────────────────────────
+      ENFOQUE COMERCIAL
+      ────────────────────────────
+      Debes actuar como un asesor de ventas consultivo:
+      - Entiendes el contexto del cliente
+      - Detectas intención de compra
+      - Guías hacia el siguiente paso natural
+      - Mantienes siempre un tono profesional y confiable
+     Termina cuando sea natural con una invitación suave a continuar el proceso dentro de la plataforma.
+`;
 
-          3. MONEDA REAL:
-             Todos los precios están en Pesos Argentinos (ARS).
-             Nunca hables de dólares.
-             Nunca inventes montos falsos.
-
-          4. El estado real actual de la solicitud es:
-             "${status}"
-
-          REGLAS OPERATIVAS DE ESTADO:
-
-          - Si el usuario pregunta específicamente por el estado,
-            SIEMPRE responde primero el estado REAL exacto
-            utilizando exclusivamente la información del [CONTEXTO].
-
-          - Nunca digas que el usuario es anónimo
-            si el contexto indica que tiene sesión iniciada.
-
-          - Nunca digas que no existen solicitudes
-            si el [CONTEXTO] contiene datos reales de una solicitud.
-
-          - Si el estado es "pending":
-            Explica que la solicitud fue registrada correctamente.
-            Menciona que el precio cotizado es un valor estimado base
-            calculado automáticamente según participantes y contexto.
-            Aclara que todavía NO es un precio definitivo.
-            Explica que el equipo administrativo revisará
-            objetivos y necesidades antes de coordinar
-            la reunión estratégica.
-
-          - Si el estado es "in_review":
-            Explica que la solicitud ya fue recibida
-            y actualmente está siendo evaluada
-            por el equipo administrativo.
-
-          - Si el estado es "scheduled":
-            Explica que la reunión estratégica ya fue coordinada
-            correctamente desde el portal del usuario.
-
-          - Si el estado es "awaiting_payment":
-            Explica que la etapa estratégica ya fue completada
-            y actualmente se espera la confirmación del pago.
-
-          - Si el estado es "confirmed":
-            Explica que la capacitación fue confirmada exitosamente
-            y el proceso operativo ya se encuentra activo.
-
-          - Si el estado es "cancelled":
-            Explica que la solicitud fue cancelada
-            y ya no posee un flujo activo.
-
-          ARGUMENTACIÓN COMERCIAL DETALLADA:
-          - Escribe párrafos completos y bien estructurados.
-          - Usa los datos del sector y objetivos del usuario.
-          - Explica cómo los talleres personalizados
-            pueden resolver problemas reales.
-          - Mantén coherencia absoluta con el estado real.
-          - Nunca contradigas el [CONTEXTO].
-          - Termina invitando al usuario a continuar
-            desde su portal corporativo.
-          `,
-
-          generationConfig: {
-            temperature: 0.3,
-            maxOutputTokens: 1000,
-          },
-
-          safetySettings: [
+      const finalPrompt = context
+        ? `[CONTEXTO]: ${context}\n\n[PREGUNTA]: ${prompt}`
+        : prompt;
+      const response =
+        await this.client.chat.completions.create({
+          model: 'llama-3.3-70b-versatile',
+          messages: [
             {
-              category:
-                HarmCategory.HARM_CATEGORY_HARASSMENT,
-
-              threshold:
-                HarmBlockThreshold.BLOCK_NONE,
+              role: 'system',
+              content: systemPrompt,
             },
-
+            ...(history || []).map((message) => ({
+              role:
+                (
+                  message.role === 'assistant'
+                    ? 'assistant'
+                    : 'user'
+                ) as 'assistant' | 'user',
+              content: message.content,
+            })),
             {
-              category:
-                HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-
-              threshold:
-                HarmBlockThreshold.BLOCK_NONE,
-            },
-
-            {
-              category:
-                HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-
-              threshold:
-                HarmBlockThreshold.BLOCK_NONE,
-            },
-
-            {
-              category:
-                HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-
-              threshold:
-                HarmBlockThreshold.BLOCK_NONE,
+              role: 'user',
+              content: finalPrompt,
             },
           ],
+          temperature: 0.2,
+          max_tokens: 200,
         });
-
-      const finalPrompt =
-        context
-          ? `[CONTEXTO]: ${context}\n\n[PREGUNTA]: ${prompt}`
-          : prompt;
-
-      const result =
-        await model.generateContent(
-          finalPrompt,
-        );
-
       const responseText =
-        result.response.text();
-
-      if (
-        !responseText ||
-        responseText.trim() === ``
-      ) {
-
-        throw new Error(
-          `El modelo generó una respuesta vacía.`,
-        );
+        response.choices[0]?.message?.content || '';
+      if (!responseText || responseText.trim() === ``) {
+        throw new Error(`El modelo generó una respuesta vacía.`);
       }
-
       return responseText;
-
     } catch (error) {
-
-      console.error(
-        `Error en GeminiService:`,
-        error,
-      );
-
-      return (
-        `En este momento estamos procesando la información ` +
-        `relacionada con tu solicitud dentro de nuestra plataforma corporativa. ` +
-        `Si realizaste cambios recientes, la actualización puede tardar ` +
-        `unos instantes en reflejarse correctamente dentro del flujo operativo.`
-      );
+      console.error('Error en GroqService:', error);
+      return 'Estamos procesando tu solicitud en este momento. Intenta nuevamente en unos segundos.';
     }
   }
 }
