@@ -116,8 +116,8 @@ export class FileResourceService {
 
       fileType: uploadResult.resource_type,
 
-      training,
-      trainingRequest,
+      //      training,
+      //      trainingRequest,
     });
 
     return this.fileRepository.save(fileResource);
