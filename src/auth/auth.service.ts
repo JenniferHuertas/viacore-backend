@@ -263,6 +263,23 @@ export class AuthService {
         await this.usersRepository.save(
           user,
         );
+
+      // Enviar email de bienvenida al nuevo usuario de Google
+      try {
+        await this.emailService.sendWelcomeEmail(
+          user.email,
+          user.name,
+        );
+
+        console.log(
+          'WELCOME EMAIL ENVIADO (Google)',
+        );
+      } catch (error) {
+        console.error(
+          'ERROR MAIL (Google):',
+          error,
+        );
+      }
     }
 
     if (!user) {
