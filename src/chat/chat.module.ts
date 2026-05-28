@@ -13,6 +13,7 @@ import { Training } from 'src/training/entities/training.entity';
   imports: [
     TypeOrmModule.forFeature([ChatMessage, TrainingRequests, Training]), 
     JwtModule.register({}),
+    AuthModule,
   ],
   controllers: [ChatController],
   providers: [
