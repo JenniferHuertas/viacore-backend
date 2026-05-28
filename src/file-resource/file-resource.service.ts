@@ -14,7 +14,7 @@ import { UploadFileDto } from './dto/upload-file.dto';
 
 import { v2 as cloudinary } from 'cloudinary';
 
-import { TrainingRequest } from 'src/training-requests/entities/training-request.entity';
+import { TrainingRequests } from 'src/training-requests/entities/training-request.entity';
 
 @Injectable()
 export class FileResourceService {
@@ -22,8 +22,8 @@ export class FileResourceService {
     @InjectRepository(FileResource)
     private readonly fileRepository: Repository<FileResource>,
 
-    @InjectRepository(TrainingRequest)
-    private readonly trainingRequestRepository: Repository<TrainingRequest>,
+    @InjectRepository(TrainingRequests)
+    private readonly trainingRequestRepository: Repository<TrainingRequests>,
   ) {}
 
   // SUBIDA CLOUDINARY
@@ -107,7 +107,7 @@ export class FileResourceService {
 
       fileType: uploadResult.resource_type,
 
-      trainingRequestId: dto.trainingRequestId,
+      trainingRequest,
     });
 
     return await this.fileRepository.save(fileResource);
@@ -165,7 +165,9 @@ export class FileResourceService {
 
     // ASOCIACIÓN DINÁMICA
     if (parentType === 'trainingRequest') {
-      fileResource.trainingRequestId = parentId;
+      fileResource.trainingRequest = {
+        id: parentId,
+      } as TrainingRequests;
     }
 
     const saved = await this.fileRepository.save(fileResource);
@@ -182,7 +184,7 @@ export class FileResourceService {
     return { ...saved, emailUrl };
   }
 
-  // Seeder
+  // función para seeder
   async createFromUrl(params: {
     url: string;
 
@@ -201,7 +203,9 @@ export class FileResourceService {
     });
 
     if (params.parentType === 'trainingRequest') {
-      fileResource.trainingRequestId = params.parentId;
+      fileResource.trainingRequest = {
+        id: params.parentId,
+      } as TrainingRequests;
     }
 
     return this.fileRepository.save(fileResource);
