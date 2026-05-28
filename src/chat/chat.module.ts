@@ -8,6 +8,7 @@ import { GeminiService } from './gemini.service';
 import { ChatMessage } from './entities/chat.entity';
 import { TrainingRequests } from '../training-requests/entities/training-request.entity'; 
 import { Training } from 'src/training/entities/training.entity';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
