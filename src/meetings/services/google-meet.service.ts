@@ -6,26 +6,19 @@ import { google } from 'googleapis';
 export class GoogleMeetService {
   private oauth2Client;
 
-  constructor(
-    private readonly configService: ConfigService,
-  ) {
+  constructor(private readonly configService: ConfigService) {
     this.oauth2Client = new google.auth.OAuth2(
-      this.configService.get<string>(
-        'GOOGLE_MEET_CLIENT_ID',
-      ),
+      this.configService.get<string>('GOOGLE_MEET_CLIENT_ID'),
 
-      this.configService.get<string>(
-        'GOOGLE_MEET_CLIENT_SECRET',
-      ),
+      this.configService.get<string>('GOOGLE_MEET_CLIENT_SECRET'),
 
-      'http://localhost',
+      'https://developers.google.com/oauthplayground',
     );
 
     this.oauth2Client.setCredentials({
-      refresh_token:
-        this.configService.get<string>(
-          'GOOGLE_MEET_REFRESH_TOKEN',
-        ),
+      refresh_token: this.configService.get<string>(
+        'GOOGLE_MEET_REFRESH_TOKEN',
+      ),
     });
   }
 
@@ -40,74 +33,57 @@ export class GoogleMeetService {
       auth: this.oauth2Client,
     });
 
-    const response =
-      await calendar.events.insert({
-        calendarId: 'primary',
+    const response = await calendar.events.insert({
+      calendarId: 'primary',
+      conferenceDataVersion: 1,
+      sendUpdates: 'all',
 
-        conferenceDataVersion: 1,
+      requestBody: {
+        summary: 'Reunión ViaCore',
 
-        sendUpdates: 'all',
+        description: 'Reunión agendada automáticamente desde ViaCore.',
 
-        requestBody: {
-          summary: 'Scheduled Meeting',
+        start: {
+          dateTime: data.start.toISOString(),
+          timeZone: 'America/Argentina/Buenos_Aires',
+        },
 
-          description:
-            'Meeting created automatically from the platform.',
+        end: {
+          dateTime: data.end.toISOString(),
+          timeZone: 'America/Argentina/Buenos_Aires',
+        },
 
-          start: {
-            dateTime:
-              data.start.toISOString(),
-
-            timeZone:
-              'America/Bogota',
+        attendees: [
+          {
+            email: data.email,
+            displayName: data.name,
           },
+        ],
 
-          end: {
-            dateTime:
-              data.end.toISOString(),
+        conferenceData: {
+          createRequest: {
+            requestId: `meet-${Date.now()}`,
 
-            timeZone:
-              'America/Bogota',
-          },
-
-          attendees: [
-            {
-              email: data.email,
-              displayName: data.name,
-            },
-          ],
-
-          conferenceData: {
-            createRequest: {
-              requestId: `meet-${Date.now()}`,
-
-              conferenceSolutionKey: {
-                type:
-                  'hangoutsMeet',
-              },
+            conferenceSolutionKey: {
+              type: 'hangoutsMeet',
             },
           },
         },
-      });
+      },
+    });
 
     const meetLink =
       response.data.conferenceData?.entryPoints?.find(
-        (entry) =>
-          entry.entryPointType ===
-          'video',
+        (entry) => entry.entryPointType === 'video',
       )?.uri || '';
 
     return {
       meetLink,
-
-      googleEventId:
-        response.data.id || '',
+      googleEventId: response.data.id || '',
     };
   }
 
-  async deleteEvent(
-    eventId: string,
-  ) {
+  async deleteEvent(eventId: string) {
     const calendar = google.calendar({
       version: 'v3',
       auth: this.oauth2Client,
@@ -124,11 +100,7 @@ export class GoogleMeetService {
     };
   }
 
-  async updateEvent(
-    eventId: string,
-    start: Date,
-    end: Date,
-  ) {
+  async updateEvent(eventId: string, start: Date, end: Date) {
     const calendar = google.calendar({
       version: 'v3',
       auth: this.oauth2Client,
@@ -136,26 +108,18 @@ export class GoogleMeetService {
 
     await calendar.events.patch({
       calendarId: 'primary',
-
       eventId,
-
       sendUpdates: 'all',
 
       requestBody: {
         start: {
-          dateTime:
-            start.toISOString(),
-
-          timeZone:
-            'America/Bogota',
+          dateTime: start.toISOString(),
+          timeZone: 'America/Argentina/Buenos_Aires',
         },
 
         end: {
-          dateTime:
-            end.toISOString(),
-
-          timeZone:
-            'America/Bogota',
+          dateTime: end.toISOString(),
+          timeZone: 'America/Argentina/Buenos_Aires',
         },
       },
     });

@@ -3,26 +3,68 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-
 import { InjectRepository } from '@nestjs/typeorm';
-
-import {
-  Not,
-  Repository,
-} from 'typeorm';
+import { Not, Repository } from 'typeorm';
 
 import { Meetings } from '../entities/meeting.entity';
-
 import { CreateMeetingDto } from '../dto/create-meeting.dto';
-
 import { RescheduleMeetingDto } from '../dto/reschedule-meeting.dto';
-
 import { GoogleMeetService } from './google-meet.service';
-
 import { MeetingStatus } from '../entities/meetingStatus.entity';
+
 import { Users } from 'src/users/entities/user.entity';
 import { TrainingRequests } from 'src/training-requests/entities/training-request.entity';
 import { RequestStatus } from 'src/training-requests/enums/requests-status.enum';
+
+import { NotificationsGateway } from 'src/notifications/gateways/notifications.gateway';
+
+// Convierte una fecha y hora local (en el timezone dado) a UTC
+function localToUTC(date: string, time: string, timezone: string): Date {
+  const localString = `${date}T${time}:00`;
+  const localDate = new Date(localString);
+  const tzDate = new Date(
+    new Date(localString).toLocaleString('en-US', { timeZone: timezone }),
+  );
+  const offsetMs = localDate.getTime() - tzDate.getTime();
+  return new Date(localDate.getTime() + offsetMs);
+}
+
+// Obtiene hora y minutos locales en el timezone dado
+function getLocalHour(
+  date: Date,
+  timezone: string,
+): { hour: number; minutes: number } {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: timezone,
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).formatToParts(date);
+
+  return {
+    hour: parseInt(parts.find((p) => p.type === 'hour')?.value ?? '0'),
+    minutes: parseInt(parts.find((p) => p.type === 'minute')?.value ?? '0'),
+  };
+}
+
+// Obtiene el día de la semana local en el timezone dado (0=domingo, 6=sábado)
+function getLocalDay(date: Date, timezone: string): number {
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: timezone,
+    weekday: 'short',
+  });
+  const weekday = formatter.format(date);
+  const days: Record<string, number> = {
+    Sun: 0,
+    Mon: 1,
+    Tue: 2,
+    Wed: 3,
+    Thu: 4,
+    Fri: 5,
+    Sat: 6,
+  };
+  return days[weekday] ?? date.getDay();
+}
 
 @Injectable()
 export class MeetingsService {
@@ -38,369 +80,270 @@ export class MeetingsService {
     @InjectRepository(Users)
     private readonly usersRepository: Repository<Users>,
 
-    @InjectRepository(TrainingRequests)
-    private readonly trainingRequestsRepository: Repository<TrainingRequests>
+    private readonly notificationsGateway: NotificationsGateway,
   ) {}
 
   async create(dto: CreateMeetingDto) {
-    const trainingRequest =
-      await this.trainingRequestRepository.findOne({
-        where: {
-          id: dto.trainingRequestId,
-        },
+    const timezone = dto.timezone ?? 'America/Bogota';
 
-        relations: [
-          'user',
-          'training',
-        ],
-      });
+    const trainingRequest = await this.trainingRequestRepository.findOne({
+      where: { id: dto.trainingRequestId },
+      relations: ['user', 'training'],
+    });
 
     if (!trainingRequest) {
-      throw new NotFoundException(
-        'Training request not found',
-      );
+      throw new NotFoundException('Solicitud no encontrada');
     }
 
-    const start = new Date(
-      `${dto.date}T${dto.time}:00`,
-    );
-
+    const start = localToUTC(dto.date, dto.time, timezone);
     const now = new Date();
 
-    const request =
-      await this.trainingRequestsRepository.findOne(
-        { where: {id: dto.trainingRequestId}, relations: ['user'] },
+    const selectedDate = new Date(start);
+    selectedDate.setHours(0, 0, 0, 0);
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (selectedDate < today) {
+      throw new BadRequestException(
+        'No puedes agendar reuniones en fechas pasadas',
       );
+    }
+
+    const request = await this.trainingRequestRepository.findOne({
+      where: { id: dto.trainingRequestId },
+      relations: ['user'],
+    });
+
     if (!request) {
-      throw new NotFoundException(
-        'Solicitud no encontrada',
-      );
+      throw new NotFoundException('Solicitud no encontrada');
     }
 
-    const user =
-      await this.usersRepository.findOne(
-        { where: {id: request.user.id} },
-      );
+    const user = await this.usersRepository.findOne({
+      where: { id: request.user.id },
+    });
+
     if (!user) {
-      throw new NotFoundException(
-        'Usuario no encontrado',
-      );
+      throw new NotFoundException('Usuario no encontrado');
     }
 
-    const minAllowedDate = new Date(
-      now.getTime() + 30 * 60000,
-    );
+    const minAllowedDate = new Date(now.getTime() + 30 * 60000);
 
     if (start <= minAllowedDate) {
       throw new BadRequestException(
-        'Meetings must be scheduled at least 30 minutes in advance',
+        'La reunión debe agendarse con al menos 30 minutos de anticipación',
       );
     }
 
-    const day = start.getDay();
+    const day = getLocalDay(start, timezone);
 
     if (day === 0 || day === 6) {
       throw new BadRequestException(
-        'Weekends are not allowed',
+        'No se permiten reuniones los fines de semana',
       );
     }
 
-    const hour = start.getHours();
+    const { hour, minutes } = getLocalHour(start, timezone);
 
-    const minutes =
-      start.getMinutes();
-
-    const invalidHour =
-      hour < 9 ||
-      hour > 16 ||
-      (hour === 16 && minutes > 30);
+    const invalidHour = hour < 9 || hour > 16 || (hour === 16 && minutes > 30);
 
     if (invalidHour) {
       throw new BadRequestException(
-        'Outside business hours',
+        'La reunión está fuera del horario laboral (9:00 - 16:30)',
       );
     }
 
-    const validMinutes =
-      minutes === 0 ||
-      minutes === 30;
+    const validMinutes = minutes === 0 || minutes === 30;
 
     if (!validMinutes) {
       throw new BadRequestException(
-        'Only 30 minute intervals are allowed',
+        'Solo se permiten intervalos de 30 minutos',
       );
     }
 
-    const exists =
-      await this.meetingRepository.findOne({
-        where: {
-          startTime: start,
-          status: Not(MeetingStatus.CANCELLED),
-        },
-      });
+    const exists = await this.meetingRepository.findOne({
+      where: {
+        startTime: start,
+        status: Not(MeetingStatus.CANCELLED),
+      },
+    });
 
     if (exists) {
-      throw new BadRequestException(
-        'Slot already occupied',
-      );
+      throw new BadRequestException('Este horario ya está ocupado');
     }
 
-    const end = new Date(
-      start.getTime() + 30 * 60000,
-    );
+    const end = new Date(start.getTime() + 30 * 60000);
 
-    const googleData =
-      await this.googleMeetService.createEvent(
-        {
-          start,
-          end,
+    const googleData = await this.googleMeetService.createEvent({
+      start,
+      end,
+      email: trainingRequest.user.email,
+      name: trainingRequest.user.name,
+    });
 
-          email:
-            trainingRequest.user.email,
+    const meeting = this.meetingRepository.create({
+      user: { id: request.user.id },
+      trainingRequest: { id: dto.trainingRequestId },
+      topic:
+        dto.topic || trainingRequest.training?.title || 'Reunión programada',
+      startTime: start,
+      endTime: end,
+      meetLink: googleData.meetLink,
+      googleEventId: googleData.googleEventId,
+      status: MeetingStatus.CONFIRMED,
+      reminderSent: false,
+    });
 
-          name:
-            trainingRequest.user.name,
-        },
-      );
+    request.status = RequestStatus.SCHEDULED;
+    await this.trainingRequestRepository.save(request);
 
-    const meeting =
-      this.meetingRepository.create({
-        user: {id: request.user.id},
+    this.notificationsGateway.emitNotificationToAdmin({
+      type: 'request_scheduled',
+      title: 'Nueva actualización de solicitud',
+      message: `La solicitud cambió a "scheduled"`,
+      status: RequestStatus.SCHEDULED,
+      requestId: dto.trainingRequestId,
+    });
 
-        trainingRequest: {id: dto.trainingRequestId},
-
-        topic:
-          dto.topic ||
-          trainingRequest.training
-            ?.title ||
-          'Scheduled Meeting',
-
-        startTime: start,
-
-        endTime: end,
-
-        meetLink:
-          googleData.meetLink,
-
-        googleEventId:
-          googleData.googleEventId,
-
-        status: MeetingStatus.CONFIRMED,
-
-        reminderSent: false,
-      });
-
-      request.status =
-      RequestStatus.SCHEDULED;
-
-    await this.trainingRequestsRepository.save( request );
-
-    return await this.meetingRepository.save(
-      meeting,
-    );
+    return await this.meetingRepository.save(meeting);
   }
 
   async findAll() {
     return this.meetingRepository.find({
-      relations: [
-        'user',
-        'trainingRequest',
-      ],
-
-      order: {
-        startTime: 'ASC',
-      },
+      relations: ['user', 'trainingRequest'],
+      order: { startTime: 'ASC' },
     });
   }
 
   async findOne(id: string) {
-    const meeting =
-      await this.meetingRepository.findOne({
-        where: { id },
-
-        relations: [
-          'user',
-          'trainingRequest',
-        ],
-      });
+    const meeting = await this.meetingRepository.findOne({
+      where: {
+        id,
+        status: Not(MeetingStatus.CANCELLED),
+      },
+      relations: ['user', 'trainingRequest'],
+    });
 
     if (!meeting) {
-      throw new NotFoundException(
-        'Meeting not found',
-      );
+      throw new NotFoundException('Reunión no encontrada');
     }
 
     return meeting;
   }
 
   async cancel(id: string) {
-    const meeting =
-      await this.meetingRepository.findOne({
-        where: { id },
-
-        relations: [
-          'user',
-          'trainingRequest',
-        ],
-      });
+    const meeting = await this.meetingRepository.findOne({
+      where: { id },
+      relations: ['user', 'trainingRequest'],
+    });
 
     if (!meeting) {
-      throw new NotFoundException(
-        'Meeting not found',
-      );
+      throw new NotFoundException('Reunión no encontrada');
     }
 
-    if (
-      meeting.googleEventId
-    ) {
-      await this.googleMeetService.deleteEvent(
-        meeting.googleEventId,
-      );
+    if (meeting.googleEventId) {
+      await this.googleMeetService.deleteEvent(meeting.googleEventId);
     }
 
     meeting.status = MeetingStatus.CANCELLED;
 
-    return await this.meetingRepository.save(
-      meeting,
-    );
+    if (meeting.trainingRequest?.id && meeting.user?.id) {
+      this.notificationsGateway.emitNotificationToUser(meeting.user.id, {
+        type: 'meeting_cancelled',
+        requestId: meeting.trainingRequest.id,
+      });
+    }
+
+    return await this.meetingRepository.save(meeting);
   }
 
-  async reschedule(
-    id: string,
-    dto: RescheduleMeetingDto,
-  ) {
-    const meeting =
-      await this.meetingRepository.findOne({
-        where: { id },
+  async reschedule(id: string, dto: RescheduleMeetingDto) {
+    const timezone = dto.timezone ?? 'America/Bogota';
 
-        relations: [
-          'user',
-          'trainingRequest',
-        ],
-      });
+    const meeting = await this.meetingRepository.findOne({
+      where: { id },
+      relations: ['user', 'trainingRequest'],
+    });
 
     if (!meeting) {
-      throw new NotFoundException(
-        'Meeting not found',
-      );
+      throw new NotFoundException('Reunión no encontrada');
     }
 
-    const newStart = new Date(
-      dto.newStartTime,
-    );
-
+    const newStart = localToUTC(dto.date, dto.time, timezone);
     const now = new Date();
 
-    const minAllowedDate = new Date(
-      now.getTime() + 30 * 60000,
-    );
+    const selectedDate = new Date(newStart);
+    selectedDate.setHours(0, 0, 0, 0);
 
-    if (
-      newStart <= minAllowedDate
-    ) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (selectedDate < today) {
       throw new BadRequestException(
-        'Meetings must be rescheduled at least 30 minutes in advance',
+        'No puedes reagendar reuniones en fechas pasadas',
       );
     }
 
-    const day =
-      newStart.getDay();
+    const minAllowedDate = new Date(now.getTime() + 30 * 60000);
+
+    if (newStart <= minAllowedDate) {
+      throw new BadRequestException(
+        'La reunión debe reagendarse con al menos 30 minutos de anticipación',
+      );
+    }
+
+    const day = getLocalDay(newStart, timezone);
 
     if (day === 0 || day === 6) {
       throw new BadRequestException(
-        'Weekends are not allowed',
+        'No se permiten reuniones los fines de semana',
       );
     }
 
-    const hour =
-      newStart.getHours();
+    const { hour, minutes } = getLocalHour(newStart, timezone);
 
-    const minutes =
-      newStart.getMinutes();
-
-    const invalidHour =
-      hour < 9 ||
-      hour > 16 ||
-      (hour === 16 &&
-        minutes > 30);
+    const invalidHour = hour < 9 || hour > 16 || (hour === 16 && minutes > 30);
 
     if (invalidHour) {
       throw new BadRequestException(
-        'Outside business hours',
+        'La reunión está fuera del horario laboral (9:00 - 16:30)',
       );
     }
 
-    const validMinutes =
-      minutes === 0 ||
-      minutes === 30;
+    const validMinutes = minutes === 0 || minutes === 30;
 
     if (!validMinutes) {
       throw new BadRequestException(
-        'Only 30 minute intervals are allowed',
+        'Solo se permiten intervalos de 30 minutos',
       );
     }
 
-    const occupied =
-      await this.meetingRepository.findOne({
-        where: {
-          startTime: newStart,
-
-          status:
-            Not(MeetingStatus.CANCELLED),
-          id: Not(id),
-        },
-      });
+    const occupied = await this.meetingRepository.findOne({
+      where: {
+        startTime: newStart,
+        status: Not(MeetingStatus.CANCELLED),
+        id: Not(id),
+      },
+    });
 
     if (occupied) {
-      throw new BadRequestException(
-        'Slot already occupied',
-      );
+      throw new BadRequestException('Este horario ya está ocupado');
     }
 
-    const newEnd = new Date(
-      newStart.getTime() +
-        30 * 60000,
-    );
+    const newEnd = new Date(newStart.getTime() + 30 * 60000);
 
-    if (
-      meeting.googleEventId
-    ) {
-      await this.googleMeetService.deleteEvent(
+    if (meeting.googleEventId) {
+      await this.googleMeetService.updateEvent(
         meeting.googleEventId,
+        newStart,
+        newEnd,
       );
     }
 
-    const googleData =
-      await this.googleMeetService.createEvent(
-        {
-          start: newStart,
-          end: newEnd,
+    meeting.startTime = newStart;
+    meeting.endTime = newEnd;
+    meeting.status = MeetingStatus.CONFIRMED;
 
-          email:
-            meeting.user.email,
-
-          name:
-            meeting.user.name,
-        },
-      );
-
-    meeting.startTime =
-      newStart;
-
-    meeting.endTime =
-      newEnd;
-
-    meeting.meetLink =
-      googleData.meetLink;
-
-    meeting.googleEventId =
-      googleData.googleEventId;
-
-    meeting.status =
-      MeetingStatus.CONFIRMED;
-
-    return await this.meetingRepository.save(
-      meeting,
-    );
+    return await this.meetingRepository.save(meeting);
   }
 }

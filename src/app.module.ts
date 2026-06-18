@@ -111,11 +111,22 @@ export class AppModule implements NestModule, OnApplicationBootstrap {
       .forRoutes('*');
   }
 
-  async onApplicationBootstrap() {
+async onApplicationBootstrap() {
+
+  try {
+
     await this.trainingService.addTraining();
 
     console.log('Capacitaciones cargadas');
 
-    //this.calendlyService.createWebhookSubscription('https://shy-shopping-trunks.ngrok-free.dev') //aca va el link del deploy
+  } catch (error) {
+
+    console.error(
+      'Error cargando capacitaciones:',
+      error,
+    );
   }
+
+  //this.calendlyService.createWebhookSubscription('https://shy-shopping-trunks.ngrok-free.dev'/)
+}
 }

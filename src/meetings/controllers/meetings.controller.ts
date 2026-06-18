@@ -1,18 +1,15 @@
 import {
   Body,
   Controller,
- Delete,
+  Delete,
   Get,
   Param,
   Patch,
   Post,
   Query,
 } from '@nestjs/common';
-
 import { MeetingsService } from '../services/meetings.service';
-
 import { AvailabilityService } from '../services/availability.service';
-
 import { CreateMeetingDto } from '../dto/create-meeting.dto';
 import { RescheduleMeetingDto } from '../dto/reschedule-meeting.dto';
 
@@ -20,26 +17,20 @@ import { RescheduleMeetingDto } from '../dto/reschedule-meeting.dto';
 export class MeetingsController {
   constructor(
     private readonly meetingsService: MeetingsService,
-
     private readonly availabilityService: AvailabilityService,
   ) {}
 
   @Get('availability')
   async availability(
     @Query('date') date: string,
+    @Query('timezone') timezone: string = 'America/Bogota',
   ) {
-    return this.availabilityService.getAvailability(
-      date,
-    );
+    return this.availabilityService.getAvailability(date, timezone);
   }
 
   @Post()
-  async create(
-    @Body() dto: CreateMeetingDto,
-  ) {
-    return this.meetingsService.create(
-      dto,
-    );
+  async create(@Body() dto: CreateMeetingDto) {
+    return this.meetingsService.create(dto);
   }
 
   @Get()
@@ -48,33 +39,20 @@ export class MeetingsController {
   }
 
   @Get(':id')
-  async findOne(
-    @Param('id') id: string,
-  ) {
-    return this.meetingsService.findOne(
-      id,
-    );
+  async findOne(@Param('id') id: string) {
+    return this.meetingsService.findOne(id);
   }
 
   @Delete(':id')
-  async cancel(
-    @Param('id') id: string,
-  ) {
-    return this.meetingsService.cancel(
-      id,
-    );
+  async cancel(@Param('id') id: string) {
+    return this.meetingsService.cancel(id);
   }
 
   @Patch(':id/reschedule')
   async reschedule(
     @Param('id') id: string,
-
-    @Body()
-    dto: RescheduleMeetingDto,
+    @Body() dto: RescheduleMeetingDto,
   ) {
-    return this.meetingsService.reschedule(
-      id,
-      dto,
-    );
+    return this.meetingsService.reschedule(id, dto);
   }
 }

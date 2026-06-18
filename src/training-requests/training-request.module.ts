@@ -17,13 +17,11 @@ import { Users } from 'src/users/entities/user.entity';
 import { EmailModule } from 'src/notifications/channels/email/email.module';
 
 import { NotificationsModule } from 'src/notifications/notifications.module';
+import { Training } from 'src/training/entities/training.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([
-      TrainingRequests,
-      Users,
-    ]),
+    TypeOrmModule.forFeature([TrainingRequests, Users, Training]),
 
     FileResourceModule,
 
@@ -32,14 +30,9 @@ import { NotificationsModule } from 'src/notifications/notifications.module';
     NotificationsModule,
   ],
 
-  controllers: [
-    TrainingRequestController,
-  ],
+  controllers: [TrainingRequestController],
 
-  providers: [
-    TrainingRequestService,
-    TrainingRequestRepository,
-  ],
+  providers: [TrainingRequestService, TrainingRequestRepository],
 
   exports: [TrainingRequestService],
 })

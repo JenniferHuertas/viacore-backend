@@ -1,21 +1,12 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-
 import { Repository } from 'typeorm';
-
 import { Users } from 'src/users/entities/user.entity';
-
 import { InjectRepository } from '@nestjs/typeorm';
-
 import { CreateUserDto, LoginUserDto } from 'src/users/dto/create-user.dto';
-
 import * as bcrypt from 'bcrypt';
-
 import { JwtService } from '@nestjs/jwt';
-
 import { Role } from 'src/users/enums/roles.enum';
-
 import { EmailService } from 'src/notifications/channels/email/email.service';
-
 import { PasswordResetToken } from './entities/password-reset-token.entity';
 
 @Injectable()
@@ -57,24 +48,19 @@ export class AuthService {
 
     const newUser = this.usersRepository.create({
       ...userData,
-
       email: normalizedEmail,
-
       password: hashedPassword,
-
       role: Role.User,
-
       profileCompleted: true,
     });
 
     const savedUser = await this.usersRepository.save(newUser);
 
     try {
-      // await this.emailService.sendWelcomeEmail(
-      //   savedUser.email,
-      //   savedUser.name,
-      // );
-
+      await this.emailService.sendWelcomeEmail(
+        savedUser.email,
+        savedUser.name,
+      );
       console.log('WELCOME EMAIL ENVIADO');
     } catch (error) {
       console.error('ERROR MAIL:', error);
@@ -115,11 +101,8 @@ export class AuthService {
 
     const payload = {
       id: foundUser.id,
-
       email: foundUser.email,
-
       role: foundUser.role,
-
       profileCompleted: foundUser.profileCompleted,
     };
 
@@ -129,16 +112,15 @@ export class AuthService {
 
     return {
       id: foundUser.id,
-
       role: foundUser.role,
-
       login: true,
-
       access_token: token,
     };
   }
 
+  // ==========================================
   // RECUPERAR CONTRASEÑA
+  // ==========================================
 
   async forgotPassword(email: string) {
     const normalizedEmail = email.toLowerCase().trim();
@@ -147,8 +129,6 @@ export class AuthService {
       email: normalizedEmail,
     });
 
-    // NO REVELAR SI EXISTE
-
     if (!user) {
       return {
         success: true,
@@ -156,16 +136,11 @@ export class AuthService {
       };
     }
 
-    // CUENTA GOOGLE
-
     if (user.googleId) {
       throw new BadRequestException(
         'Esta cuenta fue registrada con Google. Continúa con Google.',
       );
     }
-
-    // LINK SIMPLE
-    // SIN TOKEN
 
     const resetLink = `${
       process.env.FRONTEND_URL || 'http://localhost:3000'
@@ -177,11 +152,9 @@ export class AuthService {
         user.name,
         resetLink,
       );
-
       console.log('RESET PASSWORD EMAIL ENVIADO:', user.email);
     } catch (error) {
       console.error('ERROR RESET PASSWORD EMAIL:', error);
-
       throw new BadRequestException(
         'No pudimos enviar el correo de recuperación.',
       );
@@ -192,9 +165,6 @@ export class AuthService {
       message: 'Correo de recuperación enviado.',
     };
   }
-
-  // NUEVO
-  // RESET PASSWORD
 
   async resetPassword(email: string, password: string) {
     const normalizedEmail = email.toLowerCase().trim();
@@ -216,7 +186,6 @@ export class AuthService {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-
     user.password = hashedPassword;
 
     await this.usersRepository.save(user);
@@ -227,32 +196,28 @@ export class AuthService {
     };
   }
 
+  // ==========================================
+  // GOOGLE AUTH
+  // ==========================================
+
   async findOrCreateGoogleUser(
     googleUser: {
       email: string;
-
       name: string;
-
       googleId: string;
     },
-
     mode: 'signin' | 'signup',
   ) {
     const normalizedEmail = googleUser.email.toLowerCase().trim();
-
     const adminEmails = ['colmenares8093@gmail.com', 'admin.viacore@gmail.com'];
-
     const isAdmin = adminEmails.includes(normalizedEmail);
 
     let user = await this.usersRepository.findOneBy({
       email: normalizedEmail,
     });
 
-    // USUARIO EXISTE
-
     if (user) {
       // CUENTA MANUAL
-
       if (!user.googleId) {
         throw new BadRequestException(
           'Este correo ya está registrado con email y contraseña.',
@@ -260,14 +225,11 @@ export class AuthService {
       }
 
       // GOOGLE ID DISTINTO
-
       if (user.googleId !== googleUser.googleId) {
         throw new BadRequestException(
           'Este correo ya está vinculado a otra cuenta Google.',
         );
       }
-
-      // SIGNUP SOBRE CUENTA EXISTENTE
 
       if (mode === 'signup') {
         throw new BadRequestException(
@@ -276,7 +238,6 @@ export class AuthService {
       }
     } else {
       // SIGNIN SIN CUENTA
-
       if (mode === 'signin') {
         throw new BadRequestException(
           'No existe una cuenta registrada con Google para este correo.',
@@ -284,20 +245,26 @@ export class AuthService {
       }
 
       // CREAR SOLO SI NO EXISTE
-
       user = this.usersRepository.create({
         email: normalizedEmail,
-
         name: googleUser.name,
-
         googleId: googleUser.googleId,
-
         role: isAdmin ? Role.Admin : Role.User,
-
         profileCompleted: isAdmin ? true : false,
       });
 
       user = await this.usersRepository.save(user);
+
+      // Enviar email de bienvenida al nuevo usuario de Google
+      try {
+        await this.emailService.sendWelcomeEmail(
+          user.email,
+          user.name,
+        );
+        console.log('WELCOME EMAIL ENVIADO (Google)');
+      } catch (error) {
+        console.error('ERROR MAIL (Google):', error);
+      }
     }
 
     if (!user) {
@@ -306,19 +273,14 @@ export class AuthService {
 
     if (isAdmin) {
       user.role = Role.Admin;
-
       user.profileCompleted = true;
-
       user = await this.usersRepository.save(user);
     }
 
     const payload = {
       id: user.id,
-
       email: user.email,
-
       role: user.role,
-
       profileCompleted: user.profileCompleted,
     };
 
@@ -328,11 +290,8 @@ export class AuthService {
 
     return {
       id: user.id,
-
       role: user.role,
-
       login: true,
-
       access_token: token,
     };
   }

@@ -15,6 +15,7 @@ import { Users } from 'src/users/entities/user.entity';
 
 @Entity('MEETINGS')
 export class Meetings {
+
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
@@ -46,7 +47,7 @@ export class Meetings {
   @Column({
     type: 'enum',
     enum: MeetingStatus,
-    enumName: 'MeetingStatus',
+    enumName: 'meeting_status_enum',
     default: MeetingStatus.PENDING,
   })
   status!: MeetingStatus;
@@ -59,10 +60,14 @@ export class Meetings {
   @CreateDateColumn()
   createdAt!: Date;
 
-  @ManyToOne(() => Users, {
-    nullable: false,
-    onDelete: 'CASCADE',
-  })
+  @ManyToOne(
+    () => Users,
+    (user) => user.meetings,
+    {
+      nullable: false,
+      onDelete: 'CASCADE',
+    },
+  )
   @JoinColumn({
     name: 'userId',
   })

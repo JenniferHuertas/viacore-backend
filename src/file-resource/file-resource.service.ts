@@ -219,4 +219,12 @@ export class FileResourceService {
 
     return this.fileRepository.save(fileResource);
   }
+
+  async uploadImageAndGetUrl(file: Express.Multer.File): Promise<string> {
+    const uploaded = await this.uploadToCloudinary(file, 'image');
+    return cloudinary.url(uploaded.public_id, {
+      resource_type: 'image',
+      secure: true,
+    });
+  }
 }

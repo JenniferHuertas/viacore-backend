@@ -33,8 +33,9 @@ export class TrainingService {
   updateTraining(
     id: string,
     dataTraining: UpdateTrainingDto,
+    file?: Express.Multer.File,
   ): Promise<Training | null> {
-    return this.trainingRepository.updateTraining(id, dataTraining);
+    return this.trainingRepository.updateTraining(id, dataTraining, file);
   }
 
   deleteTraining(id: string): Promise<{ message: string }> {

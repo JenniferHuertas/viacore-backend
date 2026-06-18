@@ -35,6 +35,8 @@ import {
   WebhookResponseDto,
 } from './dto/payment-response.dto';
 
+import { NotificationsGateway } from 'src/notifications/gateways/notifications.gateway';
+
 @Injectable()
 export class PaymentsService {
   private preference: Preference;
@@ -52,6 +54,8 @@ export class PaymentsService {
     private readonly emailService: EmailService,
 
     private readonly notificationsService: NotificationsService,
+
+    private readonly notificationsGateway: NotificationsGateway,
   ) {
     const client = new MercadoPagoConfig({
       accessToken: this.configService.get<string>('MP_ACCESS_TOKEN') ?? '',
@@ -127,9 +131,9 @@ export class PaymentsService {
         back_urls: {
           success: `${this.configService.get('FRONTEND_URL')}/pago/${payment.id}/confirmacion`,
 
-          failure: `${this.configService.get('FRONTEND_URL')}/payments/failure`,
+          failure: `${this.configService.get('FRONTEND_URL')}/pago/failure`,
 
-          pending: `${this.configService.get('FRONTEND_URL')}/payments/pending`,
+          pending: `${this.configService.get('FRONTEND_URL')}/pago/pending`,
         },
 
         notification_url: `${this.configService.get(
@@ -211,6 +215,13 @@ export class PaymentsService {
           payment.trainingRequest.id,
           { status: RequestStatus.CONFIRMED },
         );
+        this.notificationsGateway.emitNotificationToAdmin({
+          type: 'payment_approved',
+          title: 'Nueva actualización de solicitud',
+          message: `La solicitud de ${payment.user?.companyName || payment.user?.name} cambió a "confirmed"`,
+          status: RequestStatus.CONFIRMED,
+          requestId: payment.trainingRequest.id,
+        });
       }
     }
 

@@ -92,15 +92,8 @@ export class ChatController {
         createChatDto.sessionId ||
         req['guestSession'],
     };
-
-    let userId:
-      | string
-      | undefined =
-      undefined;
-
-    const token =
-      req.cookies?.userSession;
-
+    let userId: string | undefined = undefined;
+    const token = req.cookies?.userSession;
     if (token) {
       try {
         const decoded =

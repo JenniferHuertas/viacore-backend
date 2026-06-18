@@ -25,7 +25,8 @@ export class AuthGuard
         .getRequest();
 
     const token =
-      request.cookies?.userSession;
+      request.cookies?.userSession ||
+      request.headers?.authorization?.replace('Bearer ', '');
 
     console.log(
       'COOKIE TOKEN:',

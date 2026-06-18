@@ -7,11 +7,11 @@ import { ChatMessageRepository } from './repositories/chat-message.repository';
 import { GeminiService } from './gemini.service';
 import { ChatMessage } from './entities/chat.entity';
 import { TrainingRequests } from '../training-requests/entities/training-request.entity'; 
-import { Users } from 'src/users/entities/user.entity';
+import { Training } from 'src/training/entities/training.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([ChatMessage, TrainingRequests, Users]), 
+    TypeOrmModule.forFeature([ChatMessage, TrainingRequests, Training]), 
     JwtModule.register({}),
   ],
   controllers: [ChatController],

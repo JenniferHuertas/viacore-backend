@@ -12,12 +12,21 @@ export class EmailService {
   ): string {
     const templatePath = path.join(
       __dirname,
-      `templates`,
+      'templates',
       `${templateName}.hbs`,
     );
 
-    const source = fs.readFileSync(templatePath, 'utf8');
+    console.log('>>> __dirname:', __dirname);
+    console.log('>>> templatePath:', templatePath);
 
+    try {
+      const dirContents = fs.readdirSync(__dirname);
+      console.log('>>> __dirname contents:', dirContents);
+    } catch (e) {
+      console.log('>>> Error leyendo __dirname:', e);
+    }
+
+    const source = fs.readFileSync(templatePath, 'utf8');
     const template = handlebars.compile(source);
 
     return template(context);
@@ -30,7 +39,6 @@ export class EmailService {
         {
           sender: {
             name: 'ViaCore',
-
             email: 'danielmauriciomedina95@gmail.com',
           },
           to: [{ email: to }],
@@ -40,7 +48,6 @@ export class EmailService {
         {
           headers: {
             'api-key': process.env.BREVO_API_KEY,
-
             'Content-Type': 'application/json',
           },
         },
@@ -59,10 +66,8 @@ export class EmailService {
   async sendWelcomeEmail(email: string, fullName: string) {
     const html = this.compileTemplate('welcome', {
       fullName,
-
       platformUrl:
         process.env.PLATFORM_URL ?? 'https://estudio-via3-frontend.vercel.app/',
-
       year: new Date().getFullYear(),
     });
 
@@ -72,10 +77,8 @@ export class EmailService {
   async sendForgotPasswordEmail(email: string, resetLink: string) {
     const html = this.compileTemplate('forgot-password', {
       resetLink,
-
       platformUrl:
         process.env.PLATFORM_URL ?? 'https://estudio-via3-frontend.vercel.app/',
-
       year: new Date().getFullYear(),
     });
 
@@ -86,10 +89,8 @@ export class EmailService {
     const html = this.compileTemplate('payment-approved', {
       fullName,
       amount,
-
       platformUrl:
         process.env.PLATFORM_URL ?? 'https://estudio-via3-frontend.vercel.app/',
-
       year: new Date().getFullYear(),
     });
 
@@ -99,10 +100,8 @@ export class EmailService {
   async sendTrainingRequestCreated(email: string, companyName: string) {
     const html = this.compileTemplate('training-request-created', {
       companyName,
-
       platformUrl:
         process.env.PLATFORM_URL ?? 'https://estudio-via3-frontend.vercel.app/',
-
       year: new Date().getFullYear(),
     });
 
@@ -130,9 +129,7 @@ export class EmailService {
   async sendContactConfirmation(email: string, nombre: string) {
     const html = this.compileTemplate('contact-confirmation', {
       nombre,
-
       platformUrl: process.env.PLATFORM_URL ?? 'https://viacore.com',
-
       year: new Date().getFullYear(),
     });
 
@@ -142,7 +139,6 @@ export class EmailService {
   async sendRequestInReview(email: string, fullName: string) {
     const html = this.compileTemplate('request-in-review', {
       fullName,
-
       year: new Date().getFullYear(),
     });
 
@@ -152,7 +148,6 @@ export class EmailService {
   async sendAwaitingPayment(email: string, fullName: string) {
     const html = this.compileTemplate('awaiting-payment', {
       fullName,
-
       year: new Date().getFullYear(),
     });
 
@@ -162,7 +157,6 @@ export class EmailService {
   async sendTrainingScheduled(email: string, fullName: string) {
     const html = this.compileTemplate('training-scheduled', {
       fullName,
-
       year: new Date().getFullYear(),
     });
 
@@ -172,7 +166,6 @@ export class EmailService {
   async sendTrainingConfirmed(email: string, fullName: string) {
     const html = this.compileTemplate('training-confirmed', {
       fullName,
-
       year: new Date().getFullYear(),
     });
 
@@ -182,7 +175,6 @@ export class EmailService {
   async sendTrainingCancelled(email: string, fullName: string) {
     const html = this.compileTemplate('training-cancelled', {
       fullName,
-
       year: new Date().getFullYear(),
     });
 
@@ -197,11 +189,8 @@ export class EmailService {
   ) {
     const html = this.compileTemplate('new-material-available', {
       fullName,
-
       materialTitle,
-
       materialUrl,
-
       year: new Date().getFullYear(),
     });
 
@@ -211,10 +200,8 @@ export class EmailService {
   async sendTrainingInReview(email: string, companyName: string) {
     const html = this.compileTemplate('training-in-review', {
       companyName,
-
       platformUrl:
         process.env.PLATFORM_URL ?? 'https://estudio-via3-frontend.vercel.app/',
-
       year: new Date().getFullYear(),
     });
 
@@ -224,10 +211,8 @@ export class EmailService {
   async sendTrainingAwaitingPayment(email: string, companyName: string) {
     const html = this.compileTemplate('training-awaiting-payment', {
       companyName,
-
       platformUrl:
         process.env.PLATFORM_URL ?? 'https://estudio-via3-frontend.vercel.app/',
-
       year: new Date().getFullYear(),
     });
 
@@ -235,36 +220,36 @@ export class EmailService {
   }
 
   async sendTrainingScheduledToCompany(email: string, companyName: string) {
-    const html = this.compileTemplate(`training-scheduled`, {
+    const html = this.compileTemplate('training-scheduled', {
       companyName,
       platformUrl:
-        process.env.PLATFORM_URL ?? `https://estudio-via3-frontend.vercel.app/`,
+        process.env.PLATFORM_URL ?? 'https://estudio-via3-frontend.vercel.app/',
       year: new Date().getFullYear(),
     });
 
-    await this.sendEmail(email, `Capacitación agendada`, html);
+    await this.sendEmail(email, 'Capacitación agendada', html);
   }
 
   async sendTrainingConfirmedToCompany(email: string, companyName: string) {
-    const html = this.compileTemplate(`training-confirmed`, {
+    const html = this.compileTemplate('training-confirmed', {
       companyName,
       platformUrl:
-        process.env.PLATFORM_URL ?? `https://estudio-via3-frontend.vercel.app/`,
+        process.env.PLATFORM_URL ?? 'https://estudio-via3-frontend.vercel.app/',
       year: new Date().getFullYear(),
     });
 
-    await this.sendEmail(email, `Capacitación confirmada`, html);
+    await this.sendEmail(email, 'Capacitación confirmada', html);
   }
 
   async sendTrainingCancelledToCompany(email: string, companyName: string) {
-    const html = this.compileTemplate(`training-cancelled`, {
+    const html = this.compileTemplate('training-cancelled', {
       companyName,
       platformUrl:
-        process.env.PLATFORM_URL ?? `https://estudio-via3-frontend.vercel.app/`,
+        process.env.PLATFORM_URL ?? 'https://estudio-via3-frontend.vercel.app/',
       year: new Date().getFullYear(),
     });
 
-    await this.sendEmail(email, `Solicitud cancelada`, html);
+    await this.sendEmail(email, 'Solicitud cancelada', html);
   }
 
   async sendMeetingReminder24h(
@@ -307,31 +292,19 @@ export class EmailService {
     await this.sendEmail(email, 'Recordatorio: tu reunión es en 2 horas', html);
   }
 
-  // NUEVO
-  // RECUPERACIÓN DE CONTRASEÑA
-
   async sendPasswordRecoveryEmail(
     email: string,
     fullName: string,
     resetLink: string,
   ) {
+    const html = this.compileTemplate('password-recovery', {
+      fullName,
+      resetLink,
+      platformUrl:
+        process.env.PLATFORM_URL ?? 'https://estudio-via3-frontend.vercel.app/',
+      year: new Date().getFullYear(),
+    });
 
-    const html = this.compileTemplate(
-      'password-recovery',
-      {
-        fullName,
-        resetLink,
-        platformUrl:
-          process.env.PLATFORM_URL ??
-          'https://estudio-via3-frontend.vercel.app/',
-        year: new Date().getFullYear(),
-      },
-    );
-
-    await this.sendEmail(
-      email,
-      'Recuperación de contraseña',
-      html,
-    );
+    await this.sendEmail(email, 'Recuperación de contraseña', html);
   }
 }
