@@ -154,8 +154,7 @@ export class ChatController {
       }
     }
 
-    return await this.chatService.getMyHistory(
-      userId,
+    return await this.chatService.getChatHistory(
       req['guestSession'],
     );
   }
