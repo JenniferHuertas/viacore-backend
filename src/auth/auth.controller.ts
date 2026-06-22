@@ -26,7 +26,6 @@ import {
 import { ApiTags } from '@nestjs/swagger';
 
 const isProduction = process.env.NODE_ENV === 'production';
-
 const cookieConfig = {
   httpOnly: true,
   secure: isProduction,
@@ -34,12 +33,10 @@ const cookieConfig = {
   maxAge: 1000 * 60 * 60,
   path: '/',
 };
-
 if (!isProduction) {
   cookieConfig.sameSite = "lax";
   cookieConfig.secure = false;
 }
-
 @UseInterceptors(ClassSerializerInterceptor)
 @ApiTags('Auth')
 @Controller('auth')
@@ -56,7 +53,6 @@ export class AuthController {
   @Get('google/signin')
   @UseGuards(GoogleAuthGuard)
   googleSignin() { }
-
   @Get('google/signup')
   @UseGuards(GoogleAuthGuard)
   googleSignup() { }
@@ -69,24 +65,17 @@ export class AuthController {
   @UseGuards(GoogleAuthGuard)
   async googleCallback(@Req() req: any, @Res() res: Response) {
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-
     try {
       const googleError = req.googleAuthError;
       const user = req.user;
-
       if (googleError) {
         console.log('GOOGLE ERROR:', googleError);
         return res.redirect(
           `${frontendUrl}/autenticacion?error=google_auth_failed`,
         );
       }
-
       const token = user.access_token;
-
-      // set cookie session
       res.cookie('userSession', token, cookieConfig);
-
-      // 🔥 SIEMPRE mismo destino (SIN state, SIN returnTo)
       return res.redirect(
         `${frontendUrl}/autenticacion/autenticacion-google`,
       );
@@ -107,16 +96,13 @@ export class AuthController {
   register(@Body() createUserDto: CreateUserDto) {
     return this.authService.create(createUserDto);
   }
-
   @Post('signin')
   async signin(
     @Body() credentials: LoginUserDto,
     @Res({ passthrough: true }) res: Response,
   ) {
     const response = await this.authService.signIn(credentials);
-
     res.cookie('userSession', response.access_token, cookieConfig);
-
     return {
       login: true,
       role: response.role,
@@ -132,7 +118,6 @@ export class AuthController {
   async forgotPassword(@Body() dto: ForgotPasswordDto) {
     return this.forgotPasswordService.forgotPassword(dto.email);
   }
-
   @Post('reset-password')
   async resetPassword(@Body() dto: ResetPasswordDto) {
     return this.forgotPasswordService.resetPassword(
