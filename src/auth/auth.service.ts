@@ -1,53 +1,34 @@
-import {
-  BadRequestException,
-  Injectable,
-} from '@nestjs/common';
-
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
-
 import { Users } from 'src/users/entities/user.entity';
-
 import { InjectRepository } from '@nestjs/typeorm';
-
-import {
-  CreateUserDto,
-  LoginUserDto,
-} from 'src/users/dto/create-user.dto';
-
+import { CreateUserDto, LoginUserDto } from 'src/users/dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
-
 import { JwtService } from '@nestjs/jwt';
-
 import { Role } from 'src/users/enums/roles.enum';
-
 import { EmailService } from 'src/notifications/channels/email/email.service';
+import { PasswordResetToken } from './entities/password-reset-token.entity';
 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectRepository(Users)
-    private readonly usersRepository:
-      Repository<Users>,
+    private readonly usersRepository: Repository<Users>,
 
-    private readonly jwtService:
-      JwtService,
+    @InjectRepository(PasswordResetToken)
+    private readonly resetRepository: Repository<PasswordResetToken>,
 
-    private readonly emailService:
-      EmailService,
+    private readonly jwtService: JwtService,
+
+    private readonly emailService: EmailService,
   ) {}
 
-  async create(
-    createUserDto: CreateUserDto,
-  ) {
-    const normalizedEmail =
-      createUserDto.email
-        .toLowerCase()
-        .trim();
+  async create(createUserDto: CreateUserDto) {
+    const normalizedEmail = createUserDto.email.toLowerCase().trim();
 
-    const foundUser =
-      await this.usersRepository.findOneBy({
-        email: normalizedEmail,
-      });
+    const foundUser = await this.usersRepository.findOneBy({
+      email: normalizedEmail,
+    });
 
     if (foundUser?.googleId) {
       throw new BadRequestException(
@@ -61,75 +42,46 @@ export class AuthService {
       );
     }
 
-    const hashedPassword =
-      await bcrypt.hash(
-        createUserDto.password,
-        10,
-      );
+    const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
 
-    const {
-      confirmPassword,
-      ...userData
-    } = createUserDto;
+    const { confirmPassword, ...userData } = createUserDto;
 
-    const newUser =
-      this.usersRepository.create({
-        ...userData,
+    const newUser = this.usersRepository.create({
+      ...userData,
+      email: normalizedEmail,
+      password: hashedPassword,
+      role: Role.User,
+      profileCompleted: true,
+    });
 
-        email: normalizedEmail,
-
-        password: hashedPassword,
-
-        role: Role.User,
-
-        profileCompleted: true,
-      });
-
-    const savedUser =
-      await this.usersRepository.save(
-        newUser,
-      );
+    const savedUser = await this.usersRepository.save(newUser);
 
     try {
       await this.emailService.sendWelcomeEmail(
         savedUser.email,
         savedUser.name,
       );
-
-      console.log(
-        'WELCOME EMAIL ENVIADO',
-      );
+      console.log('WELCOME EMAIL ENVIADO');
     } catch (error) {
-      console.error(
-        'ERROR MAIL:',
-        error,
-      );
+      console.error('ERROR MAIL:', error);
     }
 
     return savedUser;
   }
 
-  async signIn(
-    credentials: LoginUserDto,
-  ) {
-    const normalizedEmail =
-      credentials.email
-        .toLowerCase()
-        .trim();
+  async signIn(credentials: LoginUserDto) {
+    const normalizedEmail = credentials.email.toLowerCase().trim();
 
-    const foundUser =
-      await this.usersRepository
-        .createQueryBuilder('user')
-        .addSelect('user.password')
-        .where('user.email = :email', {
-          email: normalizedEmail,
-        })
-        .getOne();
+    const foundUser = await this.usersRepository
+      .createQueryBuilder('user')
+      .addSelect('user.password')
+      .where('user.email = :email', {
+        email: normalizedEmail,
+      })
+      .getOne();
 
     if (!foundUser) {
-      throw new BadRequestException(
-        'Credenciales inválidas',
-      );
+      throw new BadRequestException('Credenciales inválidas');
     }
 
     if (foundUser.googleId) {
@@ -138,89 +90,142 @@ export class AuthService {
       );
     }
 
-    const matchingPassword =
-      await bcrypt.compare(
-        credentials.password,
-        foundUser.password,
-      );
+    const matchingPassword = await bcrypt.compare(
+      credentials.password,
+      foundUser.password,
+    );
 
     if (!matchingPassword) {
-      throw new BadRequestException(
-        'Credenciales inválidas',
-      );
+      throw new BadRequestException('Credenciales inválidas');
     }
 
     const payload = {
       id: foundUser.id,
-
       email: foundUser.email,
-
       role: foundUser.role,
-
-      profileCompleted:
-        foundUser.profileCompleted,
+      profileCompleted: foundUser.profileCompleted,
     };
 
-    const token =
-      this.jwtService.sign(payload, {
-        expiresIn: '1h',
-      });
+    const token = this.jwtService.sign(payload, {
+      expiresIn: '1h',
+    });
 
     return {
       id: foundUser.id,
-
       role: foundUser.role,
-
       login: true,
-
       access_token: token,
     };
   }
 
+  // ==========================================
+  // RECUPERAR CONTRASEÑA
+  // ==========================================
+
+  async forgotPassword(email: string) {
+    const normalizedEmail = email.toLowerCase().trim();
+
+    const user = await this.usersRepository.findOneBy({
+      email: normalizedEmail,
+    });
+
+    if (!user) {
+      return {
+        success: true,
+        message: 'Si el correo existe, enviaremos instrucciones.',
+      };
+    }
+
+    if (user.googleId) {
+      throw new BadRequestException(
+        'Esta cuenta fue registrada con Google. Continúa con Google.',
+      );
+    }
+
+    const resetLink = `${
+      process.env.FRONTEND_URL || 'http://localhost:3000'
+    }/reset-password?email=${user.email}`;
+
+    try {
+      await this.emailService.sendPasswordRecoveryEmail(
+        user.email,
+        user.name,
+        resetLink,
+      );
+      console.log('RESET PASSWORD EMAIL ENVIADO:', user.email);
+    } catch (error) {
+      console.error('ERROR RESET PASSWORD EMAIL:', error);
+      throw new BadRequestException(
+        'No pudimos enviar el correo de recuperación.',
+      );
+    }
+
+    return {
+      success: true,
+      message: 'Correo de recuperación enviado.',
+    };
+  }
+
+  async resetPassword(email: string, password: string) {
+    const normalizedEmail = email.toLowerCase().trim();
+
+    const user = await this.usersRepository
+      .createQueryBuilder('user')
+      .addSelect('user.password')
+      .where('user.email = :email', {
+        email: normalizedEmail,
+      })
+      .getOne();
+
+    if (!user) {
+      throw new BadRequestException('Usuario no encontrado.');
+    }
+
+    if (user.googleId) {
+      throw new BadRequestException('Esta cuenta fue registrada con Google.');
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    user.password = hashedPassword;
+
+    await this.usersRepository.save(user);
+
+    return {
+      success: true,
+      message: 'Contraseña actualizada correctamente.',
+    };
+  }
+
+  // ==========================================
+  // GOOGLE AUTH
+  // ==========================================
+
   async findOrCreateGoogleUser(
     googleUser: {
       email: string;
-
       name: string;
-
       googleId: string;
     },
-
-    mode:
-      | 'signin'
-      | 'signup',
+    mode: 'signin' | 'signup',
   ) {
-    const normalizedEmail =
-      googleUser.email
-        .toLowerCase()
-        .trim();
+    const normalizedEmail = googleUser.email.toLowerCase().trim();
+    const adminEmails = ['colmenares8093@gmail.com', 'admin.viacore@gmail.com'];
+    const isAdmin = adminEmails.includes(normalizedEmail);
 
-    const adminEmails = [
-      'colmenares8093@gmail.com',
-      'admin.viacore@gmail.com',
-    ];
-
-    const isAdmin =
-      adminEmails.includes(
-        normalizedEmail,
-      );
-
-    let user =
-      await this.usersRepository.findOneBy({
-        email: normalizedEmail,
-      });
+    let user = await this.usersRepository.findOneBy({
+      email: normalizedEmail,
+    });
 
     if (user) {
+      // CUENTA MANUAL
       if (!user.googleId) {
         throw new BadRequestException(
           'Este correo ya está registrado con email y contraseña.',
         );
       }
 
-      if (
-        user.googleId !==
-        googleUser.googleId
-      ) {
+      // GOOGLE ID DISTINTO
+      if (user.googleId !== googleUser.googleId) {
         throw new BadRequestException(
           'Este correo ya está vinculado a otra cuenta Google.',
         );
@@ -232,37 +237,23 @@ export class AuthService {
         );
       }
     } else {
+      // SIGNIN SIN CUENTA
       if (mode === 'signin') {
         throw new BadRequestException(
           'No existe una cuenta registrada con Google para este correo.',
         );
       }
 
-      user =
-        this.usersRepository.create({
-          email: normalizedEmail,
+      // CREAR SOLO SI NO EXISTE
+      user = this.usersRepository.create({
+        email: normalizedEmail,
+        name: googleUser.name,
+        googleId: googleUser.googleId,
+        role: isAdmin ? Role.Admin : Role.User,
+        profileCompleted: isAdmin ? true : false,
+      });
 
-          name:
-            googleUser.name,
-
-          googleId:
-            googleUser.googleId,
-
-          role:
-            isAdmin
-              ? Role.Admin
-              : Role.User,
-
-          profileCompleted:
-            isAdmin
-              ? true
-              : false,
-        });
-
-      user =
-        await this.usersRepository.save(
-          user,
-        );
+      user = await this.usersRepository.save(user);
 
       // Enviar email de bienvenida al nuevo usuario de Google
       try {
@@ -270,59 +261,37 @@ export class AuthService {
           user.email,
           user.name,
         );
-
-        console.log(
-          'WELCOME EMAIL ENVIADO (Google)',
-        );
+        console.log('WELCOME EMAIL ENVIADO (Google)');
       } catch (error) {
-        console.error(
-          'ERROR MAIL (Google):',
-          error,
-        );
+        console.error('ERROR MAIL (Google):', error);
       }
     }
 
     if (!user) {
-      throw new BadRequestException(
-        'No se pudo autenticar el usuario Google.',
-      );
+      throw new BadRequestException('No se pudo autenticar el usuario Google.');
     }
 
     if (isAdmin) {
       user.role = Role.Admin;
-
-      user.profileCompleted =
-        true;
-
-      user =
-        await this.usersRepository.save(
-          user,
-        );
+      user.profileCompleted = true;
+      user = await this.usersRepository.save(user);
     }
 
     const payload = {
       id: user.id,
-
       email: user.email,
-
       role: user.role,
-
-      profileCompleted:
-        user.profileCompleted,
+      profileCompleted: user.profileCompleted,
     };
 
-    const token =
-      this.jwtService.sign(payload, {
-        expiresIn: '1h',
-      });
+    const token = this.jwtService.sign(payload, {
+      expiresIn: '1h',
+    });
 
     return {
       id: user.id,
-
       role: user.role,
-
       login: true,
-
       access_token: token,
     };
   }

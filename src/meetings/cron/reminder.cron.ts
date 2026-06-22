@@ -54,6 +54,8 @@ export class MeetingRemindersService {
         const companyName =
           meeting.user?.companyName || meeting.user?.name || 'Cliente';
 
+        const startTime = meeting.startTime as Date;
+
         if (email) {
           await this.emailService.sendMeetingReminder24h(
             email,
@@ -100,6 +102,8 @@ export class MeetingRemindersService {
 
         const companyName =
           meeting.user?.companyName || meeting.user?.name || 'Cliente';
+
+        const startTime = new Date(meeting.startTime);
 
         if (email) {
           await this.emailService.sendMeetingReminder2h(

@@ -1,12 +1,11 @@
-import {
-  Injectable,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ChatMessageRepository } from './repositories/chat-message.repository';
 import { ChatMessage } from './entities/chat.entity';
 import { GeminiService } from './gemini.service';
 import { TrainingRequests } from '../training-requests/entities/training-request.entity';
+import { Users } from '../users/entities/user.entity';
 import { Training } from '../training/entities/training.entity';
 import { RequestStatus } from '../training-requests/enums/requests-status.enum';
 import type { DeepPartial } from 'typeorm';
@@ -41,23 +40,22 @@ const STATUS_DETAILS: Record<string, { explanation: string; nextStep: string }> 
 
 @Injectable()
 export class ChatService {
-
   constructor(
     private readonly chatMessageRepository: ChatMessageRepository,
     private readonly geminiService: GeminiService,
-
     @InjectRepository(TrainingRequests)
     private readonly trainingRequestRepository: Repository<TrainingRequests>,
-
+    @InjectRepository(Users)
+    private readonly usersRepository: Repository<Users>,
     @InjectRepository(Training)
     private readonly trainingRepository: Repository<Training>,
-  ) { }
+  ) {}
 
   async createMessage(
     data: ICreateChatMessage,
     userId?: string,
   ): Promise<ChatMessage> {
-
+    // 1. Obtener catálogo de capacitaciones activas para darle contexto a la IA
     const globalTrainings = await this.trainingRepository.find({
       where: { isActive: true }
     });
@@ -76,37 +74,36 @@ export class ChatService {
     let currentStatus = `VISITOR_ANONYMOUS`; 
     let contextForAi = `[CATÁLOGO DE CAPACITACIONES DISPONIBLES EN LA PLATAFORMA]:\n${catalogText}\n\n`;
 
+    // 2. Evaluar el estado de autenticación y solicitudes del usuario
     if (!userId) {
       currentStatus = `ANÓNIMO (Sin iniciar sesión)`;
       contextForAi += `El usuario es un visitante anónimo. No tiene sesión iniciada en la plataforma corporativa.`;
     } else {
       currentStatus = `AUTENTICADO_SIN_SOLICITUD`;
-      const userTrainingRequest =
-        await this.trainingRequestRepository.findOne({
-          where: {
-            user: {
-              id: userId,
-            },
-          },
+      
+      // Si no viene un ID de solicitud explícito, buscamos la última del usuario
+      if (!data.trainingRequestId || data.trainingRequestId.trim() === '') {
+        const userTrainingRequest = await this.trainingRequestRepository.findOne({
+          where: { user: { id: userId } },
           relations: ['training'],
-          order: {
-            createdAt: 'DESC',
-          },
+          order: { createdAt: 'DESC' },
         });
-      if (userTrainingRequest) {
-        data.trainingRequestId = userTrainingRequest.id;
+        if (userTrainingRequest) {
+          data.trainingRequestId = userTrainingRequest.id;
+        }
       }
-      contextForAi += `El usuario tiene la sesión iniciada correctamente con el ID: ${userId}, pero aún no cuenta con una solicitud de capacitación activa.`;
+
+      contextForAi += `El usuario tiene la sesión iniciada correctamente con el ID: ${userId}.`;
 
       if (data.trainingRequestId) {
         const isValidUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(data.trainingRequestId);
         if (isValidUuid) {
           contextForAi += ` Actualmente visualiza su solicitud ID: ${data.trainingRequestId}.`;
-          const trainingRequest =
-            await this.trainingRequestRepository.findOne({
-              where: { id: data.trainingRequestId },
-              relations: [`files`, `meetings`, `payments`, `training`],
-            });
+          const trainingRequest = await this.trainingRequestRepository.findOne({
+            where: { id: data.trainingRequestId },
+            relations: ['files', 'meetings', 'payments', 'training'],
+          });
+
           if (trainingRequest) {
             currentStatus = trainingRequest.status;
             const statusInfo = STATUS_DETAILS[trainingRequest.status] || {
@@ -143,6 +140,7 @@ export class ChatService {
       }
     }
 
+    // 3. Evaluar si el usuario está preguntando específicamente por sus estados
     const normalizedMessage = data.message.toLowerCase();
     const askingForStatus =
       normalizedMessage.includes(`estado`) ||
@@ -163,6 +161,7 @@ export class ChatService {
       }
     }
 
+    // 4. Guardar mensaje enviado por el usuario
     const messagePayload: DeepPartial<ChatMessage> = {
       message: data.message,
       role: `user`,
@@ -172,13 +171,21 @@ export class ChatService {
       receiver: data.receiverId ? { id: data.receiverId } : undefined,
       sessionId: data.sessionId,
     };
-
     await this.chatMessageRepository.saveMessage(messagePayload);
-    const aiResponseText = await this.geminiService.generateResponse(
-      data.message,
-      currentStatus,
-      contextForAi,
-    );
+
+    // 5. Enviar información estructurada a Gemini con manejo de errores controlado
+    let aiResponseText = 'Lo siento, ocurrió un error temporal al procesar tu solicitud.';
+    try {
+      aiResponseText = await this.geminiService.generateResponse(
+        data.message,
+        currentStatus,
+        contextForAi,
+      );
+    } catch (error) {
+      console.error('ERROR IA GEMINI:', error);
+    }
+
+    // 6. Guardar y retornar la respuesta generada por la IA
     const aiMessagePayload: DeepPartial<ChatMessage> = {
       message: aiResponseText,
       role: `assistant`,
@@ -188,6 +195,7 @@ export class ChatService {
       receiver: userId ? { id: userId } : undefined,
       sessionId: data.sessionId,
     };
+
     return await this.chatMessageRepository.saveMessage(aiMessagePayload);
   }
 
@@ -202,6 +210,7 @@ export class ChatService {
       relations: [`sender`],
       order: { createdAt: `ASC` },
     });
+    
     if (!history || history.length === 0) {
       return [];
     }

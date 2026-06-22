@@ -19,6 +19,7 @@ export class GeminiService {
     });
   }
 
+
   async generateResponse(
     prompt: string,
     status: string,
