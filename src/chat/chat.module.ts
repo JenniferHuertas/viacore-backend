@@ -8,9 +8,11 @@ import { GeminiService } from './gemini.service';
 import { ChatMessage } from './entities/chat.entity';
 import { TrainingRequests } from '../training-requests/entities/training-request.entity'; 
 import { Training } from 'src/training/entities/training.entity';
+import { UsersModule } from 'src/users/user.module';
 
 @Module({
   imports: [
+    UsersModule,
     TypeOrmModule.forFeature([ChatMessage, TrainingRequests, Training]), 
     JwtModule.register({}),
   ],
