@@ -6,7 +6,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "build": "cross-env NODE_OPTIONS=--max-old-space-size=4096 nest build && mkdir -p dist/notifications/channels/email/templates && cp -r src/notifications/channels/email/templates/. dist/notifications/channels/email/templates/",
+    "build": "cross-env NODE_OPTIONS=--max-old-space-size=4096 nest build",
     "start": "node --max-old-space-size=1024 dist/main",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
