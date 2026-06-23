@@ -13,6 +13,7 @@ import { TypeOrmExceptionFilter } from './common/filters/typeorm-exceptions.filt
 async function bootstrap() {
   const app =
     await NestFactory.create(AppModule);
+    (app.getHttpAdapter().getInstance() as any).set('trust proxy', 1);
 
   app.use(cookieParser());
   app.use(
