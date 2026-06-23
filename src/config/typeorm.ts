@@ -3,7 +3,7 @@ import { registerAs } from '@nestjs/config';
 import { DataSource } from 'typeorm';
 import { DataSourceOptions } from 'typeorm';
 
-dotenvConfig({ path: '.development.env' });
+dotenvConfig({ path: '.env' });
 
 export const typeormConfig: DataSourceOptions = {
   type: 'postgres',
@@ -17,7 +17,7 @@ export const typeormConfig: DataSourceOptions = {
 
   ssl: { rejectUnauthorized: false },
 
-  dropSchema: true,
+  dropSchema: false,
   synchronize: true,
 
   entities: ['dist/**/*.entity{.ts,.js}'],

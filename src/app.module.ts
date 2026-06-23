@@ -42,7 +42,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     ConfigModule.forRoot({
       isGlobal: true,
 
-      envFilePath: '.development.env',
+      envFilePath: '.env',
 
       load: [typeorm],
     }),
