@@ -86,7 +86,7 @@ async function bootstrap() {
     ? originsEnv.split(`,`).map(url => url.trim())
     : [
         `http://localhost:3000`,
-        `https://estudio-via3-frontend.vercel.app`,
+        `https://viacore-frontend.vercel.app/`,
       ];
 
   app.enableCors({
