@@ -50,22 +50,16 @@ export class TrainingRequestService {
         'El servicio solicitado ya no está disponible.',
       );
     }
-
     const price = this.calculateEstimatedPrice(data.participantsCount);
-
     const newRequest = await this.repository.createRequests({
       ...data,
       estimatedPrice: price,
       user: { id: userId },
     });
-
     const user = await this.usersRepository.findOneBy({ id: userId });
-
     if (user) {
-      //await this.emailService.sendTrainingRequestCreated(
-      //////);
-    }
 
+    }
     this.notificationsGateway.emitNotificationToAdmin({
       type: 'new_request',
       title: 'Nueva solicitud',

@@ -78,12 +78,12 @@ export class PaymentsController {
   @Post('create-preference')
   @ApiBearerAuth('Bearer')
   @UseGuards(AuthGuard)
-  @ApiOperation({ summary: 'Crear preferencia de pago en MercadoPago' })
+  @ApiOperation({ summary: 'Crear orden de pago en Culqi' })
   @ApiResponse({ status: 201, type: CreatePreferenceResponseDto })
   createPreference(
     @Body() dto: CreatePaymentDto,
   ): Promise<CreatePreferenceResponseDto> {
-    return this.paymentsService.createPreference(dto);
+    return this.paymentsService.createOrder(dto);
   }
 
   @Post('webhook')

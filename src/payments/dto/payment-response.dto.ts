@@ -19,7 +19,7 @@ export class PaymentResponseDto {
 
 export class CreatePreferenceResponseDto {
   paymentId!: string;
-  init_point?: string;
+  culquiOrderId?: string;
 }
 
 export class WebhookResponseDto {
